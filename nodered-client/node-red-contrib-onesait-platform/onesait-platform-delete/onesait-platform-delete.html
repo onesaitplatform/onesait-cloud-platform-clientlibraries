@@ -1,0 +1,108 @@
+<html>
+	<script type="text/javascript">
+		RED.nodes.registerType('onesait-platform-delete',{
+			category: 'onesait-platform',
+			color: '#C0DEED',
+			defaults: {
+				name: {value:""},
+				ontology: {value:""},
+				server: {value:"", type:"onesait-platform-connection-config"},
+				check: {value:false},
+				query: {value:""},
+				queryType: {value:""},
+				deleteType: {value:""}
+			},
+			inputs: 1,
+			outputs:1,
+			icon: "platform_logo.png",
+			label: function() {
+				return this.name||"onesait-platform-delete";
+			},
+			oneditprepare: function() {
+				if($("#node-input-check").is(':checked')){
+					$("#node-input-deleteType").removeProp('disabled');
+					$("#node-input-ontology").removeProp('disabled');
+					$("#node-input-query").removeProp('disabled');
+					$("#node-input-queryType").removeProp('disabled');
+				}else{
+					$("#node-input-deleteType").prop('disabled',true);
+					$("#node-input-ontology").prop('disabled',true);
+					$("#node-input-query").prop('disabled',true);
+					$("#node-input-queryType").prop('disabled',true);
+					$("#node-input-deleteType").val('');
+					$("#node-input-ontology").val('');
+					$("#node-input-query").val('');
+					$("#node-input-queryType").val('');
+				}
+
+				$("#node-input-check").click(function() {
+					var check = $("#node-input-check").is(':checked');
+					var ontologia = $("#node-input-ontology").val();
+					if(check){
+						$("#node-input-deleteType").removeProp('disabled');
+						$("#node-input-ontology").removeProp('disabled');
+						$("#node-input-query").removeProp('disabled');
+						$("#node-input-queryType").removeProp('disabled');
+					} else{
+						$("#node-input-deleteType").prop('disabled',true);
+						$("#node-input-ontology").prop('disabled',true);
+						$("#node-input-query").prop('disabled',true);
+						$("#node-input-queryType").prop('disabled',true);
+						$("#node-input-deleteType").val('');
+						$("#node-input-ontology").val('');
+						$("#node-input-query").val('');
+						$("#node-input-queryType").val('');
+					}
+
+				});
+
+			}
+		});
+	</script>
+
+	<script type="text/x-red" data-template-name="onesait-platform-delete">
+		<div class="form-row">
+			<label for="node-input-name"><i class="icon-tag"></i> Name</label>
+			<input type="text" id="node-input-name" placeholder="Name">
+		</div>
+		<div class="form-row">
+			<label> </label>
+			<input type="checkbox" id="node-input-check" style="display: inline-block; width: auto; vertical-align: top;">
+			<label for="node-input-check" style="width: 70%;"> Insert the data manually</label>
+			<label id="label-ontology" for="node-input-ontology" ><i class="icon-file"></i> Ontology</label>
+			<input type="text" id="node-input-ontology" placeholder="Ontología" disabled  />
+		</div>
+		<div class="form-row">
+			<label for="node-input-deleteType"><i class="icon-file"></i> Delete Type</label>
+			<select id="node-input-deleteType" value="" placeholder="Delete type" disabled>
+				<option value="DELETE"> DELETE</option>
+				<option value="DELETE_BY_ID"> DELETE_BY_ID</option>
+			</select>
+		</div>
+		<div class="form-row">
+			<label for="node-input-query"><i class="icon-file"></i> Query/Id</label>
+			<input type="text" id="node-input-query" placeholder="Query/Id" disabled />
+		</div>
+		<div class="form-row">
+			<label for="node-input-queryType"><i class="icon-file"></i> Query Type</label>
+			<select id="node-input-queryType" placeholder="Query type" disabled>
+				<!--option value="SQL"> SQL</option-->
+				<option value="NATIVE"> NATIVE</option>
+			</select>
+		</div>
+		<div class="form-row">
+			<label for="node-input-server"><i class="icon-file"></i> Server</label>
+			<input type="text" id="node-input-server" placeholder="Server">
+		</div>
+		<script
+	</script>
+	<script type="text/x-red" data-help-name="onesait-platform-delete">
+		<span><img style="margin-left: 5px;" src="icons/platform_logo.png"/><h2 style="display:inline"> onesait-platform</h2>
+		<p>Node deleting data in an ontology</p>
+		<p><code>Ontology</code> Name of the ontology if the checkbox is selected, else the name of the ontology, have to go in the <code>msg.ontology</code></p>
+		<p><code>DeleteType</code> Type of delete, delete by query or id are supported, if checkbox is unselected the types have to go in the <code>msg.deleteType</code>. Available options: (<code>DELETE, DELETE_BY_ID</code>)</p>
+		<p><code>Query/Id</code> Query or id to delete if the checkbox is selected, else the query or id have to go in the <code>msg.query</code></p>
+		<!--p><code>Query Type</code> Query Type of the query if the checkbox is selected, else the query type have to go in the <code>msg.queryType</code></p-->
+	</script>
+
+</html>

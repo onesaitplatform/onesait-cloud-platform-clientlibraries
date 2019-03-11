@@ -1,0 +1,69 @@
+<html>
+	<script type="text/javascript">
+		RED.nodes.registerType('onesait-platform-insert',{
+			category: 'onesait-platform',
+			color: '#C0DEED',
+			defaults: {
+				name: {value:""},
+				ontology: {value:""},
+				server: {value:"", type:"onesait-platform-connection-config"},
+				check: {value:false}
+			},
+			inputs: 1,
+			outputs:1,
+			icon: "platform_logo.png",
+			label: function() {
+				return this.name||"onesait-platform-insert";
+			},
+			oneditprepare: function() {
+				if($("#node-input-check").is(':checked')){
+					$("#node-input-ontology").removeProp('disabled');
+				}else{
+					$("#node-input-ontology").prop('disabled',true);
+					$("#node-input-ontology").val('');
+				}
+
+				$("#node-input-check").click(function() {
+					var check = $("#node-input-check").is(':checked');
+					var ontologia = $("#node-input-ontology").val();
+					if(check){
+						$("#node-input-ontology").removeProp('disabled');
+					} else{
+						$("#node-input-ontology").prop('disabled',true);
+						$("#node-input-ontology").val('');
+					}
+
+				});
+			}
+		});
+	</script>
+
+	<script type="text/x-red" data-template-name="onesait-platform-insert">
+
+		<div class="form-row">
+			<label for="node-input-name"><i class="icon-tag"></i> Name</label>
+			<input type="text" id="node-input-name" placeholder="Name">
+		</div>
+		<div class="form-row">
+			<label> </label>
+			<input type="checkbox" id="node-input-check" style="display: inline-block; width: auto; vertical-align: top;">
+			<label for="node-input-check" style="width: 70%;"> Insert the data manually</label>
+			<label id="label-ontology" for="node-input-ontology" ><i class="icon-file"></i> Ontology</label>
+			<input type="text" id="node-input-ontology" placeholder="Ontología" disabled  />
+		</div>
+		<div class="form-row">
+			<label for="node-input-server"><i class="icon-file"></i> Server</label>
+			<input type="text" id="node-input-server" placeholder="Server">
+		</div>
+		<script
+	</script>
+	<script type="text/x-red" data-help-name="onesait-platform-insert">
+	<span><img style="margin-left: 5px;" src="icons/platform_logo.png"/><h2 style="display:inline"> onesait-platform</h2>
+		<p>Node inserting data in an ontology</p>
+		<p><code>Ontology</code> Name of the ontology if the checkbox is selected, else the name of the ontology have to go in the <code>msg.ontology</code></p>
+		<p><code>msg.payload</code> The data to be inserted in JSON format</p>
+		<p>The output of the node:</p>
+		<p><code>msg.payload</code> A JSON with the ObjectId of the insertion.</p>
+	</script>
+
+</html>

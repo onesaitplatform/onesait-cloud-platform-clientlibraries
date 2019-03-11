@@ -1,0 +1,138 @@
+<html>
+	<script type="text/javascript">
+    RED.nodes.registerType('onesait-platform-connection-config',{
+        category: 'config',
+        defaults: {
+            protocol: {value:""},
+            device: {value:""},
+						instance: {value:""},
+						token: {value:""},
+						renovation: {value:""},
+						ip: {value:""},
+						port: {value:""},
+						endpoint: {value:""},
+						path: {value:""},
+						check: {value:false}
+        },
+        label: function() {
+			if(this.protocol=="MQTT"){
+					return this.ip+":"+this.port+" as "+this.device+":"+this.instance;
+			}else{
+				return this.endpoint+" as "+this.device+":"+this.instance;
+			}
+
+        },
+		oneditprepare: function() {
+			$("#node-config-input-protocol").change(function() {
+
+				var prot = $("#node-config-input-protocol").val();
+				if(prot!=null){
+					if(prot=="MQTT"){
+						$("#div-ip").show();
+						$("#div-port").show();
+						$("#div-certificate").show();
+						$("#div-endpoint").hide();
+						$("#div-renovation").show();
+						// $("#div-security").show();
+					}else{
+						$("#div-endpoint").show();
+						$("#div-ip").hide();
+						$("#div-port").hide();
+						$("#div-certificate").hide();
+						$("#div-renovation").hide();
+						// $("#div-security").hide();
+					}
+				}
+			}); //change
+			$(".inject-time-count").spinner({
+          //max:60,
+          min:1
+      }); //spinner
+
+			if($("#node-config-input-check").is(':checked')){
+				$("#node-config-input-path").removeProp('disabled');
+			}else{
+				$("#node-config-input-path").prop('disabled',true);
+			}
+
+			$("#node-config-input-check").click(function() {
+				var check = $("#node-config-input-check").is(':checked');
+				if(check){
+					$("#node-config-input-path").removeProp('disabled');
+				} else{
+					$("#node-config-input-path").prop('disabled',true);
+				}
+
+			});
+
+		} //function
+
+    });
+</script>
+
+
+
+<script type="text/x-red" data-template-name="onesait-platform-connection-config">
+  <div class="form-row">
+    	<label for="node-config-input-protocol"><i class="icon-bookmark"></i> Protocol</label>
+      <select type="text" id="node-config-input-protocol">
+				<option value="MQTT">MQTT</option>
+				<option value="REST">REST</option>
+				<!--option value="WEBSOCKET">WEBSOCKET</option-->
+			</select>
+  </div>
+	<div class="form-row hidden" id="div-ip" style="display:nonde;">
+		<label> </label>
+      <label for="node-config-input-ip">IP</label>
+      <input type="text" style="width:213px" id="node-config-input-ip" placeholder="IP">
+    </div>
+	<div class="form-row hidden" id="div-endpoint" style="display:nonde;">
+		<label> </label>
+      <label for="node-config-input-endpoint"> Endpoint</label>
+      <input type="text"style="width:213px"  id="node-config-input-endpoint" placeholder="Endpoint">
+    </div>
+	<div class="form-row hidden" id="div-port" style="display:nonde;">
+		<label> </label>
+      <label for="node-config-input-port"> Port</label>
+      <input type="text" style="width:213px" id="node-config-input-port" placeholder="Port">
+  </div>
+	<div class="form-row" hidden id="div-certificate" style="display:nonde;">
+		<label> </label>
+		<input type="checkbox" id="node-config-input-check" style="display: inline-block; width: auto; vertical-align: top;">
+		<label for="node-config-input-check" style="width: 70%;"> Enable SSL/TLS security</label>
+		<label id="label-path" for="node-config-input-path" ><i class="icon-file"></i> Certificate</label>
+		<input type="text" id="node-config-input-path" placeholder="Example: C:\Users\Certificates\mycertificate.pem" disabled  />
+	</div>
+  <div class="form-row">
+      <label for="node-config-input-device"><i class="icon-bookmark"></i> IoTClient</label>
+      <input type="text" id="node-config-input-device" placeholder="IoTClient">
+  </div>
+	<div class="form-row">
+      <label for="node-config-input-instance"><i class="icon-file"></i> Instance</label>
+      <input type="text" id="node-config-input-instance" placeholder="Instance">
+  </div>
+	<div class="form-row">
+      <label for="node-config-input-token"><i class="icon-bookmark"></i> Token</label>
+      <input type="text" id="node-config-input-token" placeholder="Token">
+  </div>
+	<div class="form-row hidden" id="div-renovation" style="display:nonde;">
+	    <label for="node-config-input-renovation"><i class="icon-bookmark"></i> Renovate session every</label>
+	    <input id="node-config-input-renovation" class="inject-time-count" value="60"></input>
+	    <label>minutes</label>
+  </div>
+</script>
+
+	<script type="text/x-red" data-help-name="onesait-platform-connection-config">
+		<p>Configuration for the conexion:</p>
+		<p><code>Protocol</code>  Select the protocol between: MQTT, REST</p>
+	    <p><code>IoTClient</code> It is used to indicate the IoTClient to be referenced.</p>
+	    <p><code>Instance</code> It is used to indicate the IoTClient instance to be referenced.</p>
+	    <p><code>Token</code> Identification number of the IoTClient.</p>
+	    <p><code>Renovate session</code> Connection renewal time.</p>
+		<p>MQTT conexions:</p>
+		<p><code>IP</code> Host name</p>
+		<p><code>Port</code> Number port for MQTT conexion</p>
+		<p>REST conexions:</p>
+		<p><code>Endpoint</code> The url</p>
+	</script>
+</html>

@@ -1,0 +1,56 @@
+package com.minsait.onesait.platform.client.examples;
+
+import java.io.IOException;
+import java.util.List;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minsait.onesait.platform.client.RestClient;
+import com.minsait.onesait.platform.client.enums.QueryType;
+import com.minsait.onesait.platform.client.exception.RestException;
+
+public class RestAppExample {
+
+	public static void main(String[] args) throws IOException, RestException {
+
+		final String token = "e7ef0742d09d4de5a3687f0cfdf7f626";
+		final String deviceTemplate = "Ticketing App";
+		final String device = "TicketMachine1";
+		final String ontology = "Ticket";
+		final ObjectMapper mapper = new ObjectMapper();
+		RestClient client = null;
+		try {
+			client = new RestClient("http://localhost:19000/iot-broker");
+			client.connect(token, deviceTemplate, device, true);
+			log.info("...Connected to {}", client.getRestServer());
+
+			List<JsonNode> list = client.getOntologyInstances(ontology);
+			log.info("...Instances returned truncated:" + list.toString().substring(0, 100));
+
+			String query = "select Ticket.Ticket as Ticket from Ticket where Ticket.Ticket.Status=\"PENDING\"";
+			log.info("3. Getting all existing instances filtered by query:" + query);
+			
+			final List<JsonNode> instancesFiltered = client.getOntologyInstances(ontology, query, QueryType.SQL);
+			log.info("...Instances returned truncated:" + list.toString().substring(0, 100));
+
+			String instance = "{\"Ticket\":{\"Identification\":\"\",\"Status\":\"PENDING\",\"Email\":\"iex@email.com\",\"Name\":\"Alberto\",\"Response_via\":\"Email\",\"File\":{\"data\":\"\",\"media\":{\"name\":\"\",\"storageArea\":\"SERIALIZED\",\"binaryEncoding\":\"Base64\",\"mime\":\"application/pdf\"}},\"Coordinates\":{\"coordinates\":{\"latitude\":-13.887,\"longitude\":38.989},\"type\":\"Point\"}}}";
+			final String idInsert = client.insert(ontology, mapper.readTree(instance).toString());
+			log.info("...Inserted with id {}" + idInsert);
+
+			instance = "{\"Ticket\":{\"Identification\":\"\",\"Status\":\"DONE\",\"Email\":\"iex@email.com\",\"Name\":\"Alberto\",\"Response_via\":\"Email\",\"File\":{\"data\":\"\",\"media\":{\"name\":\"\",\"storageArea\":\"SERIALIZED\",\"binaryEncoding\":\"Base64\",\"mime\":\"application/pdf\"}},\"Coordinates\":{\"coordinates\":{\"latitude\":-13.887,\"longitude\":38.989},\"type\":\"Point\"}}}";
+			client.update(ontology, mapper.readTree(instance).toString(), idInsert);
+			log.info("...Updated instance");
+
+			client.delete(ontology, idInsert);
+			log.info("...Deleted instance");
+
+			client.disconnect();
+			log.info("...Disconnected");
+
+		} catch (Exception e) {
+			log.error("Error in process", e);
+		}
+
+	}
+
+}

@@ -1,0 +1,68 @@
+<html>
+	<script type="text/javascript">
+		RED.nodes.registerType('onesait-platform-subscribe',{
+			category: 'onesait-platform',
+			color: '#C0DEED',
+			defaults: {
+				name: {value:""},
+				ontology: {value:""},
+				server: {value:"", type:"onesait-platform-connection-config"},
+				check: {value:false}
+			},
+			inputs: 1,
+			outputs:1,
+			icon: "platform_logo.png",
+			label: function() {
+				return this.name||"onesait-platform-subscribe";
+			},
+			oneditprepare: function() {
+				if($("#node-input-check").is(':checked')){
+					$("#node-input-ontology").removeProp('disabled');
+				}else{
+					$("#node-input-ontology").prop('disabled',true);
+					$("#node-input-ontology").val('');
+				}
+
+				$("#node-input-check").click(function() {
+					var check = $("#node-input-check").is(':checked');
+					var ontologia = $("#node-input-ontology").val();
+					if(check){
+						$("#node-input-ontology").removeProp('disabled');
+					} else{
+						$("#node-input-ontology").prop('disabled',true);
+						$("#node-input-ontology").val('');
+					}
+
+				});
+
+			}
+		});
+	</script>
+
+	<script type="text/x-red" data-template-name="onesait-platform-subscribe">
+		<div class="form-row">
+			<label for="node-input-name"><i class="icon-tag"></i> Name</label>
+			<input type="text" id="node-input-name" placeholder="Name">
+		</div>
+		<div class="form-row">
+			<label> </label>
+			<input type="checkbox" id="node-input-check" style="display: inline-block; width: auto; vertical-align: top;">
+			<label for="node-input-check" style="width: 70%;"> Insert the data manually</label>
+			<label id="label-ontology" for="node-input-ontology" ><i class="icon-file"></i> Ontology</label>
+			<input type="text" id="node-input-ontology" placeholder="Ontología" disabled  />
+		</div>
+		<div class="form-row">
+			<label for="node-input-server"><i class="icon-file"></i> Server</label>
+			<input type="text" id="node-input-server" placeholder="Server">
+		</div>
+		<script
+	</script>
+	<script type="text/x-red" data-help-name="onesait-platform-subscribe">
+		<span><img style="margin-left: 5px;" src="icons/platform_logo.png"/><h2 style="display:inline"> onesait-platform</h2>
+		<p>Node subscribing data in an ontology</p>
+		<p><code>Ontology</code> Name of the ontology if the checkbox is selected, else the name of the ontology have to go in the <code>msg.ontology</code></p>
+		<p><code>Query</code> Query to update if the checkbox is selected, else the query have to go in the <code>msg.query</code></p>
+		<p><code>Query Type</code> Query Type of the query if the checkbox is selected, else the query type have to go in the <code>msg.queryType</code></p>
+	</script>
+
+</html>

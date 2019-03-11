@@ -1,0 +1,150 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.minsait.onesait.platform</groupId>
+	<artifactId>onesaitplatform-java-client</artifactId>
+	<name>onesaitplatform-java-client</name>
+    <version>1.2.5-rc1</version>
+	<packaging>jar</packaging>
+	<description>Java Clients for Onesait Open Platform</description>
+	<properties>
+		<license.dir>..</license.dir>
+		<onesaitplatform.version>1.2.5-rc1</onesaitplatform.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+		<maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+	</properties>
+	
+	<dependencies>
+	
+		<dependency>
+			<groupId>com.minsait.onesait.platform</groupId>
+			<artifactId>onesaitplatform-comms-protocol</artifactId>
+			<version>${onesaitplatform.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.16.18</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.paho</groupId>
+			<artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+			<version>1.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>3.10.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.spullara.mustache.java</groupId>
+			<artifactId>compiler</artifactId>
+			<version>0.9.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.overviewproject</groupId>
+			<artifactId>mime-types</artifactId>
+			<version>0.1.0</version>
+		</dependency>
+		
+		<dependency>
+	       <groupId>org.slf4j</groupId>
+	       <artifactId>slf4j-api</artifactId>
+	       <version>1.7.25</version>
+	   </dependency>
+		
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.2.3</version>
+		</dependency>
+
+		
+		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.25</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.beryx</groupId>
+			<artifactId>text-io</artifactId>
+			<version>3.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.17</version>
+		</dependency>		
+	</dependencies>
+	
+	<repositories>
+		<repository>
+			<id>onesait platform releases</id>
+			<url>http://nexus.onesaitplatform.com/nexus/content/repositories/releases/</url>
+		</repository>
+	</repositories>	
+	
+	<profiles>
+	    <profile>
+	      <id>releases</id>
+	      <activation>
+		      <activeByDefault>false</activeByDefault>
+	      </activation>      
+	      <distributionManagement>
+				<repository>
+					<id>releases</id>
+					<url>http://nexus.onesaitplatform.com/nexus/content/repositories/releases/</url>
+				</repository>	      
+	      </distributionManagement>
+	    </profile>
+	    
+	    <profile>
+	      <id>snapshots</id>
+	      <activation>
+		      <activeByDefault>false</activeByDefault>
+	      </activation>      
+	      <distributionManagement>
+				<repository>
+					<id>snapshots</id>
+					<url>http://nexus.onesaitplatform.com/nexus/content/repositories/snapshots/</url>
+				</repository>	      
+	      </distributionManagement>
+	    </profile>	    
+	</profiles>		
+	
+	<build>
+		<plugins>
+		<plugin>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-maven-plugin</artifactId>
+			<executions>
+				<execution>
+					<goals>
+						<goal>repackage</goal>
+					</goals>
+					<configuration>
+						<classifier>spring-boot</classifier>
+						<mainClass>
+						  com.minsait.onesait.platform.client.examples.Client4IoTBrokerConsole
+						</mainClass>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+		</plugins>
+	</build>
+</project>

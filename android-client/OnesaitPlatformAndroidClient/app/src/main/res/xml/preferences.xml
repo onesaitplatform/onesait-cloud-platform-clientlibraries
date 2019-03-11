@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/app_pref_cat">
+        <EditTextPreference
+            android:key="@string/pref_sensor_id"
+            android:title="@string/pref_sensor_name"
+            android:summary="@string/pref_sensor_summary"
+            android:defaultValue="C7:8D:5D:2E:D8:E6" />
+        />
+
+        <EditTextPreference
+            android:key="@string/pref_email"
+            android:title="@string/pref_email_name"
+            android:summary="@string/pref_email_summary"
+            android:defaultValue="mbriceno@minsait.com"/>
+        <EditTextPreference
+            android:key="@string/pref_ontology"
+            android:title="@string/pref_ontology_name"
+            android:summary="@string/pref_ontology_summary"
+            android:defaultValue="androidIoTFrame"/>
+
+        <EditTextPreference
+            android:key="@string/pref_thinkp"
+            android:title="@string/pref_thinkp_name"
+            android:summary="@string/pref_thinkp_summary"
+            android:defaultValue="androidIoTDevice"/>
+        <EditTextPreference
+            android:key="@string/pref_token"
+            android:title="@string/pref_token_name"
+            android:summary="@string/pref_token_summary"
+            android:defaultValue="fb3521092ebb4edfac1a8b22b72f51a4"/>
+        
+    </PreferenceCategory>
+</PreferenceScreen>

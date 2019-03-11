@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name">onesait BLE</string>
+    <string name="configuration_settings">Settings</string>
+    <string name="ble_not_supported">BLE not supported on this device</string>
+    <string name="error_bluetooth_not_supported">Bluetooth not supported on this device</string>
+    <string name="gps_location_not_enabled">Please activate location settings on this device</string>
+    <string name="location_updated">Location updated</string>
+    <string name="play_menu">Play</string>
+    <string name="stop_menu">Stop</string>
+
+    <!-- Splash Screen strings -->
+    <string name="alert_title_loc">Attention</string>
+    <string name="alert_title_msg">This app may use your device location for demo purposes</string>
+
+    <!-- Main activity strings -->
+    <string name="service_status_text">Tracking service status: </string>
+    <string name="frames_gen_text">Frames: </string>
+    <string name="frames_sent_text">Sent frames: </string>
+    <string name="latitude_text">Latitude: </string>
+    <string name="longitude_text">Longitude: </string>
+    <string name="accuracy_text">Loc. accuracy (m): </string>
+    <string name="temperature_text">Temperature (ºC):</string>
+    <string name="luxometer_text">Obj Temperature (ºC): </string>
+    <string name="accZ_text">Acc Z Axis (G):</string>
+    <string name="accY_text">Acc Y Axis (G):</string>
+    <string name="accX_text">Acc X Axis (G):</string>
+
+    <!-- Preferences keys -->
+    <string name="pref_sensor_id">pref_sensor_id</string>
+    <string name="pref_email">pref_email</string>
+    <string name="pref_ontology">pref_ontology</string>
+    <string name="pref_thinkp">pref_thinkp</string>
+    <string name="pref_token">pref_token</string>
+
+
+
+    <!-- Preferences strings -->
+    <string name="pref_email_name">Your e-mail address</string>
+    <string name="pref_ontology_name">Ontology name</string>
+    <string name="pref_thinkp_name">Client Platform</string>
+    <string name="pref_token_name">Token</string>
+
+    <string name="pref_email_summary">E-mail to be notified</string>
+    <string name="pref_ontology_summary">Ontology used</string>
+    <string name="pref_thinkp_summary">Client Platform used</string>
+    <string name="pref_token_summary">Client Platform Token</string>
+
+    <string name="pref_sensor_name">Sensor selection</string>
+    <string name="pref_sensor_summary">Identify the related sensor</string>
+    <string name="app_pref_cat">Application settings </string>
+
+    <!-- Closing dialog -->
+    <string name="dialog_title">Leaving app</string>
+    <string name="dialog_message">Please go back and push STOP to stop background operation</string>
+
+</resources>

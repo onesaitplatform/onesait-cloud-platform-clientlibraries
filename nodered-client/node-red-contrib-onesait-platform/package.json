@@ -1,0 +1,35 @@
+{
+  "homepage": "https://cloudlab.onesaitplatform.online/",
+  "keywords": [
+    "onesait-platform"
+  ],
+  "maintainers": [
+    {
+      "name": "onesait-platform",
+      "email": "onesaitplatform@gmail.com"
+    }
+  ],
+  "name": "node-red-contrib-onesait-platform",
+  "description": "Client library nodes to interact with onesait Platform",
+  "node-red": {
+    "nodes": {
+      "onesait-platform-connection-config": "onesait-platform-connection-config/onesait-platform-connection-config.js",
+      "onesait-platform-insert": "onesait-platform-insert/onesait-platform-insert.js",
+      "onesait-platform-delete": "onesait-platform-delete/onesait-platform-delete.js",
+      "onesait-platform-query": "onesait-platform-query/onesait-platform-query.js",
+      "onesait-platform-update": "onesait-platform-update/onesait-platform-update.js",
+      "onesait-platform-leave": "onesait-platform-leave/onesait-platform-leave.js",
+      "onesait-platform-subscribe": "onesait-platform-subscribe/onesait-platform-subscribe.js"
+    }
+  },
+  "readme": "README.md",
+  "scripts": {},
+  "version": "1.0.0",
+  "dependencies": {
+    "mqtt": "1.x.x",
+    "q": "1.x.x",
+    "wait-until": "0.0.2",
+    "http": "0.x.x",
+    "https": "1.x.x"
+  }
+}

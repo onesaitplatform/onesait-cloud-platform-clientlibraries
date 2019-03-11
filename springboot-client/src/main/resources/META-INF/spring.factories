@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.minsait.onesait.platform.client.springboot.SpringBootClientStarterAutoConfig
+#,com.minsait.onesait.platform.client.springboot.schema.SpringBootClientSchemaStarterAutoConfig

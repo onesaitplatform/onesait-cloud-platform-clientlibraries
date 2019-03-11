@@ -1,0 +1,36 @@
+<html>
+	<script type="text/javascript">
+		RED.nodes.registerType('onesait-platform-leave',{
+			category: 'onesait-platform',
+			color: '#C0DEED',
+			defaults: {
+				name: {value:""},
+				server: {value:"", type:"onesait-platform-connection-config"}
+			},
+			inputs: 1,
+			outputs:1,
+			icon: "platform_logo.png",
+			label: function() {
+				return this.name||"onesait-platform-leave";
+			}
+		});
+	</script>
+
+	<script type="text/x-red" data-template-name="onesait-platform-leave">
+		<div class="form-row">
+			<label for="node-input-name"><i class="icon-tag"></i> Name</label>
+			<input type="text" id="node-input-name" placeholder="Name">
+		</div>
+		<div class="form-row">
+			<label for="node-input-server"><i class="icon-file"></i> Server</label>
+			<input type="text" id="node-input-server" placeholder="Server">
+		</div>
+		<script
+	</script>
+	<script type="text/x-red" data-help-name="onesait-platform-leave">
+		<span><img style="margin-left: 5px;" src="platform_logo.png"/><h2 style="display:inline"> Sofia4Cities</h2>
+		<p>Node leaving the session:</p>
+		<p><code>msg.sessionKey</code> Session Key that should be closed.</p>
+		</script>
+
+</html>
