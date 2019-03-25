@@ -15,7 +15,7 @@ class FileManager:
     """ 
     Class FileManager to make operations with binary repository
     """
-    protocol = "https"
+    protocol = config.PROTOCOL
     binary_files_path = "/controlpanel/binary-repository"
     
     upload_template = Template("$protocol://$host$path")

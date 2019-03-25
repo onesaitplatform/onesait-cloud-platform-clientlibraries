@@ -18,7 +18,7 @@ class IotBrokerClient(Client):
     """
     log.init_logging()
 
-    protocol = "http"
+    protocol = config.PROTOCOL
     iot_broker_path = "/iot-broker"
 
     join_template = Template("$protocol://$host$path/rest/client/join")
