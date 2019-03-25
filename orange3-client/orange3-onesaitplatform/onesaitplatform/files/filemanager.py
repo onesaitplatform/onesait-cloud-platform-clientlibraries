@@ -5,12 +5,10 @@ import requests
 from string import Template
 import json
 try:
-    from onesaitplatform.iotbroker.log import log
-    import onesaitplatform.iotbroker.config as config
-except:
-    # run tests
-    from log import log
-    import config as config
+    from onesaitplatform.common.log import log
+    import onesaitplatform.common.config as config
+except Exception as e:
+    print("Error - Not possible to import necesary libraries: {}".format(e))
 
 
 class FileManager:

@@ -6,10 +6,9 @@ import sys
 import traceback
 
 try:
-    import onesaitplatform.iotbroker.config as config
-except:
-    # run tests
-    import config as config
+    import onesaitplatform.common.config as config
+except Exception as e:
+    print("Error - Not possible to import necesary libraries: {}".format(e))
 
 try:
     d = config.LOGS_FOLDER
