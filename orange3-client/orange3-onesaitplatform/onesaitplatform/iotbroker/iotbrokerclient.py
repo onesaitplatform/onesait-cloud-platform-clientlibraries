@@ -6,15 +6,11 @@ from string import Template
 import json
 try:
     from onesaitplatform.iotbroker.client import Client
-    from onesaitplatform.iotbroker.log import log
     from onesaitplatform.iotbroker.utils import wait
-    import onesaitplatform.iotbroker.config as config
-except:
-    # run tests
-    from client import Client
-    from log import log
-    from utils import wait
-    import config as config
+    import onesaitplatform.common.config as config
+    from onesaitplatform.common.log import log
+except Exception as e:
+    print("Error - Not possible to import necesary libraries: {}".format(e))
 
 class IotBrokerClient(Client):
     """ 
