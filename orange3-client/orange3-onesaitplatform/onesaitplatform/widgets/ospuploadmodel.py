@@ -31,7 +31,7 @@ class OspUploadModel(widget.OWWidget):
         model = Input("Model", Model)
 
     file_manager = None
-    host = Setting("development.onesaitplatform.com")
+    host = Setting("www.onesaitplatform.online")
     user_token = Setting(None)
     filename = Setting(None)
     

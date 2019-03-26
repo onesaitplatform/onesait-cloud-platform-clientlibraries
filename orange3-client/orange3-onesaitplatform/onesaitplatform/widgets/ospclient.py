@@ -37,7 +37,7 @@ class OspClient(OWWidget):
     want_main_area = False
     
     # fields
-    host = Setting("development.onesaitplatform.com")
+    host = Setting("www.onesaitplatform.online")
     iot_client = Setting("Client4Notebook")
     iot_client_token = Setting(None)
     connection = Setting(None)
