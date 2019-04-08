@@ -1,4 +1,4 @@
-Onesait Platoform Python Client Services
+Onesait Platform Python Client Services
 ===============================
 
 ## API documentation
@@ -16,15 +16,22 @@ It supports Python 3.4+
 In order to use this API, you must have `pip` installed in your system. The pip website (https://pypi.python.org/pypi/pip) contains detailed installation instructions.
 
 Once `pip` is installed, you will be able to install the Python clients into your local package repository by running the following commands:
+
 1. To install from download repository:
 
-	pip install .
-	
-	python setup.py install
+~~~~~~
+pip install .
+~~~~~~
+
+~~~~~~
+python setup.py install
+~~~~~~
 
 2. To install from pypi:
 
-	pip install onesaitplatform-client-services
+~~~~~~
+pip install onesaitplatform-client-services
+~~~~~~
 
 
 ## Samples usage
