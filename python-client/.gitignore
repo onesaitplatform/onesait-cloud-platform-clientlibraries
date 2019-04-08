@@ -24,6 +24,5 @@ __pycache__
 .vscode
 
 # Testing notebooks
-*.ipynb
 *.zip
-notebooks
+.ipynb_checkpoints

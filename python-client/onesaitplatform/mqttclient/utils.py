@@ -11,9 +11,9 @@ class Message:
     def result(self):
         received = self._ready.wait(timeout=self._timeout)
         if not received:
-            raise Sofia2Error("CONNECTION", "No Response Received")
+            raise MqttError("CONNECTION", "No Response Received")
         if not self._response['ok']:
-            raise Sofia2Error(self._response['errorCode'], self._response['error'])
+            raise MqttError(self._response['errorCode'], self._response['error'])
         return self._response['data']
 
     @result.setter
@@ -34,7 +34,7 @@ class Message:
         return key in self.result
 
 
-class Sofia2Error(Exception):
+class MqttError(Exception):
     def __init__(self, error_code, description):
         self.error_code = error_code
         self.description = description
