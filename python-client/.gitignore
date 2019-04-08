@@ -1,0 +1,28 @@
+# Build files
+build
+dist
+*.egg-info
+*.so
+*.pyd
+*.pyc
+MANIFEST
+
+# Cython generated files
+__pycache__
+
+# Editor files
+.idea
+.idea/*
+*~
+.project
+.pydevproject
+.settings/*
+.DS_Store
+
+# Deploying files
+*run.bat
+.vscode
+
+# Testing notebooks
+*.zip
+.ipynb_checkpoints
