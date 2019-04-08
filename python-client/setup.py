@@ -4,9 +4,9 @@ from os import path, walk
 import sys
 from setuptools import setup, find_packages
 
-NAME = "onesaitplatform-services"
+NAME = "onesaitplatform-client-services"
 
-VERSION = "0.0.2"
+VERSION = "1.0.0"
 
 DESCRIPTION = "Python Implementation of the Onesait Platform utilities"
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.md')).read()
@@ -14,10 +14,12 @@ LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.md')).read()
 LICENSE = "BSD"
 
 KEYWORDS = (
-    'onesaitplatform services',
+    'onesaitplatform client services',
 )
 
 PACKAGES = find_packages()
+
+REQUIRED_PACKAGES = ["paho-mqtt", "six"]
 
 NAMESPACE_PACKAGES = ["onesaitplatform"]
 
@@ -31,6 +33,7 @@ if __name__ == '__main__':
         long_description=LONG_DESCRIPTION,
         license=LICENSE,
         packages=PACKAGES,
+        install_requires=REQUIRED_PACKAGES,
         keywords=KEYWORDS,
         namespace_packages=NAMESPACE_PACKAGES,
         include_package_data=True,

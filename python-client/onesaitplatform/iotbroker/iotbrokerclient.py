@@ -122,7 +122,7 @@ class IotBrokerClient(Client):
         return connection
     
     # @wait(.1, .1)
-    def join(self):
+    def join(self, iot_client=None, iot_client_token=None):
         """
         Login in the platform with Iot-Client credentials
 
@@ -130,6 +130,12 @@ class IotBrokerClient(Client):
         """
         _ok = False
         _res = None
+
+        if iot_client is not None:
+            self.iot_client = iot_client
+        if iot_client_token is not None:
+            self.iot_client_token = iot_client_token
+
         try:
             log.info("Created connection with iot-broker host:{}, path:{}, client:{}, token:{}"
                      .format(self.host, self.iot_broker_path, self.iot_client, self.iot_client_token))

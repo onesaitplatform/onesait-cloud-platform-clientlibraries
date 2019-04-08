@@ -73,7 +73,8 @@ class FileManager:
             response = requests.request("POST",
                                         url,
                                         headers=headers,
-                                        files=files_to_up)
+                                        files=files_to_up, 
+                                        verify=False)
 
             if response.status_code == 201:
                 _ok = True
