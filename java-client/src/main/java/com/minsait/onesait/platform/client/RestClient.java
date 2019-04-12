@@ -1,6 +1,6 @@
 /**
- * Copyright minsait by Indra Sistemas, S.A.
- * 2013-2018 SPAIN
+ * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
+ * 2013-2019 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,6 +195,7 @@ public class RestClient {
 		return sessionKey;
 	}
 
+	// Todo --> Hay que añadir otro este método
 	public List<JsonNode> query(String ontology, String query, SSAPQueryType queryType) throws SSAPConnectionException {
 		if (!isConnected())
 			throw new SSAPConnectionException(NULL_CLIENT);
@@ -211,7 +212,7 @@ public class RestClient {
 					.addQueryParameter("queryType", SSAPQueryType.valueOf(queryType.name()).name()).build();
 			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey).get().build();
 			response = client.newCall(request).execute();
-			
+
 			if (!response.isSuccessful()) {
 				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
@@ -236,6 +237,60 @@ public class RestClient {
 			instances = mapper.readValue(instancesAsText,
 					typeFactory.constructCollectionType(List.class, JsonNode.class));
 			return instances;
+		} catch (final SSAPConnectionException e) {
+			throw e;
+		} catch (final Exception e) {
+			log.error("Error in get instances: {}", e);
+			throw new SSAPConnectionException("query: Error in get instances: {}", e);
+		}
+
+	}
+
+	public JsonNode updateSQL(String ontology, String query) throws SSAPConnectionException {
+		return this.updateDeleteSQL(ontology, query);
+	}
+
+	public JsonNode deleteSQL(String ontology, String query) throws SSAPConnectionException {
+		return this.updateDeleteSQL(ontology, query);
+	}
+
+	private JsonNode updateDeleteSQL(String ontology, String query) throws SSAPConnectionException {
+		if (!isConnected())
+			throw new SSAPConnectionException(NULL_CLIENT);
+		HttpUrl url = null;
+		Request request = null;
+		Response response = null;
+		final TypeFactory typeFactory = mapper.getTypeFactory();
+		try {
+			final String processedQuery = URLEncoder.encode(query, UTF_8);
+			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
+					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
+					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(LIST_GET)
+					.addPathSegment(ontology).addEncodedQueryParameter(QUERY_STR, processedQuery)
+					.addQueryParameter("queryType", SSAPQueryType.valueOf(SSAPQueryType.SQL.name()).name()).build();
+			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+			response = client.newCall(request).execute();
+
+			if (!response.isSuccessful()) {
+				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+					log.info(SESSIONKEY_EXP);
+					sessionRetry = true;
+					try {
+						createConnection(token, deviceTemplate, device);
+						return updateDeleteSQL(ontology, query);
+					} catch (final Exception e) {
+						log.error(REGENERATING_ERROR, e);
+					} finally {
+						sessionRetry = false;
+					}
+				}
+
+				log.error(QUERY_ERROR + response.body().string());
+				throw new SSAPConnectionException(QUERY_ERROR + response.body().string());
+			}
+			final String instancesAsText = response.body().string();
+
+			return mapper.readValue(instancesAsText, JsonNode.class);
 		} catch (final SSAPConnectionException e) {
 			throw e;
 		} catch (final Exception e) {
