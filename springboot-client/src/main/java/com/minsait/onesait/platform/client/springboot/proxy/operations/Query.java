@@ -1,6 +1,6 @@
 /**
- * Copyright minsait by Indra Sistemas, S.A.
- * 2013-2018 SPAIN
+ * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
+ * 2013-2019 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minsait.onesait.platform.client.springboot.aspect.IoTBrokerQuery;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
 import com.minsait.onesait.platform.client.springboot.fromjson.IntValue;
+import com.minsait.onesait.platform.comms.protocol.enums.SSAPQueryType;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -76,21 +77,31 @@ public class Query implements Operation {
 			if (qOf == IoTBrokerQuery.QueryOf.QUERY) {
 				returnData = client.init().query(ontology, query, queryAnnotation.queryType());
 			} else if (qOf == IoTBrokerQuery.QueryOf.UPDATE) {
-				if (method.getReturnType().getName().equals("void")) {
-					client.init().updateQuery(ontology, query);
-				} else {
-					JsonNode data = client.init().updateQueryWithIds(ontology, query);
+				if (queryAnnotation.queryType() == SSAPQueryType.SQL) {
 					returnData = new ArrayList<JsonNode>();
-					returnData.add(data);
+					returnData.add(client.init().updateSQL(ontology, query));
+				} else {
+					if (method.getReturnType().getName().equals("void")) {
+						client.init().updateQuery(ontology, query);
+					} else {
+						JsonNode data = client.init().updateQueryWithIds(ontology, query);
+						returnData = new ArrayList<JsonNode>();
+						returnData.add(data);
+					}
 				}
 
 			} else if (qOf == IoTBrokerQuery.QueryOf.DELETE) {
-				if (method.getReturnType().getName().equals("void")) {
-					client.init().deleteQuery(ontology, query);
-				} else {
-					JsonNode data = client.init().deleteQueryWithIds(ontology, query);
+				if (queryAnnotation.queryType() == SSAPQueryType.SQL) {
 					returnData = new ArrayList<JsonNode>();
-					returnData.add(data);
+					returnData.add(client.init().updateSQL(ontology, query));
+				} else {
+					if (method.getReturnType().getName().equals("void")) {
+						client.init().deleteQuery(ontology, query);
+					} else {
+						JsonNode data = client.init().deleteQueryWithIds(ontology, query);
+						returnData = new ArrayList<JsonNode>();
+						returnData.add(data);
+					}
 				}
 			} else {
 				throw new SSAPConnectionException("QueryOf:" + qOf.name() + " not supported yet");
@@ -140,7 +151,11 @@ public class Query implements Operation {
 				if (returnData.size() == 0)
 					return null;
 				try {
-					toReturn = mapper.readValue(returnData.get(0).toString(), method.getReturnType());
+					if (method.getReturnType() == String.class) {
+						toReturn = returnData.get(0).toString();
+					} else {
+						toReturn = mapper.readValue(returnData.get(0).toString(), method.getReturnType());
+					}
 				} catch (Exception e) {
 					toReturn = mapper.readValue(returnData.get(0).get("value").toString(), method.getReturnType());
 				}
