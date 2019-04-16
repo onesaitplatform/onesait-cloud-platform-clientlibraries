@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
+import org.slf4j.MDC;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,6 +69,9 @@ public class RestClient {
 	private final static String APP_JSON = "application/json; charset=utf-8";
 	private final static String UPDATE_ERROR = "Error in update . Response:";
 	private final static String DELETE_ERROR = "Error in delete . Response:";
+
+	public static final String CORRELATION_ID_LOG_VAR_NAME = "correlationId";
+	public static final String CORRELATION_ID_HEADER_NAME = "X-Correlation-Id";
 
 	private OkHttpClient client;
 	private final ObjectMapper mapper = new ObjectMapper();
@@ -169,7 +172,7 @@ public class RestClient {
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(JOIN_GET)
 					.addQueryParameter("token", token).addQueryParameter("clientPlatform", deviceTemplate)
 					.addEncodedQueryParameter("clientPlatformId", device).build();
-			request = new Request.Builder().url(url).get().build();
+			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId()).get().build();
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
 				log.error("Error in createConnection . Response:" + response.toString());
@@ -210,7 +213,8 @@ public class RestClient {
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(LIST_GET)
 					.addPathSegment(ontology).addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addQueryParameter("queryType", SSAPQueryType.valueOf(queryType.name()).name()).build();
-			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -233,7 +237,7 @@ public class RestClient {
 			final String instancesAsText = response.body().string();
 			// instancesAsText = instancesAsText.replaceAll("\\\\\\\"", "\"").replace("\"{",
 			// "{").replace("}\"", "}");
-			List<JsonNode> instances = new ArrayList<JsonNode>();
+			List<JsonNode> instances = new ArrayList<>();
 			instances = mapper.readValue(instancesAsText,
 					typeFactory.constructCollectionType(List.class, JsonNode.class));
 			return instances;
@@ -247,11 +251,11 @@ public class RestClient {
 	}
 
 	public JsonNode updateSQL(String ontology, String query) throws SSAPConnectionException {
-		return this.updateDeleteSQL(ontology, query);
+		return updateDeleteSQL(ontology, query);
 	}
 
 	public JsonNode deleteSQL(String ontology, String query) throws SSAPConnectionException {
-		return this.updateDeleteSQL(ontology, query);
+		return updateDeleteSQL(ontology, query);
 	}
 
 	private JsonNode updateDeleteSQL(String ontology, String query) throws SSAPConnectionException {
@@ -268,7 +272,8 @@ public class RestClient {
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(LIST_GET)
 					.addPathSegment(ontology).addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addQueryParameter("queryType", SSAPQueryType.valueOf(SSAPQueryType.SQL.name()).name()).build();
-			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -308,13 +313,14 @@ public class RestClient {
 		Response response = null;
 		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
-			List<JsonNode> instances = new ArrayList<JsonNode>();
+			List<JsonNode> instances = new ArrayList<>();
 			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(LIST_GET)
 					.addPathSegment(ontology).addEncodedQueryParameter(QUERY_STR, query)
 					.addQueryParameter("queryType", queryType.name()).build();
-			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
 				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
@@ -389,7 +395,8 @@ public class RestClient {
 					.addPathSegment(ontology).build();
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), instance);
 
-			request = new Request.Builder().url(url).post(body).addHeader(AUTHORIZATION_STR, sessionKey).build();
+			request = new Request.Builder().url(url).post(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, sessionKey).build();
 
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
@@ -444,7 +451,8 @@ public class RestClient {
 
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), instance);
 
-			request = new Request.Builder().url(url).put(body).addHeader(AUTHORIZATION_STR, sessionKey).build();
+			request = new Request.Builder().url(url).put(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, sessionKey).build();
 
 			response = client.newCall(request).execute();
 
@@ -502,7 +510,8 @@ public class RestClient {
 					.addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addEncodedQueryParameter("ids", Boolean.toString(getIds)).build();
 			// Es una update by query, va por GET
-			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -569,7 +578,8 @@ public class RestClient {
 					.addPathSegment(ontology).addPathSegment(id)
 					.addEncodedQueryParameter("ids", Boolean.toString(includeIds)).build();
 
-			request = new Request.Builder().url(url).delete().addHeader(AUTHORIZATION_STR, sessionKey).build();
+			request = new Request.Builder().url(url).delete().addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, sessionKey).build();
 
 			response = client.newCall(request).execute();
 
@@ -628,7 +638,8 @@ public class RestClient {
 					.addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addEncodedQueryParameter("ids", Boolean.toString(getIds)).build();
 			// Es una update by query, va por GET
-			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -679,8 +690,8 @@ public class RestClient {
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(COMMAND)
 					.addPathSegment(command).build();
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), data.textValue());
-			final Request request = new Request.Builder().url(url).post(body).addHeader(AUTHORIZATION_STR, sessionKey)
-					.build();
+			final Request request = new Request.Builder().url(url).post(body)
+					.addHeader(CORRELATION_ID_HEADER_NAME, logId()).addHeader(AUTHORIZATION_STR, sessionKey).build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -729,7 +740,8 @@ public class RestClient {
 					.addPathSegment(command).build();
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), data.textValue());
 			final Request request = new Request.Builder().url(url).post(body)
-					.addHeader(AUTHORIZATION_STR, toDeviceSession).build();
+					.addHeader(CORRELATION_ID_HEADER_NAME, logId()).addHeader(AUTHORIZATION_STR, toDeviceSession)
+					.build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -762,7 +774,7 @@ public class RestClient {
 	 **/
 	public void disconnect() {
 		final Request request = new Request.Builder().url(restServer + "/" + LEAVE_GET)
-				.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+				.addHeader(AUTHORIZATION_STR, sessionKey).addHeader(CORRELATION_ID_HEADER_NAME, logId()).get().build();
 		try {
 			client.newCall(request).execute();
 		} catch (final IOException e) {
@@ -808,13 +820,7 @@ public class RestClient {
 						.readTimeout(timeout.getReadTimeouts(), timeout.getTimeunit());
 
 			builder.sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0]);
-			builder.hostnameVerifier(new HostnameVerifier() {
-
-				@Override
-				public boolean verify(String hostname, SSLSession session) {
-					return true;
-				}
-			});
+			builder.hostnameVerifier((hostname, session) -> true);
 
 			final OkHttpClient okHttpClient = builder.build();
 			return okHttpClient;
@@ -823,6 +829,14 @@ public class RestClient {
 		} catch (final Exception e) {
 			throw new SSAPConnectionException("Error in getUnsafeOkHttpClient", e);
 		}
+	}
+
+	private String logId() {
+		final String logId = MDC.get(CORRELATION_ID_LOG_VAR_NAME);
+		if (null == logId)
+			return new String("");
+		else
+			return logId;
 	}
 
 }
