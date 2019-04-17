@@ -11,7 +11,7 @@ LOGS_FOLDER = os.path.join(os.path.expanduser("~"), ".onesaitplatform-lib")
 USER_AGENT = "onesaitplatform:PythonClient"
 HOST = "www.onesaitplatform.online"
 DEBUG_TRACE_LIMIT = 25
-PROTOCOL = "http"
+PROTOCOL = "https"
 
 # Client.IotBrokerClient
 IOT_CLIENT = "Client4Notebook"
