@@ -33,6 +33,7 @@ if __name__ == '__main__':
         long_description=LONG_DESCRIPTION,
         license=LICENSE,
         packages=PACKAGES,
+        url="https://onesait-git.cwbyminsait.com/onesait-platform/onesait-cloud-platform-clientlibraries.git",
         install_requires=REQUIRED_PACKAGES,
         keywords=KEYWORDS,
         namespace_packages=NAMESPACE_PACKAGES,
