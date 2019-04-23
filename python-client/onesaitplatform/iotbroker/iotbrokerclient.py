@@ -1,14 +1,9 @@
-import time
-import datetime
 import requests
 from string import Template
 import json
-
-import numpy as np
-
 try:
-    from onesaitplatform.iotbroker.client import Client
-    from onesaitplatform.iotbroker.utils import wait
+    from onesaitplatform.base import Client
+    from onesaitplatform.common.utils import wait
     import onesaitplatform.common.config as config
     from onesaitplatform.common.log import log
     from onesaitplatform.enum import QueryType
@@ -213,7 +208,7 @@ class IotBrokerClient(Client):
 
         @param ontology     ontology name
         @param query        query expression
-        @param query_type    quert type ['NATIVE', 'SQL']
+        @param query_type   quert type ['NATIVE', 'SQL']
 
         @return ok, info
         """
@@ -307,7 +302,6 @@ class IotBrokerClient(Client):
         
         return step_query
         
-
     # @wait(.1, .1)
     def insert(self, ontology, list_data):
         """

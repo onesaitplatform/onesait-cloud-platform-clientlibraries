@@ -1,6 +1,4 @@
 import os
-import time
-import datetime
 import requests
 from string import Template
 import json
