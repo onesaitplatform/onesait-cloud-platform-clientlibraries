@@ -44,7 +44,8 @@ class IotBrokerClient(Client):
         @param iot_client_token   Onesaitplatform iot-Client-Token
         """
         
-        super().__init__(host=host)
+        #super().__init__(host=host) # only python > 3
+        Client.__init__(self, host=host) # python > 2.7 & <= 3.7.1
         
         self.iot_client = iot_client
         self.iot_clientId = iot_client + ":PythonClient"
