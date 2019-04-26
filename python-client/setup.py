@@ -19,7 +19,7 @@ KEYWORDS = (
 
 PACKAGES = find_packages()
 
-REQUIRED_PACKAGES = ["paho-mqtt", "six"]
+REQUIRED_PACKAGES = ["paho-mqtt", "six", "requests"]
 
 NAMESPACE_PACKAGES = ["onesaitplatform"]
 

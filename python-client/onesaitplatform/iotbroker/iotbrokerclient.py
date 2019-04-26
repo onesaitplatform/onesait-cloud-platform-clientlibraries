@@ -4,8 +4,6 @@ import requests
 from string import Template
 import json
 
-import numpy as np
-
 try:
     from onesaitplatform.iotbroker.client import Client
     from onesaitplatform.iotbroker.utils import wait
