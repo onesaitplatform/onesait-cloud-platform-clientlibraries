@@ -1,53 +1,63 @@
 import requests
 from string import Template
 import json
+import logging
 try:
     from onesaitplatform.base import Client
     import onesaitplatform.common.config as config
-    from onesaitplatform.common.log import log
     from onesaitplatform.enum import QueryType
-    from onesaitplatform.enum import QueryMethods
+    from onesaitplatform.enum import RestMethods
+    from onesaitplatform.enum import RestHeaders
 except Exception as e:
     print("Error - Not possible to import necesary libraries: {}".format(e))
+
+log = logging.getLogger(__name__)
 
 
 class ApiManagerClient(Client):
     """
     Class ApiManagerClient to connect with Api-Manager and APIs of OnesaitPlatform
     """
-    log.init_logging()
+    api_manager_path = config.API_MANAGER_PATH
+    api_caller_path = config.API_CALLER_PATH
 
-    protocol = config.PROTOCOL
-    api_manager_path = "/api-manager/services/management"
-    api_caller_path = "/api-manager/server/api"
-    token = None
-
-    find_template = Template("$protocol://$host$path/apis?identificacion=$identification&estado=$state&usuario=$user")
-    create_template = Template("$protocol://$host$path/apis")
-    delete_template = Template("$protocol://$host$path/apis/$identification/$version")
-    call_template = Template("$protocol://$host$path/$url")
-    list_template = Template("$protocol://$host$path//apis/user/$user")
-    request_template = Template("$protocol://$host$path$api_path")
+    __find_template = Template("$protocol://$host$path/apis?identificacion=$identification&estado=$state&usuario=$user")
+    __create_template = Template("$protocol://$host$path/apis")
+    __delete_template = Template("$protocol://$host$path/apis/$identification/$version")
+    __call_template = Template("$protocol://$host$path/$url")
+    __list_template = Template("$protocol://$host$path//apis/user/$user")
+    __request_template = Template("$protocol://$host$path$api_path")
     
-    HTTPS = "https"
-    X_OP_APIKey = "X-OP-APIKey"
-    ACCEPT_STR = "Accept"
-    APP_JSON = "application/json"
-    CONT_TYPE  = "Content-type"
-    USER_AGENT = "User-Agent"
+    __IS_LIST_QUERY_STR = "/apis/user"
+    __IS_FIND_QUERY_STR = "/apis?"
     
     NOT_SETTED_TOKEN_MSG = "Note token setted. Please use setToken(<token>) before"
     NOT_POSSIBLE_CONNECT_MSG = "Not possible to connect"
 
-    def __init__(self, host=config.HOST):
+    def __init__(self, host, port=None):
         """
         Class ApiManagerClient to connect with Api-Manager and APIs of OnesaitPlatform
 
         @param host               Onesaitplatform host
         """
-        super().__init__(host=host)
+        #super().__init__(host, port=port) # only python > 3
+        Client.__init__(self, host, port=port) # python > 2.7 & <= 3.7.1
+        self.token = None
         log.info("Connection Params: "  + self.host + "/(" + self.api_manager_path + " - " + self.api_caller_path + ")")
         self.add_to_debug_trace("Connection Params: "  + self.host + "/(" + self.api_manager_path + " - " + self.api_caller_path + ")")
+    
+    def setToken(self, token):
+        """ Set token (== object.token = <token>)"""
+        self.token = token
+    
+    @property
+    def __headers(self):
+        return {
+            RestHeaders.X_OP_APIKey.value: self.token,
+            RestHeaders.ACCEPT_STR.value: RestHeaders.APP_JSON.value,
+            RestHeaders.CONT_TYPE.value: RestHeaders.APP_JSON.value,
+            RestHeaders.USER_AGENT.value: self.user_agent
+        }
     
     def __str__(self):
         """
@@ -104,23 +114,9 @@ class ApiManagerClient(Client):
         
         return connection
 
-    @property
-    def __headers(self):
-        headers = {
-            self.X_OP_APIKey: self.token,
-            self.ACCEPT_STR: self.APP_JSON,
-            self.CONT_TYPE: self.APP_JSON,
-            self.USER_AGENT: self.user_agent
-        }
-        return headers
-
-    def setToken(self, token):
-        """ Set token (== object.token = <token>)"""
-        self.token = token
-
-    def raiseExceptionIfNotToken(self):
+    def raise_exception_if_not_token(self):
         if self.token is None:
-            raise Exception(NOT_SETTED_TOKEN_MSG)
+            raise Exception(self.NOT_SETTED_TOKEN_MSG)
 
     def find(self, identification, state, user):
         """
@@ -137,15 +133,15 @@ class ApiManagerClient(Client):
 
         try:
             log.info("Making find: identification:{}, state:{}, user:{}".format(identification, state, user))
-            self.raiseExceptionIfNotToken()
-            url = self.find_template.substitute(protocol=self.protocol, host=self.host, 
+            self.raise_exception_if_not_token()
+            url = self.__find_template.substitute(protocol=self.protocol, host=self.hostport, 
                                                 path=self.api_manager_path, 
                                                 identification=identification,
                                                 state=state, 
                                                 user=user
                                                 )
             headers = self.__headers
-            response = self.call_rest_API(QueryMethods.GET.value, url, headers=headers)
+            response = self.call(RestMethods.GET.value, url, headers=headers)
             log.info("Response: {} - {}".format(response.status_code, response.text))
             self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
 
@@ -181,12 +177,12 @@ class ApiManagerClient(Client):
             if isinstance(json_obj, str):
                 json_obj = json.loads(json_obj)
 
-            self.raiseExceptionIfNotToken()
-            url = self.create_template.substitute(protocol=self.protocol, host=self.host, 
+            self.raise_exception_if_not_token()
+            url = self.__create_template.substitute(protocol=self.protocol, host=self.hostport, 
                                                 path=self.api_manager_path
                                                 )
             headers = self.__headers
-            response = self.call_rest_API(QueryMethods.POST.value, url, headers=headers, body=json_obj)
+            response = self.call(RestMethods.POST.value, url, headers=headers, body=json_obj)
             log.info("Response: {} - {}".format(response.status_code, response.text))
             self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
 
@@ -223,14 +219,14 @@ class ApiManagerClient(Client):
             if isinstance(version, str):
                 version = version.replace("v", "") # case vX -> X
 
-            self.raiseExceptionIfNotToken()
-            url = self.delete_template.substitute(protocol=self.protocol, host=self.host, 
+            self.raise_exception_if_not_token()
+            url = self.__delete_template.substitute(protocol=self.protocol, host=self.hostport, 
                                                 path=self.api_manager_path,
                                                 identification=identification,
                                                 version=version
                                                 )
             headers = self.__headers
-            response = self.call_rest_API(QueryMethods.DELETE.value, url, headers=headers)
+            response = self.call(RestMethods.DELETE.value, url, headers=headers)
             log.info("Response: {} - {}".format(response.status_code, response.text))
             self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
 
@@ -282,7 +278,7 @@ class ApiManagerClient(Client):
         return url
 
     def request(self, method, url=None, name=None, version=None, 
-                path_params=None, query_params=None, body=""):
+                path_params=None, query_params=None, body=None):
         """
         Make a request to an API rest
 
@@ -301,45 +297,42 @@ class ApiManagerClient(Client):
         """
         _ok = False
         _res = None
-        
-        #try:
-        log.info("Making request: url:{}".format(url))
-        self.raiseExceptionIfNotToken()
 
-        if isinstance(version, int) or isinstance(version, float):
-            version = str(version)
-        
-        if url is None:
-            api_path = self.generate_url_request(name=name, version=version, 
-                                                    path_params=path_params, query_params=query_params)
-        else:
-            api_path = url
-        
-        url = self.request_template.substitute(protocol=self.protocol, host=self.host, 
-                                            path=self.api_caller_path,
-                                            api_path=api_path
-                                            )
-        headers = self.__headers
-        if method == QueryMethods.GET.value:
-            response = self.call_rest_API(method, url, headers=headers)
-        else:
-            response = self.call_rest_API(method, url, headers=headers, body=body)
-        log.info("Response: {} - {}".format(response.status_code, response.text))
-        self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
+        try:
+            log.info("Making request: url:{}".format(url))
+            self.raise_exception_if_not_token()
 
-        if response.status_code == 200:
-            _res = response.json()
-            log.info("Query result: {}".format(response.text))
-            self.add_to_debug_trace("Query result: {}".format(response.text))
-            _ok = True
+            if isinstance(version, int) or isinstance(version, float):
+                version = str(int(version))
+            
+            if url is None:
+                api_path = self.generate_url_request(name=name, version=version, 
+                                                     path_params=path_params, query_params=query_params)
+            else:
+                api_path = url
+            
+            url = self.__request_template.substitute(protocol=self.protocol, host=self.hostport, 
+                                                path=self.api_caller_path,
+                                                api_path=api_path
+                                                )
+            headers = self.__headers
+            response = self.call(method, url, headers=headers, body=body)
+            log.info("Response: {} - {}".format(response.status_code, response.text))
+            self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
 
-        else:
-            raise Exception("Response: {} - {}".format(response.status_code, response.text))
+            if response.status_code == 200:
+                _res = response.json()
+                log.info("Query result: {}".format(response.text))
+                self.add_to_debug_trace("Query result: {}".format(response.text))
+                _ok = True
 
-        """except Exception as e:
+            else:
+                raise Exception("Response: {} - {}".format(response.status_code, response.text))
+
+        except Exception as e:
             log.error("Not possible to query api-manager: {}".format(e))
             self.add_to_debug_trace("Not possible to query api-manager: {}".format(e))
-            _res = e"""
+            _res = e
 
         return _ok, _res
     
@@ -356,13 +349,13 @@ class ApiManagerClient(Client):
 
         try:
             log.info("Making list: user: {}".format(user))
-            self.raiseExceptionIfNotToken()
-            url = self.list_template.substitute(protocol=self.protocol, host=self.host, 
+            self.raise_exception_if_not_token()
+            url = self.__list_template.substitute(protocol=self.protocol, host=self.hostport, 
                                                 path=self.api_manager_path,
                                                 user=user
                                                 )
             headers = self.__headers
-            response = self.call_rest_API(QueryMethods.GET.value, url, headers=headers)
+            response = self.call(RestMethods.GET.value, url, headers=headers)
             log.info("Response: {} - {}".format(response.status_code, response.text))
             self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
 
@@ -382,7 +375,7 @@ class ApiManagerClient(Client):
 
         return _ok, _res
 
-    def call_rest_API(self, method, url, headers="", params="", body=""):
+    def call(self, method, url, headers=None, params=None, body=None):
         """
         Make an HTTP request
 
@@ -400,7 +393,14 @@ class ApiManagerClient(Client):
         self.add_to_debug_trace("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
         .format(method, url, headers, params))
 
-        response = requests.request(method, url, headers=headers, params=params, json=body)
+        response = requests.request(method, url, headers=headers, params=params, json=body, verify=not self.avoid_ssl_certificate)
         log.info("Call rest api response: {}".format(response))
         self.add_to_debug_trace("Call rest api response: {}".format(response))
+
         return response
+
+    def __is_list_query(self, url):
+        return self.__IS_LIST_QUERY_STR in url
+    
+    def __is_find_query(self, url):
+        return self.__IS_FIND_QUERY_STR in url

@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class QueryMethods(Enum):
+class RestMethods(Enum):
     GET = "GET"
     POST = "POST"
     DELETE = "DELETE"

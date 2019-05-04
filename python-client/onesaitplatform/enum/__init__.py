@@ -1,2 +1,4 @@
 from .querytype import QueryType
-from .querymethods import QueryMethods
+from .restmethods import RestMethods
+from .resprotocols import RestProtocols
+from .restheaders import RestHeaders

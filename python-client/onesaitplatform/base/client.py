@@ -1,10 +1,13 @@
 import time
 import json
+import logging
 try:
-    from onesaitplatform.common.log import log
     import onesaitplatform.common.config as config
+    from onesaitplatform.enum import RestProtocols
 except Exception as e:
     print("Error - Not possible to import necesary libraries: {}".format(e))
+
+log = logging.getLogger(__name__)
 
 
 class Client:
@@ -15,16 +18,50 @@ class Client:
     debug_trace_limit = config.DEBUG_TRACE_LIMIT
     debug_mode = False
 
-    def __init__(self, host=config.HOST):
+    __avoid_ssl_certificate = False
+
+    def __init__(self, host, port=None):
         """
         Class Client as base class of connections
 
         @param host               Onesaitplatform host
         """
         self.host = host
+        self.port = port
+        self.protocol = config.PROTOCOL
+        self.avoid_ssl_certificate = False
         self.is_connected = False
         self.debug_trace = []
 
+    @property
+    def hostport(self):
+        hostport = self.host
+        if self.port is not None:
+            hostport += ":{}".format(self.port)
+        return hostport
+    
+    @property
+    def protocol(self):
+        return self.__protocol
+
+    @protocol.setter
+    def protocol(self, protocol):
+        if protocol == RestProtocols.HTTPS.value:
+            self.__protocol = protocol
+        else:    
+            self.__protocol = RestProtocols.HTTP.value
+
+    @property
+    def avoid_ssl_certificate(self):
+        return self.__avoid_ssl_certificate
+
+    @avoid_ssl_certificate.setter
+    def avoid_ssl_certificate(self, avoid_ssl_certificate):
+        if self.protocol == RestProtocols.HTTPS.value:
+            self.__avoid_ssl_certificate = avoid_ssl_certificate
+        else:    
+            self.__avoid_ssl_certificate = False
+    
     def add_to_debug_trace(self, msg):
         """
         Add a message to debug trace list
