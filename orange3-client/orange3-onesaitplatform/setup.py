@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 NAME = "onesaitplatform-orange3"
 
-VERSION = "0.0.3"
+VERSION = "1.0.0"
 
 DESCRIPTION = "Add-on containing onesaitplatform widgets"
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.md')).read()
