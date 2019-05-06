@@ -169,7 +169,7 @@ class OspQuery(OWWidget):
             self.connection.restart()
         else:
             printt("Starting new connection: {}".format(self.connection))
-            log.warn("Starting new connection: {}".format(self.connection))
+            log.info("Starting new connection: {}".format(self.connection))
             self.connection.join()
     
     def commit(self):

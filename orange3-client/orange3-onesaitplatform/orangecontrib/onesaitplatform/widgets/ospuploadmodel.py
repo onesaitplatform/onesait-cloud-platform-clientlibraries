@@ -11,7 +11,6 @@ from Orange.widgets.settings import Setting
 from Orange.widgets.utils import stdpaths
 from Orange.widgets.utils.widgetpreview import WidgetPreview
 from Orange.widgets.widget import OWWidget, Input, Msg
-
 from onesaitplatform.files import FileManager
 
 log = logging.getLogger(__name__)

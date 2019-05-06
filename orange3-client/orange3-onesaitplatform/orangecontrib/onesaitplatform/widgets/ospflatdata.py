@@ -4,8 +4,7 @@ import logging
 import pandas as pd
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 from Orange.data import Table
-
-import onesaitplatform.utils.dataconversion as udata
+import orangecontrib.onesaitplatform.utils.dataconversion as udata
 
 log = logging.getLogger(__name__)
 
