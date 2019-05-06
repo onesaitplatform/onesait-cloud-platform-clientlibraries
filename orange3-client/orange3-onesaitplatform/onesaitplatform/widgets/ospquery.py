@@ -3,8 +3,7 @@ import logging
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
-from onesaitplatform.iotbroker.iotbrokerclient import \
-    IotBrokerClient
+from onesaitplatform.iotbroker import IotBrokerClient
 from Orange.widgets.credentials import CredentialManager
 
 log = logging.getLogger(__name__)
