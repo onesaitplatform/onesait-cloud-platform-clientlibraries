@@ -1,29 +1,30 @@
 import os
-import time
-import datetime
 import requests
 from string import Template
 import json
+import logging
 try:
-    from onesaitplatform.common.log import log
     import onesaitplatform.common.config as config
+    from onesaitplatform.enum import RestHeaders
+    from onesaitplatform.enum import RestMethods
+    from onesaitplatform.enum import RestProtocols
 except Exception as e:
     print("Error - Not possible to import necesary libraries: {}".format(e))
 
+log = logging.getLogger(__name__)
 
 class FileManager:
     """
     Class FileManager to make operations with binary repository
     """
-    protocol = config.PROTOCOL
     binary_files_path = "/controlpanel/binary-repository"
     files_path = "/controlpanel/files"
     upload_template = Template("$protocol://$host$path")
     download_template = Template("$protocol://$host$path/$id_file")
 
-    def __init__(self,
-                 host=config.HOST,
-                 user_token=config.USER_TOKEN):
+    __avoid_ssl_certificate = False
+
+    def __init__(self, host, user_token=config.USER_TOKEN):
         """
         Class FileManager to make operations with binary repository
 
@@ -32,6 +33,30 @@ class FileManager:
         """
         self.host = host
         self.user_token = user_token
+        self.protocol = config.PROTOCOL
+        self.avoid_ssl_certificate = False
+
+    @property
+    def protocol(self):
+        return self.__protocol
+
+    @protocol.setter
+    def protocol(self, protocol):
+        if protocol == RestProtocols.HTTPS.value:
+            self.__protocol = protocol
+        else:    
+            self.__protocol = RestProtocols.HTTP.value
+
+    @property
+    def avoid_ssl_certificate(self):
+        return self.__avoid_ssl_certificate
+
+    @avoid_ssl_certificate.setter
+    def avoid_ssl_certificate(self, avoid_ssl_certificate):
+        if self.protocol == RestProtocols.HTTPS.value:
+            self.__avoid_ssl_certificate = avoid_ssl_certificate
+        else:    
+            self.__avoid_ssl_certificate = False
 
     def __str__(self):
         """
@@ -63,18 +88,18 @@ class FileManager:
             url = self.upload_template.substitute(protocol=self.protocol,
                                                   host=self.host,
                                                   path=self.binary_files_path)
-            headers = {'Authorization': self.user_token}
+            headers = {RestHeaders.AUTHORIZATION.value: self.user_token}
             files_to_up = {'file': (
                 filename,
                 open(filepath, 'rb'),
                 "multipart/form-data"
                 )}
 
-            response = requests.request("POST",
+            response = requests.request(RestMethods.POST.value,
                                         url,
                                         headers=headers,
                                         files=files_to_up, 
-                                        verify=False)
+                                        verify=not self.avoid_ssl_certificate)
 
             if response.status_code == 201:
                 _ok = True
@@ -92,7 +117,6 @@ class FileManager:
 
         return _ok, _res
 
-    # TODO: download file from binary repository
     def download_file(self, id_file):
         """
         Download a file from binary-repository
@@ -114,14 +138,14 @@ class FileManager:
                                                     host=self.host,
                                                     path=self.files_path,
                                                     id_file=id_file)
-            headers = {'Authorization': self.user_token,
-                       'accept': '*/*'}
+            headers = {RestHeaders.AUTHORIZATION.value: self.user_token,
+                       RestHeaders.ACCEPT_STR.value: RestHeaders.ACCEPT_ALL.value}
 
-            response = requests.request("GET",
+            response = requests.request(RestMethods.GET.value,
                                         url,
                                         headers=headers,
                                         data="",
-                                        verify=False)
+                                        verify=not self.avoid_ssl_certificate)
 
             if response.status_code == 200:
                 _ok = True
@@ -131,7 +155,6 @@ class FileManager:
                         "name": name_file
                         }
 
-                # TODO: Save file (requires file name.ext to open file)
                 with open(name_file, 'wb') as f:
                     f.write(response.content)
 
