@@ -23,22 +23,21 @@ package com.minsait.onesait.platform.client.springboot.fromjson;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@JsonTypeInfo(  
-	    use = JsonTypeInfo.Id.NAME,  
-	    include = JsonTypeInfo.As.EXISTING_PROPERTY,  
-	    property = "type",
-	    visible = false) 
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = GeometryPoint.class, name = "Point"),
+import lombok.Getter;
+import lombok.Setter;
 
-    @JsonSubTypes.Type(value = GeometryLinestring.class, name = "LineString"), 
-    
-    @JsonSubTypes.Type(value = GeometryMultiLineString.class, name = "MultiLineString"),
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = false)
+@JsonSubTypes({ @JsonSubTypes.Type(value = GeometryPoint.class, name = "Point"),
 
-	@JsonSubTypes.Type(value = GeometryPolygon.class, name = "Polygon") }
-)
+		@JsonSubTypes.Type(value = GeometryLinestring.class, name = "LineString"),
+
+		@JsonSubTypes.Type(value = GeometryMultiLineString.class, name = "MultiLineString"),
+
+		@JsonSubTypes.Type(value = GeometryPolygon.class, name = "Polygon") })
 public abstract class Geometry {
-	
+
+	@Getter
+	@Setter
 	protected GeometryType type;
 
 }
