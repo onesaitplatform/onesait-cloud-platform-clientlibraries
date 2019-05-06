@@ -15,9 +15,6 @@ def printt(msg):
         print("[{}] {}".format(time.ctime(), msg))
 
 class OspClient(OWWidget):
-    # Onesaitplatform connection obj
-    #connection = IotBrokerClient()
-    
     # Widget's name as displayed in the canvas
     name = "Onesaitplatform Client"
     # Short widget description

@@ -188,5 +188,5 @@ class OspInsert(OWWidget):
         log.info("Deleting widget")
         super().onDeleteWidget()
         if self.connection is not None:
-            self.close_connection
+            self.close_connection()
 

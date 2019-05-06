@@ -216,8 +216,3 @@ class OspUploadModel(widget.OWWidget):
                 os.remove(tmp_file_path)
             except:
                 pass
-
-
-
-if __name__ == "__main__":  # pragma: no cover
-    WidgetPreview(OspUploadModel).run()
