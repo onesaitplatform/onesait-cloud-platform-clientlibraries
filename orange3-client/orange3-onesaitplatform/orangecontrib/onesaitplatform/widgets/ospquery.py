@@ -3,8 +3,7 @@ import logging
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
-from onesaitplatform.iotbroker.iotbrokerclient import \
-    IotBrokerClient
+from onesaitplatform.iotbroker import IotBrokerClient
 from Orange.widgets.credentials import CredentialManager
 
 log = logging.getLogger(__name__)
@@ -170,7 +169,7 @@ class OspQuery(OWWidget):
             self.connection.restart()
         else:
             printt("Starting new connection: {}".format(self.connection))
-            log.warn("Starting new connection: {}".format(self.connection))
+            log.info("Starting new connection: {}".format(self.connection))
             self.connection.join()
     
     def commit(self):
@@ -223,6 +222,6 @@ class OspQuery(OWWidget):
         log.info("Deleting widget")
         super().onDeleteWidget()
         if self.connection is not None:
-            self.close_connection
+            self.close_connection()
         self.results = None
         self.send_results()

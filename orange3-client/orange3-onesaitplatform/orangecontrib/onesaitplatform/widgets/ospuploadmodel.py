@@ -11,9 +11,7 @@ from Orange.widgets.settings import Setting
 from Orange.widgets.utils import stdpaths
 from Orange.widgets.utils.widgetpreview import WidgetPreview
 from Orange.widgets.widget import OWWidget, Input, Msg
-
-from onesaitplatform.files.filemanager import \
-    FileManager
+from onesaitplatform.files import FileManager
 
 log = logging.getLogger(__name__)
 
@@ -216,8 +214,3 @@ class OspUploadModel(widget.OWWidget):
                 os.remove(tmp_file_path)
             except:
                 pass
-
-
-
-if __name__ == "__main__":  # pragma: no cover
-    WidgetPreview(OspUploadModel).run()

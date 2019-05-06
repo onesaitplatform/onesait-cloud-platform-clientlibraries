@@ -3,8 +3,7 @@ import logging
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import Output, OWWidget, Msg
-from onesaitplatform.iotbroker.iotbrokerclient import \
-    IotBrokerClient
+from onesaitplatform.iotbroker import IotBrokerClient
 from Orange.widgets.credentials import CredentialManager
 
 log = logging.getLogger(__name__)
@@ -15,9 +14,6 @@ def printt(msg):
         print("[{}] {}".format(time.ctime(), msg))
 
 class OspClient(OWWidget):
-    # Onesaitplatform connection obj
-    #connection = IotBrokerClient()
-    
     # Widget's name as displayed in the canvas
     name = "Onesaitplatform Client"
     # Short widget description
