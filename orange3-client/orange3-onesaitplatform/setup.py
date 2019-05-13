@@ -7,12 +7,12 @@ from setuptools import setup, find_packages
 
 NAME = "onesaitplatform-orange3"
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 DESCRIPTION = "Add-on containing onesaitplatform widgets"
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.md')).read()
 
-LICENSE = "BSD"
+LICENSE = "Apache v2.0"
 
 KEYWORDS = (
     # [PyPi](https://pypi.python.org) packages with keyword "orange3 add-on"
@@ -86,6 +86,7 @@ if __name__ == '__main__':
         version=VERSION,
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
+        long_description_content_type="text/markdown",
         license=LICENSE,
         packages=PACKAGES,
         package_data=PACKAGE_DATA,

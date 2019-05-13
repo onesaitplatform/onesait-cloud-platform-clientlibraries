@@ -31,6 +31,7 @@ if __name__ == '__main__':
         version=VERSION,
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
+        long_description_content_type="text/markdown",
         license=LICENSE,
         packages=PACKAGES,
         url="https://onesait-git.cwbyminsait.com/onesait-platform/onesait-cloud-platform-clientlibraries.git",
