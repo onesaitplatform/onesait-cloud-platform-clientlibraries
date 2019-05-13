@@ -8,10 +8,14 @@ try:
     from onesaitplatform.enum import RestHeaders
     from onesaitplatform.enum import RestMethods
     from onesaitplatform.enum import RestProtocols
+    from onesaitplatform.common.log import log
 except Exception as e:
     print("Error - Not possible to import necesary libraries: {}".format(e))
+try:
+    log = logging.getLogger(__name__)
+except:
+    log.init_logging()
 
-log = logging.getLogger(__name__)
 
 class FileManager:
     """
