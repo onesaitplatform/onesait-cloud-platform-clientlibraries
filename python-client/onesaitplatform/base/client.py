@@ -4,10 +4,14 @@ import logging
 try:
     import onesaitplatform.common.config as config
     from onesaitplatform.enum import RestProtocols
+    from onesaitplatform.common.log import log
 except Exception as e:
     print("Error - Not possible to import necesary libraries: {}".format(e))
 
-log = logging.getLogger(__name__)
+try:
+    log = logging.getLogger(__name__)
+except:
+    log.init_logging()
 
 
 class Client:
