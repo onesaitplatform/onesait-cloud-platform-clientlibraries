@@ -13,6 +13,7 @@ try:
 except Exception as e:
     print("Error - Not possible to import necesary libraries: {}".format(e))
 try:
+    logging.basicConfig()
     log = logging.getLogger(__name__)
 except:
     log.init_logging()
@@ -59,6 +60,9 @@ class IotBrokerClient(Client):
                                 client:{}, token:{}"
                                 .format(host, self.iot_broker_path, 
                                         iot_client, iot_client_token))
+
+        # Deprecation
+        print("Info - IotBrokerClient will be soon deprecated, please use DigitalClient instead")
 
     def __str__(self):
         """
