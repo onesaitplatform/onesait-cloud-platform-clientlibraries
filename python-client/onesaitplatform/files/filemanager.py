@@ -12,6 +12,7 @@ try:
 except Exception as e:
     print("Error - Not possible to import necesary libraries: {}".format(e))
 try:
+    logging.basicConfig()
     log = logging.getLogger(__name__)
 except:
     log.init_logging()
