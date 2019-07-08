@@ -11,7 +11,11 @@ except Exception as e:
     print("Error - Not possible to import necesary libraries: {}".format(e))
 
 try:
-    d = config.LOGS_FOLDER
+    d = "onesaitplatform"
+    if os.name == "nt":
+        d = os.path.join(os.path.expanduser("~"), ".onesaitplatform")
+    elif os.name == "posix":
+        d = "/var/log/onesaitplatform"
     if not os.path.exists(d):
         os.mkdir(d)
 finally:
@@ -21,7 +25,7 @@ finally:
 class log(object):
 
     handler = None
-    plugin_id = config.APP_NAME
+    plugin_id = "onesaitplatform-python-client"
 
     @staticmethod
     def error(text):
@@ -60,7 +64,7 @@ class log(object):
         try:
             """ set up rotating log file handler with custom formatting """
             log.handler = logging.handlers.RotatingFileHandler(
-                log_file_path, maxBytes=1024 * 1024 * 10, backupCount=5)
+                log_file_path, maxBytes=1024 * 10, backupCount=5)
             formatter = logging.Formatter(
                 "%(asctime)s %(levelname)-8s %(message)s")
             log.handler.setFormatter(formatter)

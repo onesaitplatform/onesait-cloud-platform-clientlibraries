@@ -5,26 +5,26 @@ from os import path, walk
 import sys
 from setuptools import setup, find_packages
 
-NAME = "Orange3 Onesait Platform Add-on"
+NAME = "onesaitplatform-orange3"
 
-VERSION = "0.0.1"
+VERSION = "1.0.1"
 
 DESCRIPTION = "Add-on containing onesaitplatform widgets"
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.md')).read()
 
-LICENSE = "BSD"
+LICENSE = "Apache v2.0"
 
 KEYWORDS = (
     # [PyPi](https://pypi.python.org) packages with keyword "orange3 add-on"
     # can be installed using the Orange Add-on Manager
-    'orange3 add-on',
+    'onesaitplatform orange3',
 )
 
 PACKAGES = find_packages()
 
 PACKAGE_DATA = {
-    'onesaitplatform': ['tutorials/*.ows'],
-    'onesaitplatform.widgets': ['icons/*'],
+    'orangecontrib.onesaitplatform': ['tutorials/*.ows'],
+    'orangecontrib.onesaitplatform.widgets': ['icons/*'],
 }
 
 DATA_FILES = [
@@ -33,19 +33,20 @@ DATA_FILES = [
 
 INSTALL_REQUIRES = [
     'Orange3',
+    'onesaitplatform-client-services'
 ]
 
 ENTRY_POINTS = {
     # Entry points that marks this package as an orange add-on. If set, addon will
     # be shown in the add-ons manager even if not published on PyPi.
     'orange3.addon': (
-        'onesaitplatform = onesaitplatform',
+        'onesaitplatform = orangecontrib.onesaitplatform',
     ),
     # Entry point used to specify packages containing tutorials accessible
     # from welcome screen. Tutorials are saved Orange Workflows (.ows files).
     'orange.widgets.tutorials': (
         # Syntax: any_text = path.to.package.containing.tutorials
-        'onesaitplatform tutorials = onesaitplatform.tutorials',
+        'onesaitplatform tutorials = orangecontrib.onesaitplatform.tutorials',
     ),
 
     # Entry point used to specify packages containing widgets.
@@ -53,15 +54,15 @@ ENTRY_POINTS = {
         # Syntax: category name = path.to.package.containing.widgets
         # Widget category specification can be seen in
         #    orangecontrib/example/widgets/__init__.py
-        'OnesaitPlatform = onesaitplatform.widgets',
+        'OnesaitPlatform = orangecontrib.onesaitplatform.widgets',
     ),
 
    
 }
 
-NAMESPACE_PACKAGES = ["onesaitplatform"]
+NAMESPACE_PACKAGES = ["orangecontrib"]
 
-TEST_SUITE = "onesaitplatform.tests.suite"
+TEST_SUITE = "orangecontrib.onesaitplatform.tests.suite"
 
 
 def include_documentation(local_dir, install_dir):
@@ -85,6 +86,7 @@ if __name__ == '__main__':
         version=VERSION,
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
+        long_description_content_type="text/markdown",
         license=LICENSE,
         packages=PACKAGES,
         package_data=PACKAGE_DATA,

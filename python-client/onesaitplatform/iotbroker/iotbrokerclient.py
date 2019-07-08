@@ -1,41 +1,40 @@
-import time
-import datetime
 import requests
 from string import Template
 import json
-
-import numpy as np
-
+import logging
 try:
-    from onesaitplatform.iotbroker.client import Client
-    from onesaitplatform.iotbroker.utils import wait
+    from onesaitplatform.base import Client
+    from onesaitplatform.common.utils import wait
     import onesaitplatform.common.config as config
-    from onesaitplatform.common.log import log
+    from onesaitplatform.enum import RestMethods
     from onesaitplatform.enum import QueryType
+    from onesaitplatform.enum import RestHeaders
+    from onesaitplatform.common.log import log
 except Exception as e:
     print("Error - Not possible to import necesary libraries: {}".format(e))
+try:
+    logging.basicConfig()
+    log = logging.getLogger(__name__)
+except:
+    log.init_logging()
 
 
 class IotBrokerClient(Client):
     """
     Class IotBrokerClient to connect with Iot-Broker of OnesaitPlatform
     """
-    log.init_logging()
-
-    protocol = config.PROTOCOL
-    iot_broker_path = "/iot-broker"
+    iot_broker_path = config.IOT_BROKER_PATH
     batch_size = config.BATCH_QUERY_SIZE
 
-    join_template = Template("$protocol://$host$path/rest/client/join")
-    leave_template = Template("$protocol://$host$path/rest/client/leave")
-    query_template = Template("$protocol://$host$path/rest/ontology/$ontology")
-    insert_template = Template("$protocol://$host$path/rest/ontology/$ontology")
+    __join_template = Template("$protocol://$host$path/rest/client/join")
+    __leave_template = Template("$protocol://$host$path/rest/client/leave")
+    __query_template = Template("$protocol://$host$path/rest/ontology/$ontology")
+    __insert_template = Template("$protocol://$host$path/rest/ontology/$ontology")
 
-    query_batch_sql = Template("$query offset $start limit $end")
-    query_batch_mongo = Template("$query.skip($start).limit($end)")
+    __query_batch_sql = Template("$query offset $start limit $end")
+    __query_batch_mongo = Template("$query.skip($start).limit($end)")
 
-    def __init__(self,
-                 host=config.HOST,
+    def __init__(self, host, port=None,
                  iot_client=config.IOT_CLIENT,
                  iot_client_token=config.IOT_CLIENT_TOKEN):
         """
@@ -45,9 +44,8 @@ class IotBrokerClient(Client):
         @param iot_client         Onesaitplatform Iot-Client
         @param iot_client_token   Onesaitplatform iot-Client-Token
         """
-        
-        super().__init__(host=host)
-        
+        #super().__init__(host, port=port) # only python > 3
+        Client.__init__(self, host, port=port) # python > 2.7 & <= 3.7.1
         self.iot_client = iot_client
         self.iot_clientId = iot_client + ":PythonClient"
         self.iot_client_token = iot_client_token
@@ -62,6 +60,9 @@ class IotBrokerClient(Client):
                                 client:{}, token:{}"
                                 .format(host, self.iot_broker_path, 
                                         iot_client, iot_client_token))
+
+        # Deprecation
+        print("Info - IotBrokerClient will be soon deprecated, please use DigitalClient instead")
 
     def __str__(self):
         """
@@ -121,7 +122,6 @@ class IotBrokerClient(Client):
         
         return connection
     
-    # @wait(.1, .1)
     def join(self, iot_client=None, iot_client_token=None):
         """
         Login in the platform with Iot-Client credentials
@@ -140,10 +140,13 @@ class IotBrokerClient(Client):
             log.info("Created connection with iot-broker host:{}, path:{}, client:{}, token:{}"
                      .format(self.host, self.iot_broker_path, self.iot_client, self.iot_client_token))
 
-            url = self.join_template.substitute(protocol=self.protocol, host=self.host, path=self.iot_broker_path)
+            url = self.__join_template.substitute(protocol=self.protocol, host=self.hostport, path=self.iot_broker_path)
             querystring = {"token": self.iot_client_token, "clientPlatform": self.iot_client, "clientPlatformId": self.iot_clientId}
-            headers = {'Accept': "application/json", 'Content-type': "application/json"}
-            response = self.call_rest_API("GET", url, headers, querystring)
+            headers = {
+                RestHeaders.ACCEPT_STR.value: RestHeaders.APP_JSON.value, 
+                RestHeaders.CONT_TYPE.value: RestHeaders.APP_JSON.value
+                }
+            response = self.call(RestMethods.GET.value, url, headers, querystring)
             _res = response.json()
             self.session_key = _res["sessionKey"]
             self.is_connected = True
@@ -157,7 +160,6 @@ class IotBrokerClient(Client):
 
         return _ok, _res
 
-    # @wait(.1, .1)
     def leave(self):
         """
         Logout in the platform with session token
@@ -169,9 +171,9 @@ class IotBrokerClient(Client):
         try:
             log.info("Leaving connection with session_key:{}".format(self.session_key))
             if self.is_connected:
-                url = self.leave_template.substitute(protocol=self.protocol, host=self.host, path=self.iot_broker_path)
-                headers = {'Authorization': self.session_key}
-                response = self.call_rest_API("GET", url, headers=headers)
+                url = self.__leave_template.substitute(protocol=self.protocol, host=self.hostport, path=self.iot_broker_path)
+                headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
+                response = self.call(RestMethods.GET.value, url, headers=headers)
                 _res = json.loads(response.text)
                 self.is_connected = False
                 self.session_key = None
@@ -188,7 +190,6 @@ class IotBrokerClient(Client):
 
         return _ok, _res
 
-    # @wait(.1, .1)
     def restart(self):
         """
         Restar conection:
@@ -206,14 +207,13 @@ class IotBrokerClient(Client):
 
         return _ok_join, _res_join
 
-    # @wait(.1, .1)
     def query(self, ontology, query, query_type):
         """
         Make a query to iot-broker service of the platform
 
         @param ontology     ontology name
         @param query        query expression
-        @param query_type    quert type ['NATIVE', 'SQL']
+        @param query_type   quert type ['NATIVE', 'SQL']
 
         @return ok, info
         """
@@ -221,11 +221,11 @@ class IotBrokerClient(Client):
         _res = None
         try:
             log.info("Making query to ontology:{}, query:{}, query_type:{}".format(ontology, query, query_type))
-            url = self.query_template.substitute(protocol=self.protocol, host=self.host, 
+            url = self.__query_template.substitute(protocol=self.protocol, host=self.hostport, 
                                                  path=self.iot_broker_path, ontology=ontology)
             querystring = {"query": query, "queryType": query_type.upper()}
-            headers = {'Authorization': self.session_key}
-            response = self.call_rest_API("GET", url, headers=headers, params=querystring)
+            headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
+            response = self.call(RestMethods.GET.value, url, headers=headers, params=querystring)
             log.info("Response: {} - {}".format(response.status_code, response.text))
             self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
 
@@ -236,7 +236,7 @@ class IotBrokerClient(Client):
                 self.add_to_debug_trace("Reconnected: {}".format(_ok_reconnect))
                 
                 if _ok_reconnect:
-                    response = self.call_rest_API("GET", url, headers=headers, params=querystring)
+                    response = self.call(RestMethods.GET.value, url, headers=headers, params=querystring)
                     log.info("Response: {} - {}".format(response.status_code, response.text))
                     self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
 
@@ -256,7 +256,6 @@ class IotBrokerClient(Client):
 
         return _ok, _res
 
-    # TODO: paginated queries by batch size
     def query_batch(self, ontology, query, query_type, batch_size = None):
         """
         Make a query to iot-broker service of the platform paginated by batch size
@@ -307,8 +306,6 @@ class IotBrokerClient(Client):
         
         return step_query
         
-
-    # @wait(.1, .1)
     def insert(self, ontology, list_data):
         """
         Make a insert to iot-broker service of the platform
@@ -322,13 +319,15 @@ class IotBrokerClient(Client):
         _res = None
         try:
             log.info("Making insert to ontology:{}, elements:{}".format(ontology, len(list_data)))
-            url = self.insert_template.substitute(protocol=self.protocol, host=self.host, 
+            url = self.__insert_template.substitute(protocol=self.protocol, host=self.hostport, 
                                                 path=self.iot_broker_path, ontology=ontology)
             
-            body = json.dumps(list_data)
             body = list_data
-            headers = {'Authorization': self.session_key}
-            response = self.call_rest_API("POST", url, headers=headers, body=body)
+            if isinstance(list_data, str):
+                body = json.loads(list_data)
+            
+            headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
+            response = self.call(RestMethods.POST.value, url, headers=headers, body=body)
             
             if response.status_code != 200:
                 log.info("Session expired, reconnecting...")
@@ -337,7 +336,7 @@ class IotBrokerClient(Client):
                 self.add_to_debug_trace("Reconnected: {}".format(is_reconnected))
                 
                 if is_reconnected:
-                    response = self.call_rest_API("POST", url, headers=headers, body=body)
+                    response = self.call(RestMethods.POST.value, url, headers=headers, body=body)
 
             if response.status_code == 200:
                 _res = response.json()
@@ -354,8 +353,7 @@ class IotBrokerClient(Client):
 
         return _ok, _res
 
-    # @wait(.1, .1)
-    def call_rest_API(self, method, url, headers="", params="", body=""):
+    def call(self, method, url, headers="", params="", body=""):
         """
         Make an HTTP request
 
@@ -373,7 +371,8 @@ class IotBrokerClient(Client):
         self.add_to_debug_trace("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
         .format(method, url, headers, params))
 
-        response = requests.request(method, url, headers=headers, params=params, json=body)
+        response = requests.request(method, url,
+                                    headers=headers, params=params, json=body, verify=not self.avoid_ssl_certificate)
         log.info("Call rest api response: {}".format(response))
         self.add_to_debug_trace("Call rest api response: {}".format(response))
         return response
