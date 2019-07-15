@@ -53,7 +53,8 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
 		log.info("Scanning for resources...");
 		String scanPath = "";
-		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+//		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 
 		Enumeration<URL> resources;
 		try {
@@ -83,7 +84,7 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 		}
 	}
 
-	public void processJarResource(String resourceName, ConfigurableListableBeanFactory beanFactory) {
+	private void processJarResource(String resourceName, ConfigurableListableBeanFactory beanFactory) {
 		log.debug("Processing Jar resource {}", resourceName);
 		try {
 			URL url = new URL(resourceName);
@@ -106,7 +107,7 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 		}
 	}
 
-	public void registerClassByName(String className, ConfigurableListableBeanFactory beanFactory) {
+	private void registerClassByName(String className, ConfigurableListableBeanFactory beanFactory) {
 		try {
 			Class clazz = Class.forName(className);
 			boolean isInterface = clazz.isInterface();
@@ -131,6 +132,7 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 				Object proxy = Proxy.newProxyInstance(classLoader, classes, invocationHandler);
 				beanFactory.registerSingleton(clazz.getCanonicalName(), proxy);
 				log.info("Registered proxy for {}", className);
+
 			}
 		} catch (ClassNotFoundException e) {
 			log.warn("Unable to get class for name: {}", className);
