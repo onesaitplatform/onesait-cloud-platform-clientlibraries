@@ -53,8 +53,7 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
 		log.info("Scanning for resources...");
 		String scanPath = "";
-//		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
 		Enumeration<URL> resources;
 		try {
