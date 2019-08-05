@@ -398,7 +398,8 @@ class ApiManagerClient(Client):
         self.add_to_debug_trace("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
         .format(method, url, headers, params))
 
-        response = requests.request(method, url, headers=headers, params=params, json=body, verify=not self.avoid_ssl_certificate)
+        response = requests.request(method, url, headers=headers, params=params, json=body, verify=not self.avoid_ssl_certificate,
+                                    timeout=self.timeout, proxies=self.proxies)
         log.info("Call rest api response: {}".format(response))
         self.add_to_debug_trace("Call rest api response: {}".format(response))
 

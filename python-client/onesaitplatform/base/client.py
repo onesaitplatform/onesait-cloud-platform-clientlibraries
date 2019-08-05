@@ -33,6 +33,8 @@ class Client:
         """
         self.host = host
         self.port = port
+        self.__timeout = None
+        self.__proxies = None
         self.protocol = config.PROTOCOL
         self.avoid_ssl_certificate = False
         self.is_connected = False
@@ -44,6 +46,28 @@ class Client:
         if self.port is not None:
             hostport += ":{}".format(self.port)
         return hostport
+
+    @property
+    def timeout(self):
+        return self.__timeout
+
+    @timeout.setter
+    def timeout(self, timeout):
+        try:
+            timeout = int(timeout)
+        except:
+            timeout = None
+        self.__timeout = timeout
+
+    @property
+    def proxies(self):
+        return self.__proxies
+
+    @proxies.setter
+    def proxies(self, proxies):
+        if not isinstance(proxies, dict):
+            proxies = None
+        self.__proxies = proxies
     
     @property
     def protocol(self):

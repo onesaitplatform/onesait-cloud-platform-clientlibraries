@@ -372,7 +372,8 @@ class IotBrokerClient(Client):
         .format(method, url, headers, params))
 
         response = requests.request(method, url,
-                                    headers=headers, params=params, json=body, verify=not self.avoid_ssl_certificate)
+                                    headers=headers, params=params, json=body, 
+                                    verify=not self.avoid_ssl_certificate, timeout=self.timeout, proxies=self.proxies)
         log.info("Call rest api response: {}".format(response))
         self.add_to_debug_trace("Call rest api response: {}".format(response))
         return response
