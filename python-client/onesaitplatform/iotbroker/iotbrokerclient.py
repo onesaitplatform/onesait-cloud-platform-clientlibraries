@@ -226,24 +226,23 @@ class IotBrokerClient(Client):
             querystring = {"query": query, "queryType": query_type.upper()}
             headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
             response = self.call(RestMethods.GET.value, url, headers=headers, params=querystring)
-            log.info("Response: {} - {}".format(response.status_code, response.text))
-            self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
 
             if response.status_code != 200:
+                log.warn("Response: {} - {}".format(response.status_code, response.text))
+                self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
                 log.info("Not possible to connect ({}) - {}, reconnecting...".format(response.status_code, response.text))
                 _ok_reconnect, _res_reconnect = self.restart()
-                log.info("Reconnected: {}".format(_ok_reconnect))
-                self.add_to_debug_trace("Reconnected: {}".format(_ok_reconnect))
+                log.info("Reconnected: {} - {}".format(_ok_reconnect, _res_reconnect))
+                self.add_to_debug_trace("Reconnected: {} - {}".format(_ok_reconnect, _res_reconnect))
                 
                 if _ok_reconnect:
+                    headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
                     response = self.call(RestMethods.GET.value, url, headers=headers, params=querystring)
-                    log.info("Response: {} - {}".format(response.status_code, response.text))
-                    self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
 
             if response.status_code == 200:
                 _res = response.json()
-                log.info("Query result: {}".format(response.text))
-                self.add_to_debug_trace("Query result: {}".format(response.text))
+                log.info("Response: {} - {}".format(response.status_code, _res[0] if len(_res) > 0 else []))
+                self.add_to_debug_trace("Response: {} - {}".format(response.status_code, _res[0] if len(_res) > 0 else []))
                 _ok = True
 
             else:
