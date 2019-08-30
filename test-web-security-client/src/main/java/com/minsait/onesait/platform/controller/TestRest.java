@@ -100,7 +100,7 @@ public class TestRest {
 		}
 	}
 
-	@PreAuthorize("hasAnyRole('ROLE_role4')")
+	@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
 	@RequestMapping(value = { "/secured/authenticated2" }, method = RequestMethod.GET)
 	public String testSecuredAutehnticated2() {
 
@@ -114,8 +114,22 @@ public class TestRest {
 		}
 	}
 
-	@PreAuthorize("hasAuthority('role1')")
-	@RequestMapping(value = { "/secured/test" }, method = RequestMethod.GET)
+	@PreAuthorize("hasAnyRole('ROLE_USER')")
+	@RequestMapping(value = { "/secured/authenticated3" }, method = RequestMethod.GET)
+	public String testSecuredAutehnticated3() {
+
+		Logger.getLogger(getClass().getName()).log(Level.INFO,
+				"SECURED AUTHENTICATED2 REST TESTController test service");
+		try {
+			return "SECURED AUTHENTICATED2 REST TEST service controller is alive";
+		} catch (Exception e) {
+			Logger.getLogger(getClass().getName()).log(Level.INFO, e.getMessage());
+			return null;
+		}
+	}
+
+	@PreAuthorize("hasAuthority('auth1')")
+	@RequestMapping(value = { "/secured/authenticated4" }, method = RequestMethod.GET)
 	public String testSecuredController() {
 
 		Logger.getLogger(getClass().getName()).log(Level.INFO, "SECURED REST TESTController test service");
@@ -127,7 +141,7 @@ public class TestRest {
 		}
 	}
 
-	@PreAuthorize("hasAuthority('fake_authority')")
+	@PreAuthorize("hasAuthority('auth2')")
 	@RequestMapping(value = { "/secured/testToFail" }, method = RequestMethod.GET)
 	public String testSecuredToFailController() {
 

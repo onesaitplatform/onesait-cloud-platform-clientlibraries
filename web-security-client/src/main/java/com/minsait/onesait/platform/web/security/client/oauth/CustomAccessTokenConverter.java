@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class CustomAccessTokenConverter extends DefaultAccessTokenConverter {
 
 	private final static String JWT_PRINCIPAL_KEY = "principal";
-	private final static String TOKEN_CONVERTER_PRINCIPAL_KEY = "principal";
+	private final static String TOKEN_CONVERTER_PRINCIPAL_KEY = "user_name";
 
 	@Override
 	public OAuth2Authentication extractAuthentication(Map<String, ?> claims) {
