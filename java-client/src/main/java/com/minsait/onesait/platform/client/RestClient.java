@@ -264,7 +264,6 @@ public class RestClient {
 		HttpUrl url = null;
 		Request request = null;
 		Response response = null;
-		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
 			final String usedSessionKey = new String(sessionKey);
 			final String processedQuery = URLEncoder.encode(query, UTF_8);
@@ -455,11 +454,16 @@ public class RestClient {
 		Request request = null;
 		Response response = null;
 		try {
-			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
-					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
-					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(UPDATE)
-					.addPathSegment(ontology).addPathSegment(id)
-					.addEncodedQueryParameter("ids", Boolean.toString(includeIds)).build();
+			url = new HttpUrl.Builder()
+			        .scheme(HttpUrl.parse(restServer).scheme())
+					.host(HttpUrl.parse(restServer).host())
+					.port(HttpUrl.parse(restServer).port())
+					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0))
+					.addEncodedPathSegments(UPDATE)
+					.addPathSegment(ontology)
+					.addPathSegment(id)
+					.addEncodedQueryParameter("ids", Boolean.toString(includeIds))
+					.build();
 
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), instance);
 
@@ -518,19 +522,30 @@ public class RestClient {
 		HttpUrl url = null;
 		Request request = null;
 		Response response = null;
-		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
 			final String processedQuery = URLEncoder.encode(query, UTF_8);
-			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
-					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
-					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(UPDATE)
-					.addPathSegment(ontology).addEncodedPathSegments("update")
-					.addEncodedQueryParameter(QUERY_STR, processedQuery)
-					.addEncodedQueryParameter("ids", Boolean.toString(getIds)).build();
-			// Es una update by query, va por GET
+			url = new HttpUrl.Builder()
+			        .scheme(HttpUrl.parse(restServer).scheme())
+					.host(HttpUrl.parse(restServer).host())
+					.port(HttpUrl.parse(restServer).port())
+					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0))
+					.addEncodedPathSegments(UPDATE)
+					.addPathSegment(ontology)
+					.addEncodedPathSegments("update")
+					.addEncodedQueryParameter("ids", Boolean.toString(getIds))
+					.build();
+			
+			// Es una update by query, va por PUT
 			final String usedSessionKey = new String(sessionKey);
-			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
+			MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+	        RequestBody body = RequestBody.create(JSON, processedQuery);
+	        
+			request = new Request.Builder()
+			        .url(url)
+			        .addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, usedSessionKey)
+					.put(body)
+					.build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -653,7 +668,6 @@ public class RestClient {
 		HttpUrl url = null;
 		Request request = null;
 		Response response = null;
-		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
 			final String processedQuery = URLEncoder.encode(query, UTF_8);
 			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
