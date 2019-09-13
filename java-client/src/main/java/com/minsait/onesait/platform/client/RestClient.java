@@ -523,7 +523,6 @@ public class RestClient {
 		Request request = null;
 		Response response = null;
 		try {
-			final String processedQuery = URLEncoder.encode(query, UTF_8);
 			url = new HttpUrl.Builder()
 			        .scheme(HttpUrl.parse(restServer).scheme())
 					.host(HttpUrl.parse(restServer).host())
@@ -537,8 +536,8 @@ public class RestClient {
 			
 			// Es una update by query, va por PUT
 			final String usedSessionKey = new String(sessionKey);
-			MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-	        RequestBody body = RequestBody.create(JSON, processedQuery);
+			MediaType JSON = MediaType.parse(APP_JSON);
+	        RequestBody body = RequestBody.create(JSON, query);
 	        
 			request = new Request.Builder()
 			        .url(url)
