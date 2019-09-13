@@ -47,7 +47,7 @@ public class TestRestClient {
 	@BeforeClass
 	public static void startUp() {
 		// remote
-		client = new RestClient(url_s4citiespro, TimeOutConfig.builder().connectTimeout(10).writeTimeout(10)
+		client = new RestClient(url_localhost, TimeOutConfig.builder().connectTimeout(10).writeTimeout(10)
 				.readTimeouts(10).timeunit(TimeUnit.SECONDS).build());
 		// local
 		// client = new RestClient("http://localhost:19000/iot-broker");
@@ -90,6 +90,21 @@ public class TestRestClient {
 			Assert.assertTrue(client.query(ontology,
 					"select Ticket.Ticket as Ticket from Ticket where _id=OID(\"" + idInsert + "\")", SSAPQueryType.SQL)
 					.get(0).get("Ticket").get("status").asText().equals("DONE"));
+			
+			log.info("Updating with native query");
+			String nativeUpdate = "{\"Ticket.identification\": \"Roads bad shape\"}, {\"$set\":{\"Ticket.name\": \"Jose\"}}";
+			client.updateQuery(ontology, nativeUpdate);
+			List<JsonNode> response = client.query(ontology, 
+			        "db.Ticket.find({\"Ticket.identification\": \"Roads bad shape\", \"Ticket.name\": \"Jose\"})", 
+			        SSAPQueryType.NATIVE);
+			Assert.assertTrue(response.size() > 0);
+			nativeUpdate = "{\"Ticket.identification\": \"Roads bad shape\"}, {\"$set\":{\"Ticket.name\": \"Javier\"}}";
+			client.updateQuery(ontology, nativeUpdate);
+			response = client.query(ontology, 
+                    "db.Ticket.find({\"Ticket.identification\": \"Roads bad shape\", \"Ticket.name\": \"Javier\"})", 
+                    SSAPQueryType.NATIVE);
+			Assert.assertTrue(response.size() > 0);
+			
 			log.info("Deleting instance with id {}", idInsert);
 			client.delete(ontology, idInsert);
 			Assert.assertTrue(client.query(ontology,
@@ -133,10 +148,17 @@ public class TestRestClient {
 			sessionKey = client.connect(token, deviceTemplate, device, true);
 			Assert.assertNotNull(sessionKey);
 			log.info("Inserting 2 ontologies");
-			final String size = client.insert(ontology, mapper.readTree(
+			
+			//{"nInserted":2,"inserted":["5d7b61eba7b72c4ae569ccbf","5d7b61eba7b72c4ae569ccc0"]}
+			final String response = client.insert(ontology, mapper.readTree(
 					"[{\"Ticket\":{\"identification\":\"111\",\"status\":\"PENDING\",\"email\":\"iex@email.com\",\"name\":\"Alberto\",\"Response_via\":\"email\",\"file\":{\"data\":\"\",\"media\":{\"name\":\"\",\"storageArea\":\"SERIALIZED\",\"binaryEncoding\":\"Base64\",\"mime\":\"application/pdf\"}},\"coordinates\":{\"coordinates\":{\"latitude\":-13.887,\"longitude\":38.989},\"type\":\"Point\"}}},{\"Ticket\":{\"identification\":\"111\",\"status\":\"PENDING\",\"email\":\"iex@email.com\",\"name\":\"Alberto\",\"response_via\":\"email\",\"file\":{\"data\":\"\",\"media\":{\"name\":\"\",\"storageArea\":\"SERIALIZED\",\"binaryEncoding\":\"Base64\",\"mime\":\"application/pdf\"}},\"coordinates\":{\"coordinates\":{\"latitude\":-13.887,\"longitude\":38.989},\"type\":\"Point\"}}}]")
 					.toString());
-			Assert.assertTrue(Integer.parseInt(size) == 2);
+			
+			JsonNode responseJSON = mapper.readTree(response);
+			JsonNode sizeJSON = responseJSON.get("nInserted");
+			int size = sizeJSON.asInt();
+			
+			Assert.assertTrue(size == 2);
 		} catch (final Exception e) {
 			log.error("Could not connect: {}", e);
 			throw e;
