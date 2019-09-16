@@ -184,9 +184,3 @@ class Client:
         if self.raise_exceptions:
             assert isinstance(exception, Exception)
             raise exception
-
-    def raw_response_if_enabled(self, result, response):
-        _res = result
-        if self.return_response_objects:
-            _res = response
-        return _res
