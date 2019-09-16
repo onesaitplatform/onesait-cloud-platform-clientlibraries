@@ -9,16 +9,16 @@ from digitalclient import DigitalClient
 class DigitalClientTest():
 
     def __init__(self):
-        HOST = "development.onesaitplatform.com"
-        IOT_CLIENT = "RestaurantClient"
-        IOT_CLIENT_TOKEN = "669b4309e9d24412b10b8cd34aa70d88"
+        HOST = "www.onesaitplatform.online"
+        IOT_CLIENT = "<client>"
+        IOT_CLIENT_TOKEN = "<token>"
 
         client = DigitalClient (HOST, iot_client=IOT_CLIENT, iot_client_token=IOT_CLIENT_TOKEN)
         client.protocol = "https"
         client.debug_mode = True
         client.proxies = {
-            "http": "http://proxy.indra.es:8080",
-            "https": "http://proxy.indra.es:8080"
+            "http": "<proxy>",
+            "https": "<proxy>"
             }
         self.client = client
 
