@@ -1,2 +1,2 @@
-from .iotbrokerclient import IotBrokerClient
-from .iotbrokerclient import IotBrokerClient as DigitalClient
+from .digitalclient import DigitalClient
+from .digitalclient import DigitalClient as IotBrokerClient
