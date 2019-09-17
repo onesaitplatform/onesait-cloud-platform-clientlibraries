@@ -1,3 +1,4 @@
+import os
 import time
 import json
 import logging
@@ -35,10 +36,12 @@ class Client:
         self.port = port
         self.__timeout = None
         self.__proxies = None
+        self.__raise_exceptions = False
         self.protocol = config.PROTOCOL
         self.avoid_ssl_certificate = False
         self.is_connected = False
         self.debug_trace = []
+        self.load_proxies_automatically()
 
     @property
     def hostport(self):
@@ -90,6 +93,17 @@ class Client:
             self.__avoid_ssl_certificate = avoid_ssl_certificate
         else:    
             self.__avoid_ssl_certificate = False
+
+    @property
+    def raise_exceptions(self):
+        return self.__raise_exceptions
+
+    @raise_exceptions.setter
+    def raise_exceptions(self, raise_exceptions):
+        if raise_exceptions == True or raise_exceptions == 1:
+            self.__raise_exceptions = True
+        else:    
+            self.__raise_exceptions = False
     
     def add_to_debug_trace(self, msg):
         """
@@ -120,6 +134,27 @@ class Client:
         self.add_to_debug_trace("Exported json {}".format(json_obj))
         return json_obj
 
+    def is_correct_status_code(self, status_code):
+        assert isinstance(status_code, int), "Invalid input value"
+        return (status_code >= 200) and (status_code < 300)
+
+    def load_proxies_automatically(self):
+        proxies = {}
+        if "http_proxy" in os.environ.keys():
+            proxies["http"] = os.environ["http_proxy"]
+        elif "HTTP_PROXY" in os.environ.keys():
+            proxies["http"] = os.environ["HTTP_PROXY"]
+
+        if "https_proxy" in os.environ.keys():
+            proxies["https"] = os.environ["https_proxy"]
+        elif "HTTPS_PROXY" in os.environ.keys():
+            proxies["https"] = os.environ["HTTPS_PROXY"]
+
+        if proxies != {}:
+            log.info("Detected proxies: {}".format(proxies))
+            self.add_to_debug_trace("Detected proxies: {}".format(proxies))
+            self.__proxies = proxies
+
     @staticmethod
     def from_json(json_object):
         """
@@ -144,3 +179,8 @@ class Client:
             log.error("Not possible to import object from json: {}".format(e))
 
         return connection
+
+    def raise_exception_if_enabled(self, exception):
+        if self.raise_exceptions:
+            assert isinstance(exception, Exception)
+            raise exception
