@@ -24,6 +24,7 @@ class Client:
     debug_trace_limit = config.DEBUG_TRACE_LIMIT
     debug_mode = False
 
+    __supported_protocols = [RestProtocols.HTTP.value, RestProtocols.HTTPS.value]
     __avoid_ssl_certificate = False
 
     def __init__(self, host, port=None):
@@ -78,10 +79,19 @@ class Client:
 
     @protocol.setter
     def protocol(self, protocol):
+        if isinstance(protocol, RestProtocols):
+            protocol = protocol.value
+        
+        if not isinstance(protocol, str):
+            raise ValueError("Not supported protocol value type (only str or RestProtocols)")
+        else:
+            protocol = protocol.lower()
+
         if protocol == RestProtocols.HTTPS.value:
             self.__protocol = protocol
         else:    
             self.__protocol = RestProtocols.HTTP.value
+            self.avoid_ssl_certificate = False
 
     @property
     def avoid_ssl_certificate(self):
@@ -90,7 +100,7 @@ class Client:
     @avoid_ssl_certificate.setter
     def avoid_ssl_certificate(self, avoid_ssl_certificate):
         if self.protocol == RestProtocols.HTTPS.value:
-            self.__avoid_ssl_certificate = avoid_ssl_certificate
+            self.__avoid_ssl_certificate = bool(avoid_ssl_certificate)
         else:    
             self.__avoid_ssl_certificate = False
 
