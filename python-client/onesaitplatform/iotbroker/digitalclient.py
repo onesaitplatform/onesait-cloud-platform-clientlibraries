@@ -1,6 +1,5 @@
 import requests
 from string import Template
-from collections.abc import Iterable
 import json
 import logging
 try:
@@ -390,8 +389,6 @@ class DigitalClient(Client):
 
         if isinstance(list_data, str):
             list_data = json.loads(list_data)
-
-        assert isinstance(list_data, Iterable), "Invalid input list_data"
 
         log.info("Making insert to ontology:{}, elements:{}".format(ontology, len(list_data)))
 
