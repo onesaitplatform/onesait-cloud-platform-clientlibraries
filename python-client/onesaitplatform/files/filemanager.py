@@ -26,6 +26,7 @@ class FileManager:
     files_path = "/controlpanel/files"
     upload_template = Template("$protocol://$host$path")
     download_template = Template("$protocol://$host$path/$id_file")
+    __MAX_X_OP_APIKEY_LENGTH = 35
 
     __avoid_ssl_certificate = False
 
@@ -40,7 +41,7 @@ class FileManager:
         self.user_token = user_token
         self.protocol = config.PROTOCOL
         self.avoid_ssl_certificate = False
-
+    
     @property
     def protocol(self):
         return self.__protocol
@@ -51,6 +52,7 @@ class FileManager:
             self.__protocol = protocol
         else:    
             self.__protocol = RestProtocols.HTTP.value
+            self.__avoid_ssl_certificate = False
 
     @property
     def avoid_ssl_certificate(self):
@@ -63,6 +65,22 @@ class FileManager:
         else:    
             self.__avoid_ssl_certificate = False
 
+    @property
+    def __headers(self):
+        _headers =  dict()
+        if len(self.user_token) < self.__MAX_X_OP_APIKEY_LENGTH:
+            _headers[RestHeaders.X_OP_APIKey.value] = self.user_token
+        else:
+            _headers[RestHeaders.AUTHORIZATION.value] = self.user_token
+
+        return _headers
+
+    @property
+    def __headers_download(self):
+        _headers =  dict(self.__headers)
+        _headers[RestHeaders.ACCEPT_STR.value] = RestHeaders.ACCEPT_ALL.value
+        return _headers
+    
     def __str__(self):
         """
         String to print object info
@@ -93,7 +111,7 @@ class FileManager:
             url = self.upload_template.substitute(protocol=self.protocol,
                                                   host=self.host,
                                                   path=self.binary_files_path)
-            headers = {RestHeaders.AUTHORIZATION.value: self.user_token}
+            headers = self.__headers
             files_to_up = {'file': (
                 filename,
                 open(filepath, 'rb'),
@@ -143,8 +161,7 @@ class FileManager:
                                                     host=self.host,
                                                     path=self.files_path,
                                                     id_file=id_file)
-            headers = {RestHeaders.AUTHORIZATION.value: self.user_token,
-                       RestHeaders.ACCEPT_STR.value: RestHeaders.ACCEPT_ALL.value}
+            headers = self.__headers_download
 
             response = requests.request(RestMethods.GET.value,
                                         url,
