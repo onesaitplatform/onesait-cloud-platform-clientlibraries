@@ -86,7 +86,6 @@ class DigitalClient(Client):
 
         @return json_obj    json-dict/ json string
         """
-        self.debug_trace = []
         json_obj = dict()
         json_obj["host"] = self.host
         json_obj["port"] = self.port
@@ -122,7 +121,7 @@ class DigitalClient(Client):
                 json_object = json.loads(json_object)
 
             json_object_keys = list(json_object.keys())
-            client = DigitalClient(host=json_object['host'],
+            client = DigitalClient(host=json_object['host'], port=json_object['port'],
                                          iot_client=json_object['iot_client'],
                                          iot_client_token=json_object['iot_client_token'])
             if "is_connected" in json_object_keys:
