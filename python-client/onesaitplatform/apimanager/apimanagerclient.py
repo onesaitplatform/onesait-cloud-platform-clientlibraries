@@ -86,9 +86,17 @@ class ApiManagerClient(Client):
 
         @return json_obj    json-dict/ json string
         """
-        self.debug_trace = []
-        json_obj = dict(self.__dict__)
-        json_obj.pop("debug_trace", None)
+        json_obj = dict()
+        json_obj["host"] = self.host
+        json_obj["port"] = self.port
+        json_obj["protocol"] = self.protocol
+        json_obj["is_connected"] = self.is_connected
+        json_obj["token"] = self.token        
+        json_obj["proxies"] = self.proxies
+        json_obj["timeout"] = self.timeout
+        json_obj["avoid_ssl_certificate"] = self.avoid_ssl_certificate
+        json_obj["raise_exceptions"] = self.raise_exceptions
+
         if as_string:
             json_obj = json.dumps(json_obj)
 
@@ -103,21 +111,39 @@ class ApiManagerClient(Client):
 
         @param json_object    json.dict/ json-string
 
-        @return connection   connection object
+        @return client        client object
         """
-        connection = None
+        client = None
         try:
             if type(json_object) == str:
                 json_object = json.loads(json_object)
-            connection = ApiManagerClient(host=json_object['host'])
-            connection.is_connected = json_object['is_connected']
+            
+            json_object_keys = list(json_object.keys())
+            client = ApiManagerClient(host=json_object['host'])
+            if "port" in json_object_keys:
+                client.port = json_object['port']
+            if "is_connected" in json_object_keys:
+                client.is_connected = json_object['is_connected'] 
+            if "token" in json_object_keys:
+                client.token = json_object['token']
+            if "protocol" in json_object_keys:
+                client.protocol = json_object['protocol']
+            if "proxies" in json_object_keys:
+                client.proxies = json_object['proxies']
+            if "timeout" in json_object_keys:
+                client.timeout = json_object['timeout']
+            if "avoid_ssl_certificate" in json_object_keys:
+                client.avoid_ssl_certificate = json_object['avoid_ssl_certificate']
+            if "raise_exceptions" in json_object_keys:
+                client.raise_exceptions = json_object['raise_exceptions']
+
             log.info("Imported json {}".format(json_object))
-            connection.add_to_debug_trace("Imported json {}".format(json_object))
+            client.add_to_debug_trace("Imported json {}".format(json_object))
 
         except Exception as e:
             log.error("Not possible to import object from json: {}".format(e))
         
-        return connection
+        return client
 
     def raise_exception_if_not_token(self):
         if self.token is None:
