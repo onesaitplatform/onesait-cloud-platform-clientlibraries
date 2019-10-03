@@ -53,12 +53,12 @@ class DigitalClient(Client):
 
         log.info("Created client with iot-broker \
                  host:{}, path:{}, client:{}, token:{}"
-                 .format(host, self.iot_broker_path, 
+                 .format(host, self.iot_broker_path,
                          iot_client, iot_client_token))
         self.add_to_debug_trace("Created client with \
                                 iot-broker host:{}, path:{}, \
                                 client:{}, token:{}"
-                                .format(host, self.iot_broker_path, 
+                                .format(host, self.iot_broker_path,
                                         iot_client, iot_client_token))
 
         # Deprecation
@@ -75,7 +75,7 @@ class DigitalClient(Client):
             if k not in hide_attributes:
                 info += "{}={}, ".format(k, v)
         info = info[:-2] + ")"
-        
+
         return info
 
     def to_json(self, as_string=False):
@@ -87,8 +87,19 @@ class DigitalClient(Client):
         @return json_obj    json-dict/ json string
         """
         self.debug_trace = []
-        json_obj = dict(self.__dict__)
-        json_obj.pop("debug_trace", None)
+        json_obj = dict()
+        json_obj["host"] = self.host
+        json_obj["port"] = self.port
+        json_obj["protocol"] = self.protocol
+        json_obj["iot_client"] = self.iot_client
+        json_obj["iot_client_token"] = self.iot_client_token
+        json_obj["is_connected"] = self.is_connected
+        json_obj["session_key"] = self.session_key        
+        json_obj["proxies"] = self.proxies
+        json_obj["timeout"] = self.timeout
+        json_obj["avoid_ssl_certificate"] = self.avoid_ssl_certificate
+        json_obj["raise_exceptions"] = self.raise_exceptions
+
         if as_string:
             json_obj = json.dumps(json_obj)
 
@@ -109,30 +120,39 @@ class DigitalClient(Client):
         try:
             if type(json_object) == str:
                 json_object = json.loads(json_object)
-            client = DigitalClient(host=json_object['host'], 
-                                         iot_client=json_object['iot_client'], 
+
+            json_object_keys = list(json_object.keys())
+            client = DigitalClient(host=json_object['host'],
+                                         iot_client=json_object['iot_client'],
                                          iot_client_token=json_object['iot_client_token'])
-            client.is_connected = json_object['is_connected']
-            client.session_key = json_object['session_key']
-            client.protocol = json_object['protocol']
-            client.proxies = json_object['proxies']
-            client.timeout = json_object['timeout']
-            client.avoid_ssl_certificate = json_object['avoid_ssl_certificate']
-            client.raise_exception_if_enabled = json_object['raise_exception_if_enabled']
-            client.return_response_objects = json_object['return_response_objects']
+            if "is_connected" in json_object_keys:
+                client.is_connected = json_object['is_connected'] 
+            if "session_key" in json_object_keys:
+                client.session_key = json_object['session_key']
+            if "protocol" in json_object_keys:
+                client.protocol = json_object['protocol']
+            if "proxies" in json_object_keys:
+                client.proxies = json_object['proxies']
+            if "timeout" in json_object_keys:
+                client.timeout = json_object['timeout']
+            if "avoid_ssl_certificate" in json_object_keys:
+                client.avoid_ssl_certificate = json_object['avoid_ssl_certificate']
+            if "raise_exceptions" in json_object_keys:
+                client.raise_exceptions = json_object['raise_exceptions']
+
             log.info("Imported json {}".format(json_object))
             client.add_to_debug_trace("Imported json {}".format(json_object))
 
         except Exception as e:
             log.error("Not possible to import object from json: {}".format(e))
-        
+
         return client
-    
+
     def raw_join(self, iot_client=None, iot_client_token=None):
         """
         Login in the platform with Iot-Client credentials
 
-        @return response  
+        @return response
         """
 
         if iot_client is not None:
@@ -146,7 +166,7 @@ class DigitalClient(Client):
         url = self.__join_template.substitute(protocol=self.protocol, host=self.hostport, path=self.iot_broker_path)
         querystring = {"token": self.iot_client_token, "clientPlatform": self.iot_client, "clientPlatformId": self.iot_clientId}
         headers = {
-            RestHeaders.ACCEPT_STR.value: RestHeaders.APP_JSON.value, 
+            RestHeaders.ACCEPT_STR.value: RestHeaders.APP_JSON.value,
             RestHeaders.CONT_TYPE.value: RestHeaders.APP_JSON.value
             }
         response = self.call(RestMethods.GET.value, url, headers, querystring)
@@ -163,20 +183,20 @@ class DigitalClient(Client):
 
         return response
 
-    
-    
+
+
     def join(self, iot_client=None, iot_client_token=None):
         """
         Login in the platform with Iot-Client credentials
 
-        @return ok, info  
+        @return ok, info
         """
         _ok = False
         _res = None
 
         try:
             response = self.raw_join(iot_client=iot_client, iot_client_token=iot_client_token)
-            
+
             if response.status_code == 200:
                 _res = response.json()
                 _ok = True
@@ -212,7 +232,7 @@ class DigitalClient(Client):
             self.add_to_debug_trace("There is not connection, please join() before leave()")
 
         return response
-    
+
     def leave(self):
         """
         Logout in the platform with session token
@@ -268,9 +288,9 @@ class DigitalClient(Client):
         assert ontology != None, "Invalid input ontology"
         assert query != None, "Invalid input query"
         assert query_type != None, "Invalid input query_type"
-        
+
         log.info("Making query to ontology:{}, query:{}, query_type:{}".format(ontology, query, query_type))
-        url = self.__query_template.substitute(protocol=self.protocol, host=self.hostport, 
+        url = self.__query_template.substitute(protocol=self.protocol, host=self.hostport,
                                                 path=self.iot_broker_path, ontology=ontology)
         querystring = {"query": query, "queryType": query_type.upper()}
         headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
@@ -283,14 +303,14 @@ class DigitalClient(Client):
             _ok_reconnect, _res_reconnect = self.restart()
             log.info("Reconnected: {} - {}".format(_ok_reconnect, _res_reconnect))
             self.add_to_debug_trace("Reconnected: {} - {}".format(_ok_reconnect, _res_reconnect))
-            
+
             if _ok_reconnect:
                 headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
                 response = self.call(RestMethods.GET.value, url, headers=headers, params=querystring)
 
         return response
 
-    
+
     def query(self, ontology, query, query_type):
         """
         Make a query to iot-broker service of the platform
@@ -305,13 +325,13 @@ class DigitalClient(Client):
         _res = None
         try:
             response = self.raw_query(ontology, query, query_type)
-                    
+
             if self.is_correct_status_code(response.status_code):
                 _res = response.json()
                 log.info("Response: {} - {}".format(response.status_code, _res[0] if len(_res) > 0 else []))
                 self.add_to_debug_trace("Response: {} - {}".format(response.status_code, _res[0] if len(_res) > 0 else []))
                 _ok = True
-                
+
             else:
                 log.info("Bad response: {} - {}".format(response.status_code, response.text))
                 self.add_to_debug_trace("Bad response: {} - {}".format(response.status_code, response.text))
@@ -341,7 +361,7 @@ class DigitalClient(Client):
         _ok = False
         _res = None
 
-        if batch_size is None: 
+        if batch_size is None:
             batch_size = self.batch_size
 
         offset = 0
@@ -354,27 +374,27 @@ class DigitalClient(Client):
             res_query_count = 0
             step_query = self._query_batch_str(query, offset, limit, query_type)
             ok_query, res_query = self.query(ontology, step_query, query_type)
-            
-            if ok_query: 
+
+            if ok_query:
                 res_query_count = len(res_query)
                 _res += res_query
                 offset += batch_size
 
             _ok = ok_query
-            
+
         return _ok, _res
 
     def _query_batch_str(self, query, offset, limit, query_type):
         step_query = None
-        
+
         if query_type == QueryType.SQL.value:
             step_query = query + " offset {} limit {}".format(offset, limit)
-        
+
         elif query_type == QueryType.NATIVE.value:
             step_query = query + ".skip({}).limit({})".format(offset, limit)
-        
+
         return step_query
-        
+
     def raw_insert(self, ontology, list_data):
         """
         Make a insert to iot-broker service of the platform
@@ -392,7 +412,7 @@ class DigitalClient(Client):
 
         log.info("Making insert to ontology:{}, elements:{}".format(ontology, len(list_data)))
 
-        url = self.__insert_template.substitute(protocol=self.protocol, host=self.hostport, 
+        url = self.__insert_template.substitute(protocol=self.protocol, host=self.hostport,
                                             path=self.iot_broker_path, ontology=ontology)
         body = list_data
         headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
@@ -403,14 +423,14 @@ class DigitalClient(Client):
             is_reconnected, _ = self.restart()
             log.info("Reconnected: {}".format(is_reconnected))
             self.add_to_debug_trace("Reconnected: {}".format(is_reconnected))
-            
+
             if is_reconnected:
                 headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
                 response = self.call(RestMethods.POST.value, url, headers=headers, body=body)
-        
+
         return response
 
-    
+
     def insert(self, ontology, list_data):
         """
         Make a insert to iot-broker service of the platform
@@ -454,7 +474,7 @@ class DigitalClient(Client):
         @param params  request params
         @param body    request body
 
-        @return requests.request(...) 
+        @return requests.request(...)
         """
         method = method.upper()
         log.info("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
@@ -463,18 +483,18 @@ class DigitalClient(Client):
         .format(method, url, headers, params))
 
         response = requests.request(method, url,
-                                    headers=headers, params=params, json=body, 
+                                    headers=headers, params=params, json=body,
                                     verify=not self.avoid_ssl_certificate, timeout=self.timeout, proxies=self.proxies)
         log.info("Call rest api response: {}".format(response.status_code))
         self.add_to_debug_trace("Call rest api response: {}".format(response.status_code))
         return response
-            
+
     def connect(self):
         return self.join()
 
     def disconnect(self):
         return self.leave()
-    
+
     def __enter__(self):
         self.join()
         return self
