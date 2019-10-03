@@ -121,9 +121,13 @@ class DigitalClient(Client):
                 json_object = json.loads(json_object)
 
             json_object_keys = list(json_object.keys())
-            client = DigitalClient(host=json_object['host'], port=json_object['port'],
-                                         iot_client=json_object['iot_client'],
-                                         iot_client_token=json_object['iot_client_token'])
+            client = DigitalClient(host=json_object['host'])
+            if "port" in json_object_keys:
+                client.port = json_object['port']
+            if "iot_client" in json_object_keys:
+                client.iot_client = json_object['iot_client']
+            if "iot_client_token" in json_object_keys:
+                client.iot_client_token = json_object['iot_client_token'] 
             if "is_connected" in json_object_keys:
                 client.is_connected = json_object['is_connected'] 
             if "session_key" in json_object_keys:
