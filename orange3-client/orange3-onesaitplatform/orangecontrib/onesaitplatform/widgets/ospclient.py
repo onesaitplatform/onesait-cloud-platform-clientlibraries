@@ -3,7 +3,7 @@ import logging
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import Output, OWWidget, Msg
-from onesaitplatform.iotbroker import IotBrokerClient
+from onesaitplatform.iotbroker import DigitalClient
 from Orange.widgets.credentials import CredentialManager
 
 log = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ class OspClient(OWWidget):
     # Widget's name as displayed in the canvas
     name = "Onesaitplatform Client"
     # Short widget description
-    description = "Iot Client to login in Onesait Platform"
+    description = "Digital Client to login in Onesait Platform"
 
     # An icon resource file path for this widget
     # (a path relative to the module where this widget is defined)
@@ -36,6 +36,7 @@ class OspClient(OWWidget):
     host = Setting("www.onesaitplatform.online")
     iot_client = Setting("Client4Notebook")
     iot_client_token = Setting(None)
+    avoid_ssl_certificate = Setting(False)
     connection = Setting(None)
     auto_commit = Setting(False)
 
@@ -56,6 +57,7 @@ class OspClient(OWWidget):
         super().__init__() 
 
         self.iot_client_token = None # default
+        self.avoid_ssl_certificate = False # default
         self.auto_commit = False
 
         self._init_gui()
@@ -74,14 +76,17 @@ class OspClient(OWWidget):
                     valueType=str)
         
         # iot_client
-        gui.lineEdit(self.box_parameters, self, "iot_client", "Enter Iot Client",
+        gui.lineEdit(self.box_parameters, self, "iot_client", "Enter Digital Client",
                     callback=self.iot_client_changed,
                     valueType=str)
         
         # iot_client_token
-        gui.lineEdit(self.box_parameters, self, "iot_client_token", "Enter Iot Client Token",
+        gui.lineEdit(self.box_parameters, self, "iot_client_token", "Enter Digital Client Token",
                     callback=self.iot_client_token_changed,
                     valueType=str)
+
+        gui.checkBox(self.box_parameters, self, "avoid_ssl_certificate", "Avoid SSL certificate",
+                    callback=self.avoid_ssl_certificate_changed)
 
         gui.auto_commit(self.controlArea, self, "auto_commit", "Send Client")
 
@@ -89,7 +94,7 @@ class OspClient(OWWidget):
         printt("Init {} connection".format(__class__))
         log.info("Init {} connection".format(__class__))
         if self.all_arguments_ok(): 
-            self.connection = IotBrokerClient(host=self.host, iot_client=self.iot_client, iot_client_token=self.iot_client_token)
+            self.connection = DigitalClient(host=self.host, iot_client=self.iot_client, iot_client_token=self.iot_client_token)
         printt("Created connection {}".format(self.connection)) 
         log.info("Created connection {}".format(self.connection)) 
 
@@ -152,6 +157,15 @@ class OspClient(OWWidget):
             printt("Setting new token: {}".format(self.iot_client_token))
             log.info("Setting new token: {}".format(self.iot_client_token))
             self.connection.iot_client_token = self.iot_client_token
+        
+        self.commit()
+
+    def avoid_ssl_certificate_changed(self):
+        self.validate_arguments()
+        if self.avoid_ssl_certificate != self.connection.avoid_ssl_certificate:
+            printt("Setting avoid ssl: {}".format(self.avoid_ssl_certificate))
+            log.info("Setting avoid ssl: {}".format(self.avoid_ssl_certificate))
+            self.connection.avoid_ssl_certificate = self.avoid_ssl_certificate
         
         self.commit()
 
