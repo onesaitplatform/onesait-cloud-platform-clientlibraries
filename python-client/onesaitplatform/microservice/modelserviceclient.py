@@ -2,15 +2,10 @@ import requests
 from string import Template
 import json
 import logging
-try:
-    from onesaitplatform.base import Client
-    import onesaitplatform.common.config as config
-    from onesaitplatform.enum import QueryType
-    from onesaitplatform.enum import RestMethods
-    from onesaitplatform.enum import RestHeaders
-    from onesaitplatform.common.log import log
-except Exception as e:
-    print("Error - Not possible to import necesary libraries: {}".format(e))
+from onesaitplatform.base import Client
+import onesaitplatform.common.config as config
+from onesaitplatform.enum import QueryType, RestMethods, RestHeaders
+from onesaitplatform.common.log import log
 
 try:
     logging.basicConfig()
@@ -18,10 +13,7 @@ try:
 except:
     log.init_logging()
 
-class ModelServiceClient:
-    
-    # connection
-    __supported_protocols = ["http", "https"]
+class ModelServiceClient(Client):
     
     # endpoints
     __endpoint_health = "/health"
@@ -32,14 +24,11 @@ class ModelServiceClient:
     __endpoint_predict = "/predict"
     __endpoint_train = "/train"
     
-    def __init__(self, host, model_endpoint, model_version, token=None, port=None, protocol="http", avoid_ssl_certificate=False):
-        self.__host = host
-        self.__model_endpoint = model_endpoint
-        self.__model_version = str(model_version)
+    def __init__(self, host, model_endpoint, model_version, token=None, port=None): #, protocol="http", avoid_ssl_certificate=False):
+        Client.__init__(self, host, port=port) # python > 2.7 & <= 3.7.1
+        self.__model_endpoint = self.__parse_input_model_endpoint(model_endpoint)
+        self.__model_version = self.__parse_input_model_version(model_version)
         self.token = token
-        self.__port = port
-        self.__protocol = protocol
-        self.__avoid_ssl_certificate = avoid_ssl_certificate
         
     def __str__(self):
         """
@@ -61,61 +50,52 @@ class ModelServiceClient:
         info += mandatory + optionals + token_str + ")"
         
         return info
-        
-    @property
-    def host(self):
-        return self.__host
     
     @property
     def model_endpoint(self):
         return self.__model_endpoint
     
+    def __parse_input_model_endpoint(self, model_endpoint):
+        if not model_endpoint.startswith("/"):
+            model_endpoint = "/{}".format(model_endpoint)
+        return model_endpoint
+    
     @property
     def model_version(self):
         return self.__model_version
+    
+    def __parse_input_model_version(self, model_version):
+        model_version = str(model_version)
+        if model_version.startswith("v"):
+            model_version = model_version[1:]
+        return model_version
     
     @property
     def model_version_str(self):
         return self.model_version if self.model_version.startswith("v") else "v{}".format(self.model_version)
     
     @property
-    def port(self):
-        return self.__port
+    def is_connected(self):
+        is_healthly = False
+        try:
+            is_healthly = self.health().status_code == 200
+        except Exception as e:
+            log.warning("Not possible to connect with remote model: {}".format(e))
+        finally:
+            self.__is_connected = is_healthly
+        return self.__is_connected
     
-    @property
-    def protocol(self):
-        return self.__protocol
-    
-    @protocol.setter
-    def protocol(self, p):
-        if not isinstance(p, str):
-            raise ValueError("Not supported protocol value type (only str)")
-        else:
-            p = p.lower()
-            
-        if not p in self.suported_protocols:
-            print("WARNING - protocol {} not in supported protocols {}, using 'http' default".format(p, self.suported_protocols))
-            p = "http"
-        self.__protocol = p 
+    @is_connected.setter
+    def is_connected(self, is_con):
+        self.__is_connected = is_con
     
     @property
     def suported_protocols(self):
         return self.__supported_protocols
-        
-    @property
-    def avoid_ssl_certificate(self): # not necessary
-        return self.__avoid_ssl_certificate
     
-    @avoid_ssl_certificate.setter # not necessary
-    def avoid_ssl_certificate(self, avoid):
-        if self.protocol == "http":
-            self.__avoid_ssl_certificate = False
-        else:
-            self.__avoid_ssl_certificate = bool(avoid)
-        
     @property
     def model_path(self):
-        return "/{}/api/{}".format(self.model_endpoint, self.model_version_str)
+        return "{}/api/{}".format(self.model_endpoint, self.model_version_str)
     
     @property
     def model_url(self):
@@ -128,64 +108,130 @@ class ModelServiceClient:
         url += self.model_path
         
         return url
+
+    def __set_token_if_not_none(self, token):
+        if token:
+            self.token = token
     
     @property
     def __headers(self):
         return {
-            "Authorization": self.token,
-            "Content-Type": "application/json"
+            RestHeaders.AUTHORIZATION.value: self.token,
+            RestHeaders.CONT_TYPE.value: RestHeaders.APP_JSON.value
         }
     
     def health(self, token=None):
-        if token:
-            self.token = token
-        url = "{url}{op_endpoint}".format(url=self.model_url, op_endpoint=self.__endpoint_health)
-        print("making request to url {}".format(url))
-        return requests.get(url, headers=self.__headers)
+        self.__set_token_if_not_none(token)
+        url = "{url}{op_endpoint}".format(url=self.model_url, op_endpoint=self.__endpoint_health)        
+        return self.call(RestMethods.GET.value, url, headers=self.__headers)
     
     def status(self, token=None):
-        if token:
-            self.token = token
+        self.__set_token_if_not_none(token)
         url = "{url}{op_endpoint}".format(url=self.model_url, op_endpoint=self.__endpoint_status)
-        print("making request to url {}".format(url))
-        return requests.get(url, headers=self.__headers)
+        return self.call(RestMethods.GET.value, url, headers=self.__headers)
     
     def information(self, token=None):
-        if token:
-            self.token = token
+        self.__set_token_if_not_none(token)
         url = "{url}{op_endpoint}".format(url=self.model_url, op_endpoint=self.__endpoint_information)
-        print("making request to url {}".format(url))
-        return requests.get(url, headers=self.__headers)
+        return self.call(RestMethods.GET.value, url, headers=self.__headers)
     
     def sample(self, token=None):
-        if token:
-            self.token = token
+        self.__set_token_if_not_none(token)
         url = "{url}{op_endpoint}".format(url=self.model_url, op_endpoint=self.__endpoint_sample)
-        print("making request to url {}".format(url))
-        return requests.get(url, headers=self.__headers)
+        return self.call(RestMethods.GET.value, url, headers=self.__headers)
     
     def stats(self, token=None):
-        if token:
-            self.token = token
+        self.__set_token_if_not_none(token)
         url = "{url}{op_endpoint}".format(url=self.model_url, op_endpoint=self.__endpoint_stats)
-        print("making request to url {}".format(url))
-        return requests.get(url, headers=self.__headers)
+        return self.call(RestMethods.GET.value, url, headers=self.__headers)
     
     def predict(self, data, token=None):
-        if token:
-            self.token = token
+        self.__set_token_if_not_none(token)
         url = "{url}{op_endpoint}".format(url=self.model_url, op_endpoint=self.__endpoint_predict)
-        print("making request to url {}".format(url))
-        if not isinstance(data, str):
-            data = json.dumps(data)
-        return requests.post(url, headers=self.__headers, data=data)
+        """if not isinstance(data, str):
+            data = json.dumps(data)"""
+        #return requests.post(url, headers=self.__headers, data=data, proxies=self.proxies)
+        return self.call(RestMethods.POST.value, url, headers=self.__headers, body=data)
     
     def train(self, data, token=None):
-        if token:
-            self.token = token
+        self.__set_token_if_not_none(token)
         url = "{url}{op_endpoint}".format(url=self.model_url, op_endpoint=self.__endpoint_train)
-        print("making request to url {}".format(url))
-        if not isinstance(data, str):
-            data = json.dumps(data)
-        return requests.post(url, headers=self.__headers, data=data)
+        """if not isinstance(data, str):
+            data = json.dumps(data)"""
+        #return requests.post(url, headers=self.__headers, data=data, proxies=self.proxies)
+        return self.call(RestMethods.POST.value, url, headers=self.__headers, body=data)
+    
+    def to_json(self, as_string=False):
+        """
+        Export object to json
+
+        @param as_string    If json dumped (String)
+
+        @return json_obj   json-dict/ json string
+        """
+        json_obj = dict()
+        json_obj["host"] = self.host
+        json_obj["port"] = self.port
+        json_obj["protocol"] = self.protocol
+        json_obj["is_connected"] = self.is_connected
+        json_obj["proxies"] = self.proxies
+        json_obj["timeout"] = self.timeout
+        json_obj["avoid_ssl_certificate"] = self.avoid_ssl_certificate
+        json_obj["raise_exceptions"] = self.raise_exceptions
+        json_obj["model_endpoint"] = self.model_endpoint
+        json_obj["model_version"] = self.model_version
+        json_obj["token"] = self.token
+        if as_string:
+            json_obj = json.dumps(json_obj)
+
+        log.info("Exported json {}".format(json_obj))
+        self.add_to_debug_trace("Exported json {}".format(json_obj))
+        return json_obj
+    
+    @staticmethod
+    def from_json(json_object):
+        """
+        Creates a object from json-dict/ json-string
+
+        @param json_object    json.dict/ json-string
+
+        @return client        client object
+        """
+        client = None
+        try:
+            if type(json_object) == str:
+                json_object = json.loads(json_object)
+            
+            json_object_keys = list(json_object.keys())
+
+            client = Client(host=json_object['host'])
+            if "port" in json_object_keys:
+                client.port = json_object['port']
+            if "protocol" in json_object_keys:
+                client.protocol = json_object['protocol']
+            if "is_connected" in json_object_keys:
+                client.is_connected = json_object['is_connected'] 
+            if "proxies" in json_object_keys:
+                client.proxies = json_object['proxies']
+            if "timeout" in json_object_keys:
+                client.timeout = json_object['timeout']
+            if "avoid_ssl_certificate" in json_object_keys:
+                client.avoid_ssl_certificate = json_object['avoid_ssl_certificate']
+            if "raise_exceptions" in json_object_keys:
+                client.raise_exceptions = json_object['raise_exceptions']
+            if "model_endpoint" in json_object_keys:
+                client.model_endpoint = json_object['model_endpoint']
+            if "model_version" in json_object_keys:
+                client.model_version = json_object['model_version']
+            if "token" in json_object_keys:
+                client.token = json_object['token']
+                
+            log.info("Imported json {}".format(json_object))
+            client.add_to_debug_trace("Imported json {}"
+                                          .format(json_object))
+
+        except Exception as e:
+            log.error("Not possible to import object from json: {}".format(e))
+
+        return client
     

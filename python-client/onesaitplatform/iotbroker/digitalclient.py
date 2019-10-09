@@ -2,16 +2,12 @@ import requests
 from string import Template
 import json
 import logging
-try:
-    from onesaitplatform.base import Client
-    from onesaitplatform.common.utils import wait
-    import onesaitplatform.common.config as config
-    from onesaitplatform.enum import RestMethods
-    from onesaitplatform.enum import QueryType
-    from onesaitplatform.enum import RestHeaders
-    from onesaitplatform.common.log import log
-except Exception as e:
-    print("Error - Not possible to import necesary libraries: {}".format(e))
+from onesaitplatform.base import Client
+from onesaitplatform.common.utils import wait
+import onesaitplatform.common.config as config
+from onesaitplatform.enum import RestMethods, QueryType, RestHeaders
+from onesaitplatform.common.log import log
+
 try:
     logging.basicConfig()
     log = logging.getLogger(__name__)
@@ -23,7 +19,7 @@ class DigitalClient(Client):
     """
     Class DigitalClient to connect with Iot-Broker of OnesaitPlatform
     """
-    iot_broker_path = config.IOT_BROKER_PATH
+    __iot_broker_path = config.IOT_BROKER_PATH
     batch_size = config.BATCH_QUERY_SIZE
 
     __join_template = Template("$protocol://$host$path/rest/client/join")
@@ -53,16 +49,13 @@ class DigitalClient(Client):
 
         log.info("Created client with iot-broker \
                  host:{}, path:{}, client:{}, token:{}"
-                 .format(host, self.iot_broker_path,
+                 .format(host, self.__iot_broker_path,
                          iot_client, iot_client_token))
         self.add_to_debug_trace("Created client with \
                                 iot-broker host:{}, path:{}, \
                                 client:{}, token:{}"
-                                .format(host, self.iot_broker_path,
+                                .format(host, self.__iot_broker_path,
                                         iot_client, iot_client_token))
-
-        # Deprecation
-        print("Info - IotBrokerClient will be soon deprecated, please use DigitalClient instead")
 
     def __str__(self):
         """
@@ -164,9 +157,9 @@ class DigitalClient(Client):
             self.iot_client_token = iot_client_token
 
         log.info("Created connection with iot-broker host:{}, path:{}, client:{}, token:{}"
-                     .format(self.host, self.iot_broker_path, self.iot_client, self.iot_client_token))
+                     .format(self.host, self.__iot_broker_path, self.iot_client, self.iot_client_token))
 
-        url = self.__join_template.substitute(protocol=self.protocol, host=self.hostport, path=self.iot_broker_path)
+        url = self.__join_template.substitute(protocol=self.protocol, host=self.hostport, path=self.__iot_broker_path)
         querystring = {"token": self.iot_client_token, "clientPlatform": self.iot_client, "clientPlatformId": self.iot_clientId}
         headers = {
             RestHeaders.ACCEPT_STR.value: RestHeaders.APP_JSON.value,
@@ -185,8 +178,6 @@ class DigitalClient(Client):
             self.add_to_debug_trace("Not possible to loggin: {} - {}".format(response.status_code, response.text))
 
         return response
-
-
 
     def join(self, iot_client=None, iot_client_token=None):
         """
@@ -223,7 +214,7 @@ class DigitalClient(Client):
         """
         log.info("Leaving connection with session_key:{}".format(self.session_key))
         if self.is_connected:
-            url = self.__leave_template.substitute(protocol=self.protocol, host=self.hostport, path=self.iot_broker_path)
+            url = self.__leave_template.substitute(protocol=self.protocol, host=self.hostport, path=self.__iot_broker_path)
             headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
             response = self.call(RestMethods.GET.value, url, headers=headers)
             self.is_connected = False
@@ -294,7 +285,7 @@ class DigitalClient(Client):
 
         log.info("Making query to ontology:{}, query:{}, query_type:{}".format(ontology, query, query_type))
         url = self.__query_template.substitute(protocol=self.protocol, host=self.hostport,
-                                                path=self.iot_broker_path, ontology=ontology)
+                                                path=self.__iot_broker_path, ontology=ontology)
         querystring = {"query": query, "queryType": query_type.upper()}
         headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
         response = self.call(RestMethods.GET.value, url, headers=headers, params=querystring)
@@ -312,7 +303,6 @@ class DigitalClient(Client):
                 response = self.call(RestMethods.GET.value, url, headers=headers, params=querystring)
 
         return response
-
 
     def query(self, ontology, query, query_type):
         """
@@ -416,7 +406,7 @@ class DigitalClient(Client):
         log.info("Making insert to ontology:{}, elements:{}".format(ontology, len(list_data)))
 
         url = self.__insert_template.substitute(protocol=self.protocol, host=self.hostport,
-                                            path=self.iot_broker_path, ontology=ontology)
+                                            path=self.__iot_broker_path, ontology=ontology)
         body = list_data
         headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
         response = self.call(RestMethods.POST.value, url, headers=headers, body=body)
@@ -432,7 +422,6 @@ class DigitalClient(Client):
                 response = self.call(RestMethods.POST.value, url, headers=headers, body=body)
 
         return response
-
 
     def insert(self, ontology, list_data):
         """
@@ -466,31 +455,6 @@ class DigitalClient(Client):
             _res = e
 
         return _ok, _res
-
-    def call(self, method, url, headers="", params="", body=""):
-        """
-        Make an HTTP request
-
-        @param metod   HTTP method ['GET', 'PUT', ...]
-        @param url     url path to append to host
-        @param header  request headers
-        @param params  request params
-        @param body    request body
-
-        @return requests.request(...)
-        """
-        method = method.upper()
-        log.info("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
-        .format(method, url, headers, params))
-        self.add_to_debug_trace("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
-        .format(method, url, headers, params))
-
-        response = requests.request(method, url,
-                                    headers=headers, params=params, json=body,
-                                    verify=not self.avoid_ssl_certificate, timeout=self.timeout, proxies=self.proxies)
-        log.info("Call rest api response: {}".format(response.status_code))
-        self.add_to_debug_trace("Call rest api response: {}".format(response.status_code))
-        return response
 
     def connect(self):
         return self.join()

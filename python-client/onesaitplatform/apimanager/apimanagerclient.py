@@ -2,15 +2,10 @@ import requests
 from string import Template
 import json
 import logging
-try:
-    from onesaitplatform.base import Client
-    import onesaitplatform.common.config as config
-    from onesaitplatform.enum import QueryType
-    from onesaitplatform.enum import RestMethods
-    from onesaitplatform.enum import RestHeaders
-    from onesaitplatform.common.log import log
-except Exception as e:
-    print("Error - Not possible to import necesary libraries: {}".format(e))
+from onesaitplatform.base import Client
+import onesaitplatform.common.config as config
+from onesaitplatform.enum import QueryType, RestMethods, RestHeaders
+from onesaitplatform.common.log import log
 
 try:
     logging.basicConfig()
@@ -405,31 +400,6 @@ class ApiManagerClient(Client):
             _res = e
 
         return _ok, _res
-
-    def call(self, method, url, headers=None, params=None, body=None):
-        """
-        Make an HTTP request
-
-        @param metod   HTTP method ['GET', 'PUT', ...]
-        @param url     url path to append to host
-        @param header  request headers
-        @param params  request params
-        @param body    request body
-
-        @return requests.request(...) 
-        """
-        method = method.upper()
-        log.info("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
-        .format(method, url, headers, params))
-        self.add_to_debug_trace("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
-        .format(method, url, headers, params))
-
-        response = requests.request(method, url, headers=headers, params=params, json=body, verify=not self.avoid_ssl_certificate,
-                                    timeout=self.timeout, proxies=self.proxies)
-        log.info("Call rest api response: {}".format(response))
-        self.add_to_debug_trace("Call rest api response: {}".format(response))
-
-        return response
 
     def __is_list_query(self, url):
         return self.__IS_LIST_QUERY_STR in url

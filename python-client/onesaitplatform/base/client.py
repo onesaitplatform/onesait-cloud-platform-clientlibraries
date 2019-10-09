@@ -2,12 +2,10 @@ import os
 import time
 import json
 import logging
-try:
-    import onesaitplatform.common.config as config
-    from onesaitplatform.enum import RestProtocols
-    from onesaitplatform.common.log import log
-except Exception as e:
-    print("Error - Not possible to import necesary libraries: {}".format(e))
+import requests
+import onesaitplatform.common.config as config
+from onesaitplatform.enum import RestProtocols
+from onesaitplatform.common.log import log
 
 try:
     logging.basicConfig()
@@ -38,9 +36,9 @@ class Client:
         self.__timeout = None
         self.__proxies = None
         self.__raise_exceptions = False
-        self.protocol = config.PROTOCOL
-        self.avoid_ssl_certificate = False
-        self.is_connected = False
+        self.__protocol = config.PROTOCOL
+        self.__avoid_ssl_certificate = False
+        self.__is_connected = False
         self.debug_trace = []
         self.load_proxies_automatically()
 
@@ -93,6 +91,14 @@ class Client:
             self.__protocol = RestProtocols.HTTP.value
             self.avoid_ssl_certificate = False
 
+    @property
+    def is_connected(self):
+        return self.__is_connected
+    
+    @is_connected.setter
+    def is_connected(self, is_con):
+        self.__is_connected = bool(is_con)
+    
     @property
     def avoid_ssl_certificate(self):
         return self.__avoid_ssl_certificate
@@ -216,3 +222,28 @@ class Client:
         if self.raise_exceptions:
             assert isinstance(exception, Exception)
             raise exception
+
+    def call(self, method, url, headers=None, params=None, body=None):
+        """
+        Make an HTTP request
+
+        @param metod   HTTP method ['GET', 'PUT', ...]
+        @param url     url path to append to host
+        @param header  request headers
+        @param params  request params
+        @param body    request body
+
+        @return requests.request(...) 
+        """
+        method = method.upper()
+        log.info("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
+        .format(method, url, headers, params))
+        self.add_to_debug_trace("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
+        .format(method, url, headers, params))
+
+        response = requests.request(method, url, headers=headers, params=params, json=body, verify=not self.avoid_ssl_certificate,
+                                    timeout=self.timeout, proxies=self.proxies)
+        log.info("Call rest api response: {}".format(response))
+        self.add_to_debug_trace("Call rest api response: {}".format(response))
+
+        return response
