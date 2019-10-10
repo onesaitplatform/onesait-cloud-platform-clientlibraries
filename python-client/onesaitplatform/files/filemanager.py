@@ -3,14 +3,12 @@ import requests
 from string import Template
 import json
 import logging
-try:
-    import onesaitplatform.common.config as config
-    from onesaitplatform.enum import RestHeaders
-    from onesaitplatform.enum import RestMethods
-    from onesaitplatform.enum import RestProtocols
-    from onesaitplatform.common.log import log
-except Exception as e:
-    print("Error - Not possible to import necesary libraries: {}".format(e))
+import onesaitplatform.common.config as config
+from onesaitplatform.enum import RestHeaders
+from onesaitplatform.enum import RestMethods
+from onesaitplatform.enum import RestProtocols
+from onesaitplatform.common.log import log
+
 try:
     logging.basicConfig()
     log = logging.getLogger(__name__)
@@ -22,10 +20,10 @@ class FileManager:
     """
     Class FileManager to make operations with binary repository
     """
-    binary_files_path = "/controlpanel/binary-repository"
-    files_path = "/controlpanel/files"
-    upload_template = Template("$protocol://$host$path")
-    download_template = Template("$protocol://$host$path/$id_file")
+    __binary_files_path = config.FILE_MANAGER_BINARY_FILES_PATH
+    __files_path = config.FILE_MANAGER_FILES_PATH
+    __upload_template = Template("$protocol://$host$path")
+    __download_template = Template("$protocol://$host$path/$id_file")
     __MAX_X_OP_APIKEY_LENGTH = 35
 
     __avoid_ssl_certificate = False
@@ -108,9 +106,9 @@ class FileManager:
             if not os.path.exists(filepath):
                 raise IOError("Source file not found: {}".format(filepath))
 
-            url = self.upload_template.substitute(protocol=self.protocol,
+            url = self.__upload_template.substitute(protocol=self.protocol,
                                                   host=self.host,
-                                                  path=self.binary_files_path)
+                                                  path=self.__binary_files_path)
             headers = self.__headers
             files_to_up = {'file': (
                 filename,
@@ -157,9 +155,9 @@ class FileManager:
         _ok = False
         _res = None
         try:
-            url = self.download_template.substitute(protocol=self.protocol,
+            url = self.__download_template.substitute(protocol=self.protocol,
                                                     host=self.host,
-                                                    path=self.files_path,
+                                                    path=self.__files_path,
                                                     id_file=id_file)
             headers = self.__headers_download
 

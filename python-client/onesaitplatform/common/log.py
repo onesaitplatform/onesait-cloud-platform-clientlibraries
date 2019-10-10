@@ -2,22 +2,26 @@ import inspect
 import logging
 import logging.handlers
 import os
+import platform
 import sys
 import traceback
+import onesaitplatform.common.config as config
 
 try:
-    import onesaitplatform.common.config as config
-except Exception as e:
-    print("Error - Not possible to import necesary libraries: {}".format(e))
+    default_dir = ".onesaitplatform"
+    if config.LOG_FOLDER:
+        d = os.path.join(config.LOG_FOLDER, default_dir)
+    else:
+        d = os.path.join(os.path.expanduser("~"), default_dir)
 
-try:
-    d = "onesaitplatform"
-    if os.name == "nt":
-        d = os.path.join(os.path.expanduser("~"), ".onesaitplatform")
-    elif os.name == "posix":
-        d = "/var/log/onesaitplatform"
-    if not os.path.exists(d):
-        os.mkdir(d)
+    try:
+        if not os.path.exists(d):
+            os.mkdir(d)
+    except:
+        d = default_dir
+        if not os.path.exists(d):
+            os.mkdir(d)
+
 finally:
     log_file_path = os.path.join(d, "onesaitplatform-python-client.log")
 

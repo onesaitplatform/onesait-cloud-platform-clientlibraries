@@ -1,40 +1,57 @@
 import os
 import sys
+import unittest
 relative_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 if relative_path not in sys.path:
     sys.path.insert(0, relative_path)
 
-from digitalclient import DigitalClient
+from .digitalclient import DigitalClient
 
-class DigitalClientTest():
+class DigitalClientTest(unittest.TestCase):
 
-    def __init__(self):
-        HOST = "www.onesaitplatform.online"
-        IOT_CLIENT = "<client>"
-        IOT_CLIENT_TOKEN = "<token>"
+    HOST = "www.onesaitplatform.online"
+    IOT_CLIENT = "<client>"
+    IOT_CLIENT_TOKEN = "<token>"
+    PROTOCOL = "https"
+    AVOID_SSL_CERTIFICATE = True
+    DEBUG_MODE = False
+    PROXIES = None
 
-        client = DigitalClient (HOST, iot_client=IOT_CLIENT, iot_client_token=IOT_CLIENT_TOKEN)
-        client.protocol = "https"
-        client.debug_mode = True
-        client.proxies = {
-            "http": "<proxy>",
-            "https": "<proxy>"
-            }
+    def setUp(self):
+        client = DigitalClient(self.HOST, iot_client=self.IOT_CLIENT, iot_client_token=self.IOT_CLIENT_TOKEN)
+        client.protocol = self.PROTOCOL
+        client.debug_mode = self.DEBUG_MODE
+        client.proxies = self.PROXIES
         self.client = client
+        self.client_json = {
+            'host': self.HOST,
+            'port': None,
+            'protocol': self.PROTOCOL,
+            'iot_client': self.IOT_CLIENT,
+            'iot_client_token': self.IOT_CLIENT_TOKEN,
+            'is_connected': False,
+            'session_key': None,
+            'proxies': self.PROXIES,
+            'timeout': 10000,
+            'avoid_ssl_certificate': self.AVOID_SSL_CERTIFICATE,
+            'raise_exceptions': False
+        }
 
-    def test_join(self):
-        _join, _res_join = self.client.join()
-        query = "select c, _id from Restaurant as c limit 100"
-        _ok, volcado_de_prueba = self.client.query('Restaurant', query, "SQL")
-        print(_ok, volcado_de_prueba)
+    def test_init(self):
+        self.assertEqual(self.client.host, self.HOST)
+        self.assertEqual(self.client.iot_client, self.IOT_CLIENT)
+        self.assertEqual(self.client.iot_client_token, self.IOT_CLIENT_TOKEN)
+        self.assertEqual(self.client.debug_mode, self.DEBUG_MODE)
+        self.assertEqual(self.client.protocol, self.PROTOCOL)
+        self.assertEqual(self.client.proxies, self.PROXIES)
 
-        self.client.session_key = "asdasd"
-        query = "select c, _id from Restaurant as c where c.contextData.timestampMillis = 123 limit 100"
-        _ok, volcado_de_prueba = self.client.query('Restaurant', query, "SQL")
-        print(_ok, volcado_de_prueba)
-        _restart, _res_restart = self.client.restart()
-        
+    def test_to_json(self):
+        self.assertEqual(self.client.to_json().keys(), self.client_json.keys())
+
+    def test_from_json(self):
+        tmp_client = DigitalClient.from_json(self.client.to_json())
+        self.assertDictEqual(tmp_client.to_json(), self.client.to_json())
 
 
-test = DigitalClientTest()
-test.test_join()
+if __name__ == '__main__':
+    unittest.main()

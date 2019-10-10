@@ -2,12 +2,10 @@ import os
 import time
 import json
 import logging
-try:
-    import onesaitplatform.common.config as config
-    from onesaitplatform.enum import RestProtocols
-    from onesaitplatform.common.log import log
-except Exception as e:
-    print("Error - Not possible to import necesary libraries: {}".format(e))
+import requests
+import onesaitplatform.common.config as config
+from onesaitplatform.enum import RestProtocols
+from onesaitplatform.common.log import log
 
 try:
     logging.basicConfig()
@@ -24,6 +22,7 @@ class Client:
     debug_trace_limit = config.DEBUG_TRACE_LIMIT
     debug_mode = False
 
+    __supported_protocols = [RestProtocols.HTTP.value, RestProtocols.HTTPS.value]
     __avoid_ssl_certificate = False
 
     def __init__(self, host, port=None):
@@ -37,9 +36,9 @@ class Client:
         self.__timeout = None
         self.__proxies = None
         self.__raise_exceptions = False
-        self.protocol = config.PROTOCOL
-        self.avoid_ssl_certificate = False
-        self.is_connected = False
+        self.__protocol = config.PROTOCOL
+        self.__avoid_ssl_certificate = False
+        self.__is_connected = False
         self.debug_trace = []
         self.load_proxies_automatically()
 
@@ -78,11 +77,28 @@ class Client:
 
     @protocol.setter
     def protocol(self, protocol):
+        if isinstance(protocol, RestProtocols):
+            protocol = protocol.value
+        
+        if not isinstance(protocol, str):
+            raise ValueError("Not supported protocol value type (only str or RestProtocols)")
+        else:
+            protocol = protocol.lower()
+
         if protocol == RestProtocols.HTTPS.value:
             self.__protocol = protocol
         else:    
             self.__protocol = RestProtocols.HTTP.value
+            self.avoid_ssl_certificate = False
 
+    @property
+    def is_connected(self):
+        return self.__is_connected
+    
+    @is_connected.setter
+    def is_connected(self, is_con):
+        self.__is_connected = bool(is_con)
+    
     @property
     def avoid_ssl_certificate(self):
         return self.__avoid_ssl_certificate
@@ -90,7 +106,7 @@ class Client:
     @avoid_ssl_certificate.setter
     def avoid_ssl_certificate(self, avoid_ssl_certificate):
         if self.protocol == RestProtocols.HTTPS.value:
-            self.__avoid_ssl_certificate = avoid_ssl_certificate
+            self.__avoid_ssl_certificate = bool(avoid_ssl_certificate)
         else:    
             self.__avoid_ssl_certificate = False
 
@@ -206,3 +222,28 @@ class Client:
         if self.raise_exceptions:
             assert isinstance(exception, Exception)
             raise exception
+
+    def call(self, method, url, headers=None, params=None, body=None):
+        """
+        Make an HTTP request
+
+        @param metod   HTTP method ['GET', 'PUT', ...]
+        @param url     url path to append to host
+        @param header  request headers
+        @param params  request params
+        @param body    request body
+
+        @return requests.request(...) 
+        """
+        method = method.upper()
+        log.info("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
+        .format(method, url, headers, params))
+        self.add_to_debug_trace("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
+        .format(method, url, headers, params))
+
+        response = requests.request(method, url, headers=headers, params=params, json=body, verify=not self.avoid_ssl_certificate,
+                                    timeout=self.timeout, proxies=self.proxies)
+        log.info("Call rest api response: {}".format(response))
+        self.add_to_debug_trace("Call rest api response: {}".format(response))
+
+        return response
