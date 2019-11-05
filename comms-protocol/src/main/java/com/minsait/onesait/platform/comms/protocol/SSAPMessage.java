@@ -29,9 +29,9 @@ public final class SSAPMessage<T extends SSAPBodyMessage> implements Serializabl
 
 	protected String messageId;
 	protected String sessionKey;
-	// protected String ontology;
 	protected SSAPMessageDirection direction;
 	protected SSAPMessageTypes messageType;
+	protected String transactionId;
 
 	@JsonIgnore
 	private boolean includeIds;
@@ -97,6 +97,16 @@ public final class SSAPMessage<T extends SSAPBodyMessage> implements Serializabl
 	@JsonIgnore
 	public void setIncludeIds(boolean ids) {
 		this.includeIds = ids;
+	}
+
+	@JsonProperty(required = false)
+	public String getTransactionId() {
+		return transactionId;
+	}
+
+	@JsonProperty(required = false)
+	public void setTransactionId(String transactionId) {
+		this.transactionId = transactionId;
 	}
 
 }
