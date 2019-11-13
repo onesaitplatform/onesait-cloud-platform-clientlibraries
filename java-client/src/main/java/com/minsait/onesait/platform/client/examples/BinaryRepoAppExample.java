@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BinaryRepoAppExample {
 
 	private final static String USERNAME = "developer";
-	private final static String PASSWORD = "Changed!";
+	private final static String PASSWORD = "Changed2019!";
 	private final static String SERVER = "http://localhost:18000/controlpanel/";
 	private final static String RESOURCES_FILE = "onesaitCloudPlatform_GettingStarted.pdf";
 
