@@ -57,7 +57,7 @@ public class ConfigurationManager {
 	private final String password;
 	private final String server;
 	private final ObjectMapper mapper = new ObjectMapper();
-	private final String oauthPathTemplate = "api-ops/login/username/{{username}}/password/{{password}}";
+	private final String oauthPathTemplate = "api/login/username/{{username}}/password/{{password}}";
 	private String oauthPath;
 	private OkHttpClient client;
 	private final static String CONFIGURATION_MANAGEMENT_PATH = "management/configurations/";
