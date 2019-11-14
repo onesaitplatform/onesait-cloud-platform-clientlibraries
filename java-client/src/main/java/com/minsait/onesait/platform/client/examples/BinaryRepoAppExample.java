@@ -31,7 +31,7 @@ public class BinaryRepoAppExample {
 
 	private final static String USERNAME = "developer";
 	private final static String PASSWORD = "Changed2019!";
-	private final static String SERVER = "http://localhost:18000/controlpanel/";
+	private final static String SERVER = "https://localhost:18000/controlpanel/";
 	private final static String RESOURCES_FILE = "onesaitCloudPlatform_GettingStarted.pdf";
 
 	public static void main(String[] args) throws BinaryRepositoryException, IOException, GetBytesException {
@@ -44,7 +44,7 @@ public class BinaryRepoAppExample {
 		final BinaryRepositoryClient client = new BinaryRepositoryClient(USERNAME, PASSWORD, SERVER);
 
 		// Add binary file to platform
-		final String newFileId = client.addBinaryFile(myFile, "", RepositoryType.FILE);
+		final String newFileId = client.addBinaryFile(myFile, "", RepositoryType.MONGO_GRIDFS);
 		log.info("New file ID is {}", newFileId);
 
 		// Retrieve binary file from platform
