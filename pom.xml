@@ -158,7 +158,11 @@
 				<repository>
 					<id>releases</id>
 					<url>http://nexus.onesaitplatform.com/nexus/content/repositories/releases/</url>
-				</repository>	      
+				</repository>	
+				<repository>
+					<id>releases-ssdd</id>
+					<url>https://nexus-ssdd.onesaitplatform.com/repository/maven-releases/</url>
+				</repository>					
 	      </distributionManagement>
 	    </profile>
 	    
@@ -171,7 +175,7 @@
 				<repository>
 					<id>snapshots</id>
 					<url>http://nexus.onesaitplatform.com/nexus/content/repositories/snapshots/</url>
-				</repository>	      
+				</repository>	
 	      </distributionManagement>
 	    </profile>	    
 	</profiles>	
