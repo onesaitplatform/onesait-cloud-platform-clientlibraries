@@ -94,7 +94,12 @@ public class LoginServiceImpl implements LoginService {
 		try {
 			auth = this.loginRestTemplate.postForEntity(baseUrl + loginPostUrl, entity, OAuth2AuthenticationDTO.class);
 		} catch (RestClientException e) {
-			throw (HttpClientErrorException) e;
+	    	if (e instanceof HttpClientErrorException) {
+				throw (HttpClientErrorException) e;
+			} else {
+				throw e;
+			}
+
 		}
 
 		OAuth2Token login = new OAuth2Token();
