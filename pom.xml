@@ -142,7 +142,7 @@
 	
 	<modules>
 		<!--LIBRARIES--> 
-		<modules>web-security-client</modules>
+		<module>web-security-client</module>
       	<module>comms-protocol</module>
 		<module>java-client</module>
 		<module>springboot-client</module>
