@@ -31,7 +31,7 @@ public class RestTransactionAppExample {
 		final String device = "TicketMachine1";
 		final String ontology = "Ticket";
 		final ObjectMapper mapper = new ObjectMapper();
-		Transaction tx = null;
+		Transaction tx = new Transaction("http://localhost:19000/iot-broker");
 		RestClient client = null;
 		try {
 
@@ -40,7 +40,7 @@ public class RestTransactionAppExample {
 			log.info(ExampleUtils.getInstance().loadFromResources("RestAppExample.code"));
 
 			log.info("Now we are going to execute the example");
-			tx = new Transaction("http://localhost:19000/iot-broker");
+
 			client = new RestClient("http://localhost:19000/iot-broker");
 			log.info("1. Connecting to {}", tx.getRestclientTx().getRestServer() + " with token:" + token
 					+ " and device:" + deviceTemplate + ":" + device);
@@ -103,6 +103,7 @@ public class RestTransactionAppExample {
 
 		} catch (final Exception e) {
 			log.error("Error in process", e);
+			tx.rollback();
 		}
 
 	}

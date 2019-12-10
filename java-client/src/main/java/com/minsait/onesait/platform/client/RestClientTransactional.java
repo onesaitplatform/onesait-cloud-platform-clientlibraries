@@ -19,6 +19,7 @@ public class RestClientTransactional extends RestClient {
 
 	private static final String START_TX = "rest/transaction/start";
 	private static final String COMMIT_TX = "rest/transaction/commit/";
+	private static final String ROLLBACK_TX = "rest/transaction/rollback";
 	private static final String TRANSACTION_STR = "TransactionId";
 	private static final String LOCK_ONTOLOGIES_STR = "LockOntologies";
 	private static final String TRANSACTION_ERROR = "Error in transaction . Response:";
@@ -111,9 +112,20 @@ public class RestClientTransactional extends RestClient {
 	public String commit(String transactionId, Boolean lockOntologies) throws SSAPConnectionException {
 		final JsonNode toReturn = sendCommitTx(transactionId, lockOntologies);
 		if (toReturn.has("id")) {
-			final String idInsert = toReturn.get("id").asText();
-			log.debug("Transaction Commited {}", transactionId);
-			return idInsert;
+			final String idCommit = toReturn.get("id").asText();
+			log.debug("Transaction Commit {}", transactionId);
+			return idCommit;
+		} else {
+			return toReturn.toString();
+		}
+	}
+
+	public String rollback(String transactionId) throws SSAPConnectionException {
+		final JsonNode toReturn = sendRollbackTx(transactionId);
+		if (toReturn.has("id")) {
+			final String idrollback = toReturn.get("id").asText();
+			log.debug("Transaction Rollback {}", transactionId);
+			return idrollback;
 		} else {
 			return toReturn.toString();
 		}
@@ -407,6 +419,39 @@ public class RestClientTransactional extends RestClient {
 		} catch (final Exception e) {
 			log.error("Error commiting transaction with id {} : {}", transactionId, e);
 			throw new SSAPConnectionException("commit transaction: Error in commiting transaction.", e);
+		}
+
+	}
+
+	private JsonNode sendRollbackTx(String transactionId) throws SSAPConnectionException {
+		if (!isConnected())
+			throw new SSAPConnectionException(NULL_CLIENT);
+		HttpUrl url = null;
+		Request request = null;
+		Response response = null;
+		try {
+			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
+					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
+					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(ROLLBACK_TX)
+					.addPathSegment(transactionId).build();
+			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+			response = client.newCall(request).execute();
+
+			if (!response.isSuccessful()) {
+				if (response.code() == 401) {// Expired transaction
+					log.error(TRANSACTION_EXPIRED);
+					return mapper.readTree(response.body().toString());
+				}
+
+				log.error(TRANSACTION_ERROR + response.body().string());
+				throw new SSAPConnectionException(TRANSACTION_ERROR + response.body().string());
+			}
+			return mapper.readValue("{\"status\":\"" + response.message() + "\"}", JsonNode.class);
+		} catch (final SSAPConnectionException e) {
+			throw e;
+		} catch (final Exception e) {
+			log.error("Error doing rollback transaction with id {} : {}", transactionId, e);
+			throw new SSAPConnectionException("rollback transaction: Error in rollback transaction.", e);
 		}
 
 	}

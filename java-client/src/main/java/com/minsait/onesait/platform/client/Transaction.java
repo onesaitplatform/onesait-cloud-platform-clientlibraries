@@ -87,4 +87,13 @@ public class Transaction {
 		}
 	}
 
+	public String rollback() {
+		try {
+			return restclientTx.rollback(transactionId);
+		} catch (Exception e) {
+			Log.error("Error rollback transaction with id {} . {}", transactionId, e);
+			return "Error tollback transaction.";
+		}
+	}
+
 }
