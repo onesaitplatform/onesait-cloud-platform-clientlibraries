@@ -48,40 +48,40 @@ import okhttp3.Response;
 @Slf4j
 public class RestClient {
 	@Getter
-	private String sessionKey;
+	protected String sessionKey;
 	@Getter
-	private final String restServer;
+	protected final String restServer;
 	private final static String JOIN_GET = "rest/client/join";
 	private final static String LEAVE_GET = "rest/client/leave";
 	private final static String LIST_GET = "rest/ontology";
-	private final static String INSERT_POST = "rest/ontology";
-	private final static String UPDATE = "rest/ontology";
-	private final static String DELETE = "rest/ontology";
+	protected final static String INSERT_POST = "rest/ontology";
+	protected final static String UPDATE = "rest/ontology";
+	protected final static String DELETE = "rest/ontology";
 	private final static String COMMAND = "commandAsync";
 
-	private final static String NULL_CLIENT = "Client is null. Use connect() before.";
-	private final static String UTF_8 = "UTF-8";
-	private final static String QUERY_STR = "query";
-	private final static String AUTHORIZATION_STR = "Authorization";
-	private final static String SESSIONKEY_EXP = "Expired sessionkey detected. Regenerating";
-	private final static String REGENERATING_ERROR = "Error regenerating sessionkey";
+	protected final static String NULL_CLIENT = "Client is null. Use connect() before.";
+	protected final static String UTF_8 = "UTF-8";
+	protected final static String QUERY_STR = "query";
+	protected final static String AUTHORIZATION_STR = "Authorization";
+	protected final static String SESSIONKEY_EXP = "Expired sessionkey detected. Regenerating";
+	protected final static String REGENERATING_ERROR = "Error regenerating sessionkey";
 	private final static String QUERY_ERROR = "Error in query . Response:";
-	private final static String APP_JSON = "application/json; charset=utf-8";
+	protected final static String APP_JSON = "application/json; charset=utf-8";
 	private final static String UPDATE_ERROR = "Error in update . Response:";
 	private final static String DELETE_ERROR = "Error in delete . Response:";
 
 	public static final String CORRELATION_ID_LOG_VAR_NAME = "correlationId";
 	public static final String CORRELATION_ID_HEADER_NAME = "X-Correlation-Id";
 
-	private OkHttpClient client;
+	protected OkHttpClient client;
 	private final ObjectMapper mapper = new ObjectMapper();
 	private TimeOutConfig timeout = null;
 
-	private String token;
-	private String deviceTemplate;
-	private String device;
+	protected String token;
+	protected String deviceTemplate;
+	protected String device;
 
-	private boolean sessionRetry = false;
+	protected boolean sessionRetry = false;
 
 	private final Lock lockConnection = new ReentrantLock();
 
@@ -103,15 +103,11 @@ public class RestClient {
 	/**
 	 * Creates a REST session.
 	 *
-	 * @param token
-	 *            The token associated with the device/client
-	 * @param deviceTemplate
-	 *            The device/client identification
-	 * @param device
-	 *            The instance of the device
-	 * @param avoidSSLValidation
-	 *            Indicates if the connection will avoid to validate SSL
-	 *            certificates
+	 * @param token              The token associated with the device/client
+	 * @param deviceTemplate     The device/client identification
+	 * @param device             The instance of the device
+	 * @param avoidSSLValidation Indicates if the connection will avoid to validate
+	 *                           SSL certificates
 	 * @return The session key for the session established between client and IoT
 	 *         Broker
 	 * @throws RestException
@@ -158,7 +154,8 @@ public class RestClient {
 		}
 	}
 
-	private String createConnection(String token, String deviceTemplate, String device) throws SSAPConnectionException {
+	protected String createConnection(String token, String deviceTemplate, String device)
+			throws SSAPConnectionException {
 		this.token = token;
 		this.deviceTemplate = deviceTemplate;
 		this.device = device;
@@ -546,10 +543,8 @@ public class RestClient {
 	/**
 	 * Deletes ontology instance by Id.
 	 *
-	 * @param ontology
-	 *            Ontology associated with the message
-	 * @param id
-	 *            Id of the instance in DB
+	 * @param ontology Ontology associated with the message
+	 * @param id       Id of the instance in DB
 	 *
 	 * @throws IOException
 	 * @throws RestException
@@ -675,10 +670,8 @@ public class RestClient {
 	/**
 	 * Sends command to connected rest device
 	 *
-	 * @param command
-	 *            The command
-	 * @param data
-	 *            The command parameters
+	 * @param command The command
+	 * @param data    The command parameters
 	 * @throws IOException
 	 */
 
@@ -722,12 +715,9 @@ public class RestClient {
 	/**
 	 * Sends command to others device
 	 *
-	 * @param toDeviceSession
-	 *            Session key of others device
-	 * @param command
-	 *            The command
-	 * @param data
-	 *            The command parameters
+	 * @param toDeviceSession Session key of others device
+	 * @param command         The command
+	 * @param data            The command parameters
 	 * @throws IOException
 	 */
 	public void sendCommand(String toDeviceSession, String command, JsonNode data) throws SSAPConnectionException {
@@ -831,7 +821,7 @@ public class RestClient {
 		}
 	}
 
-	private String logId() {
+	protected String logId() {
 		final String logId = MDC.get(CORRELATION_ID_LOG_VAR_NAME);
 		if (null == logId)
 			return new String("");

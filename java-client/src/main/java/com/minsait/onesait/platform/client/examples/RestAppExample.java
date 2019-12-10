@@ -36,6 +36,7 @@ public class RestAppExample {
 		final ObjectMapper mapper = new ObjectMapper();
 		RestClient client = null;
 		try {
+			log.info("Example without transaction:");
 			log.info("First you can see the code of the example:");
 			log.info(ExampleUtils.getInstance().loadFromResources("RestAppExample.code"));
 
@@ -54,14 +55,14 @@ public class RestAppExample {
 			final String query = "select Ticket.Ticket as Ticket from Ticket where Ticket.Ticket.Status=\"PENDING\"";
 			log.info("3. Getting all existing instances filtered by query:'" + query + "'");
 			final List<JsonNode> instancesFiltered = client.query(ontology, query, SSAPQueryType.SQL);
-			log.info("...Instances returned truncated:" + instancesFiltered.toString().substring(0, 100));
+			log.info("...Instances returned truncated:" + instancesFiltered.toString());
 
-			String instance = "{\"Ticket\":{\"Identification\":\"\",\"Status\":\"PENDING\",\"Email\":\"iex@email.com\",\"Name\":\"Alberto\",\"Response_via\":\"Email\",\"File\":{\"data\":\"\",\"media\":{\"name\":\"\",\"storageArea\":\"SERIALIZED\",\"binaryEncoding\":\"Base64\",\"mime\":\"application/pdf\"}},\"Coordinates\":{\"coordinates\":{\"latitude\":-13.887,\"longitude\":38.989},\"type\":\"Point\"}}}";
+			String instance = "{\"Ticket\":{\"identification\":\"\",\"status\":\"DONE\",\"email\":\"iex@email.com\",\"name\":\"Alberto\",\"response_via\":\"email\",\"file\":{\"data\":\"\",\"media\":{\"name\":\"\",\"storageArea\":\"SERIALIZED\",\"binaryEncoding\":\"Base64\",\"mime\":\"application/pdf\"}},\"coordinates\":{\"coordinates\":{\"latitude\":45.456,\"longitude\":-41.283},\"type\":\"Point\"}}}";
 			log.info("4. Inserting one instance:" + instance);
 			final String idInsert = client.insert(ontology, mapper.readTree(instance).toString());
 			log.info("...Inserted with id {}" + idInsert);
 
-			instance = "{\"Ticket\":{\"Identification\":\"\",\"Status\":\"DONE\",\"Email\":\"iex@email.com\",\"Name\":\"Alberto\",\"Response_via\":\"Email\",\"File\":{\"data\":\"\",\"media\":{\"name\":\"\",\"storageArea\":\"SERIALIZED\",\"binaryEncoding\":\"Base64\",\"mime\":\"application/pdf\"}},\"Coordinates\":{\"coordinates\":{\"latitude\":-13.887,\"longitude\":38.989},\"type\":\"Point\"}}}";
+			instance = "{\"Ticket\":{\"identification\":\"\",\"status\":\"DONE\",\"email\":\"iex@email.com\",\"name\":\"Alberto\",\"response_via\":\"email\",\"file\":{\"data\":\"\",\"media\":{\"name\":\"updated\",\"storageArea\":\"SERIALIZED\",\"binaryEncoding\":\"Base64\",\"mime\":\"application/pdf\"}},\"coordinates\":{\"coordinates\":{\"latitude\":45.456,\"longitude\":-41.283},\"type\":\"Point\"}}}";
 			log.info("5. Updating instance with id {}", idInsert);
 			client.update(ontology, mapper.readTree(instance).toString(), idInsert);
 			log.info("...Updated instance");
@@ -73,8 +74,6 @@ public class RestAppExample {
 			log.info("7. Disconnecting");
 			client.disconnect();
 			log.info("...Disconnected");
-
-			log.info("Example OK!!!");
 
 		} catch (final Exception e) {
 			log.error("Error in process", e);
