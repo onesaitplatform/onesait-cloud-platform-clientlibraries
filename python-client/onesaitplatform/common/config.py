@@ -2,13 +2,16 @@ import os
 import sys
 
 # -------- Configuration --------
+# Application
+LOG_FOLDER = None
+
 # Client
 USER_AGENT = "onesaitplatform:PythonClient"
 HOST = "www.onesaitplatform.online"
 DEBUG_TRACE_LIMIT = 25
 PROTOCOL = "https"
 
-# IotBrokerClient
+# DigitalClient
 IOT_BROKER_HOST = "iotbrokerservice"
 IOT_BROKER_AVOID_SSL_CERTIFICATE = True
 IOT_BROKER_PORT = 19000
@@ -26,7 +29,9 @@ API_CALLER_PATH = "/api-manager/server/api"
 API_USER_TOKEN = "b32522cd73e84ddda519f1dff9627f40"
 
 # FileManager
-FILE_MANAGER_HOST = ""
+FILE_MANAGER_HOST = "controlpanelservice"
+FILE_MANAGER_BINARY_FILES_PATH = "/controlpanel/binary-repository"
+FILE_MANAGER_FILES_PATH = "/controlpanel/files"
 USER_TOKEN = "Bearer ..."
 
-
+# ModelServiceClient

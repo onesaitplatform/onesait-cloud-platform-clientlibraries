@@ -1,1 +1,1 @@
-from .iotbrokerclient import IotBrokerClient
+from .digitalclient import DigitalClient

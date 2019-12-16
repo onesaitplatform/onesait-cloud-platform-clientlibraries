@@ -3,24 +3,28 @@ import requests
 from string import Template
 import json
 import logging
-try:
-    import onesaitplatform.common.config as config
-    from onesaitplatform.enum import RestHeaders
-    from onesaitplatform.enum import RestMethods
-    from onesaitplatform.enum import RestProtocols
-except Exception as e:
-    print("Error - Not possible to import necesary libraries: {}".format(e))
+import onesaitplatform.common.config as config
+from onesaitplatform.enum import RestHeaders
+from onesaitplatform.enum import RestMethods
+from onesaitplatform.enum import RestProtocols
+from onesaitplatform.common.log import log
 
-log = logging.getLogger(__name__)
+try:
+    logging.basicConfig()
+    log = logging.getLogger(__name__)
+except:
+    log.init_logging()
+
 
 class FileManager:
     """
     Class FileManager to make operations with binary repository
     """
-    binary_files_path = "/controlpanel/binary-repository"
-    files_path = "/controlpanel/files"
-    upload_template = Template("$protocol://$host$path")
-    download_template = Template("$protocol://$host$path/$id_file")
+    __binary_files_path = config.FILE_MANAGER_BINARY_FILES_PATH
+    __files_path = config.FILE_MANAGER_FILES_PATH
+    __upload_template = Template("$protocol://$host$path")
+    __download_template = Template("$protocol://$host$path/$id_file")
+    __MAX_X_OP_APIKEY_LENGTH = 35
 
     __avoid_ssl_certificate = False
 
@@ -35,7 +39,7 @@ class FileManager:
         self.user_token = user_token
         self.protocol = config.PROTOCOL
         self.avoid_ssl_certificate = False
-
+    
     @property
     def protocol(self):
         return self.__protocol
@@ -46,6 +50,7 @@ class FileManager:
             self.__protocol = protocol
         else:    
             self.__protocol = RestProtocols.HTTP.value
+            self.__avoid_ssl_certificate = False
 
     @property
     def avoid_ssl_certificate(self):
@@ -58,6 +63,22 @@ class FileManager:
         else:    
             self.__avoid_ssl_certificate = False
 
+    @property
+    def __headers(self):
+        _headers =  dict()
+        if len(self.user_token) < self.__MAX_X_OP_APIKEY_LENGTH:
+            _headers[RestHeaders.X_OP_APIKey.value] = self.user_token
+        else:
+            _headers[RestHeaders.AUTHORIZATION.value] = self.user_token
+
+        return _headers
+
+    @property
+    def __headers_download(self):
+        _headers =  dict(self.__headers)
+        _headers[RestHeaders.ACCEPT_STR.value] = RestHeaders.ACCEPT_ALL.value
+        return _headers
+    
     def __str__(self):
         """
         String to print object info
@@ -85,10 +106,10 @@ class FileManager:
             if not os.path.exists(filepath):
                 raise IOError("Source file not found: {}".format(filepath))
 
-            url = self.upload_template.substitute(protocol=self.protocol,
+            url = self.__upload_template.substitute(protocol=self.protocol,
                                                   host=self.host,
-                                                  path=self.binary_files_path)
-            headers = {RestHeaders.AUTHORIZATION.value: self.user_token}
+                                                  path=self.__binary_files_path)
+            headers = self.__headers
             files_to_up = {'file': (
                 filename,
                 open(filepath, 'rb'),
@@ -134,12 +155,11 @@ class FileManager:
         _ok = False
         _res = None
         try:
-            url = self.download_template.substitute(protocol=self.protocol,
+            url = self.__download_template.substitute(protocol=self.protocol,
                                                     host=self.host,
-                                                    path=self.files_path,
+                                                    path=self.__files_path,
                                                     id_file=id_file)
-            headers = {RestHeaders.AUTHORIZATION.value: self.user_token,
-                       RestHeaders.ACCEPT_STR.value: RestHeaders.ACCEPT_ALL.value}
+            headers = self.__headers_download
 
             response = requests.request(RestMethods.GET.value,
                                         url,

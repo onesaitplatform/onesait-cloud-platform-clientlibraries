@@ -1,0 +1,14 @@
+server: ## Config Web Server
+   port: 8080
+   contextPath: /app
+
+openplatform.api:
+   baseurl: https://development.onesaitplatform.com
+   auth:
+    login.path: /oauth-server/oauth/token
+    token:
+      verify.path: /oauth-server/openplatform-oauth/check_token
+      grant_type: password
+      scope: openid
+      clientId: TEST_SSO
+      password: onesaitplatform

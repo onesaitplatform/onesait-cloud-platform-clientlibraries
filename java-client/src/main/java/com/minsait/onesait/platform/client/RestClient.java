@@ -84,6 +84,7 @@ public class RestClient {
 	protected boolean sessionRetry = false;
 
 	private final Lock lockConnection = new ReentrantLock();
+	private final Lock lockRenewSession = new ReentrantLock();
 
 	public RestClient(String restServer, TimeOutConfig timeout) {
 		this.timeout = timeout;
@@ -204,6 +205,7 @@ public class RestClient {
 		Response response = null;
 		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
+			final String usedSessionKey = new String(sessionKey);
 			final String processedQuery = URLEncoder.encode(query, UTF_8);
 			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
@@ -211,21 +213,25 @@ public class RestClient {
 					.addPathSegment(ontology).addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addQueryParameter("queryType", SSAPQueryType.valueOf(queryType.name()).name()).build();
 			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
-				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+				if (response.code() == 401) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
-					sessionRetry = true;
 					try {
-						createConnection(token, deviceTemplate, device);
-						return query(ontology, query, queryType);
+						lockRenewSession.lock();
+						if (this.sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
-						sessionRetry = false;
+						lockRenewSession.unlock();
 					}
+
+					return query(ontology, query, queryType);
+
 				}
 
 				log.error(QUERY_ERROR + response.body().string());
@@ -261,8 +267,8 @@ public class RestClient {
 		HttpUrl url = null;
 		Request request = null;
 		Response response = null;
-		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
+			final String usedSessionKey = new String(sessionKey);
 			final String processedQuery = URLEncoder.encode(query, UTF_8);
 			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
@@ -270,21 +276,24 @@ public class RestClient {
 					.addPathSegment(ontology).addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addQueryParameter("queryType", SSAPQueryType.valueOf(SSAPQueryType.SQL.name()).name()).build();
 			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
-				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+				if (response.code() == 401) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
-					sessionRetry = true;
+
 					try {
-						createConnection(token, deviceTemplate, device);
-						return updateDeleteSQL(ontology, query);
+						lockRenewSession.lock();
+						if (this.sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
-						sessionRetry = false;
+						lockRenewSession.unlock();
 					}
+					return updateDeleteSQL(ontology, query);
 				}
 
 				log.error(QUERY_ERROR + response.body().string());
@@ -311,26 +320,30 @@ public class RestClient {
 		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
 			List<JsonNode> instances = new ArrayList<>();
+			final String usedSessionKey = new String(sessionKey);
 			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(LIST_GET)
 					.addPathSegment(ontology).addEncodedQueryParameter(QUERY_STR, query)
 					.addQueryParameter("queryType", queryType.name()).build();
 			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
-				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+				if (response.code() == 401) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
-					sessionRetry = true;
+
 					try {
-						createConnection(token, deviceTemplate, device);
-						return this.getAll(ontology);
+						lockRenewSession.lock();
+						if (this.sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
-						sessionRetry = false;
+						lockRenewSession.unlock();
 					}
+					return this.getAll(ontology);
 				}
 
 				log.error(QUERY_ERROR + response.body().string());
@@ -392,22 +405,26 @@ public class RestClient {
 					.addPathSegment(ontology).build();
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), instance);
 
+			final String usedSessionKey = new String(sessionKey);
 			request = new Request.Builder().url(url).post(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).build();
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).build();
 
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
-				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+				if (response.code() == 401) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
-					sessionRetry = true;
+
 					try {
-						createConnection(token, deviceTemplate, device);
-						return sendInsert(ontology, instance);
+						lockRenewSession.lock();
+						if (this.sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
-						sessionRetry = false;
+						lockRenewSession.unlock();
 					}
+					return sendInsert(ontology, instance);
 				}
 
 				log.error("Error in insert . Response:" + response.body().string());
@@ -448,23 +465,29 @@ public class RestClient {
 
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), instance);
 
+			final String usedSessionKey = new String(sessionKey);
 			request = new Request.Builder().url(url).put(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).build();
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).build();
 
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
-				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+				if (response.code() == 401) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
-					sessionRetry = true;
+
 					try {
-						createConnection(token, deviceTemplate, device);
-						return updateWithConfirmation(ontology, instance, id);
+						lockRenewSession.lock();
+						if (this.sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
-						sessionRetry = false;
+						lockRenewSession.unlock();
 					}
+
+					return updateWithConfirmation(ontology, instance, id);
+
 				}
 
 				log.error(UPDATE_ERROR + response.body().string());
@@ -497,32 +520,37 @@ public class RestClient {
 		HttpUrl url = null;
 		Request request = null;
 		Response response = null;
-		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
-			final String processedQuery = URLEncoder.encode(query, UTF_8);
 			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(UPDATE)
 					.addPathSegment(ontology).addEncodedPathSegments("update")
-					.addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addEncodedQueryParameter("ids", Boolean.toString(getIds)).build();
-			// Es una update by query, va por GET
+
+			// Es una update by query, va por PUT
+			final String usedSessionKey = new String(sessionKey);
+			MediaType JSON = MediaType.parse(APP_JSON);
+			RequestBody body = RequestBody.create(JSON, query);
+
 			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).put(body).build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
-				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+				if (response.code() == 401) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
-					sessionRetry = true;
+
 					try {
-						createConnection(token, deviceTemplate, device);
-						return updateQuery(ontology, query, getIds);
+						lockRenewSession.lock();
+						if (this.sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
-						sessionRetry = false;
+						lockRenewSession.unlock();
 					}
+					return updateQuery(ontology, query, getIds);
 				}
 
 				log.error(UPDATE_ERROR + response.body().string());
@@ -573,24 +601,29 @@ public class RestClient {
 					.addPathSegment(ontology).addPathSegment(id)
 					.addEncodedQueryParameter("ids", Boolean.toString(includeIds)).build();
 
+			final String usedSessionKey = new String(sessionKey);
 			request = new Request.Builder().url(url).delete().addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).build();
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).build();
 
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
-				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+				if (response.code() == 401) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
-					sessionRetry = true;
-					try {
-						createConnection(token, deviceTemplate, device);
-						return deleteWithConfirmation(ontology, id);
 
+					try {
+						lockRenewSession.lock();
+						if (this.sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
-						sessionRetry = false;
+						lockRenewSession.unlock();
 					}
+
+					return deleteWithConfirmation(ontology, id);
+
 				}
 
 				log.error(DELETE_ERROR + response.body().string());
@@ -623,7 +656,6 @@ public class RestClient {
 		HttpUrl url = null;
 		Request request = null;
 		Response response = null;
-		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
 			final String processedQuery = URLEncoder.encode(query, UTF_8);
 			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
@@ -632,24 +664,30 @@ public class RestClient {
 					.addPathSegment(ontology).addEncodedPathSegments("delete")
 					.addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addEncodedQueryParameter("ids", Boolean.toString(getIds)).build();
+
+			final String usedSessionKey = new String(sessionKey);
 			// Es una update by query, va por GET
 			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
-				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+				if (response.code() == 401) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
-					sessionRetry = true;
-					try {
-						createConnection(token, deviceTemplate, device);
-						return deleteQuery(ontology, query, getIds);
 
+					try {
+						lockRenewSession.lock();
+						if (this.sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
-						sessionRetry = false;
+						lockRenewSession.unlock();
 					}
+
+					return deleteQuery(ontology, query, getIds);
+
 				}
 
 				log.error(DELETE_ERROR + response.body().string());
@@ -683,23 +721,31 @@ public class RestClient {
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(COMMAND)
 					.addPathSegment(command).build();
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), data.textValue());
+
+			final String usedSessionKey = new String(sessionKey);
 			final Request request = new Request.Builder().url(url).post(body)
-					.addHeader(CORRELATION_ID_HEADER_NAME, logId()).addHeader(AUTHORIZATION_STR, sessionKey).build();
+					.addHeader(CORRELATION_ID_HEADER_NAME, logId()).addHeader(AUTHORIZATION_STR, usedSessionKey)
+					.build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
-				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+				if (response.code() == 401) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
-					sessionRetry = true;
+
 					try {
-						createConnection(token, deviceTemplate, device);
-						this.sendCommand(command, data);
-						return;
+						lockRenewSession.lock();
+						if (this.sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
-						sessionRetry = false;
+						lockRenewSession.unlock();
 					}
+
+					this.sendCommand(command, data);
+					return;
+
 				}
 			}
 
@@ -729,24 +775,30 @@ public class RestClient {
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(COMMAND)
 					.addPathSegment(command).build();
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), data.textValue());
+
+			final String usedSessionKey = new String(toDeviceSession);
 			final Request request = new Request.Builder().url(url).post(body)
-					.addHeader(CORRELATION_ID_HEADER_NAME, logId()).addHeader(AUTHORIZATION_STR, toDeviceSession)
+					.addHeader(CORRELATION_ID_HEADER_NAME, logId()).addHeader(AUTHORIZATION_STR, usedSessionKey)
 					.build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
-				if (response.code() == 401 && !sessionRetry) {// Expired sessionkey
+				if (response.code() == 401) {// Expired sessionkey
 					log.info(SESSIONKEY_EXP);
-					sessionRetry = true;
 					try {
-						createConnection(token, deviceTemplate, device);
-						this.sendCommand(toDeviceSession, command, data);
-						return;
+						lockRenewSession.lock();
+						if (this.sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
-						sessionRetry = false;
+						lockRenewSession.unlock();
 					}
+
+					this.sendCommand(this.sessionKey, command, data);
+					return;
+
 				}
 			}
 

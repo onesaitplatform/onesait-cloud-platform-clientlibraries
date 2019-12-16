@@ -40,12 +40,14 @@ public class ClientIoTBroker {
 	private ConnectionProperties props;
 
 	public RestClient init() throws SSAPConnectionException {
-		if (client == null || !client.isConnected()) {
-			client = new RestClient(props.getUrlRestIoTBroker(),
-					TimeOutConfig.builder().connectTimeout(props.getConnectTimeoutInSec())
-							.readTimeouts(props.getReadTimeoutInSec()).writeTimeout(props.getWriteTimeoutInSec())
-							.timeunit(TimeUnit.SECONDS).build());
-			client.connect(props.getToken(), props.getDeviceTemplate(), props.getDevice(), props.isSslverify());
+		synchronized (this) {
+			if (client == null || !client.isConnected()) {
+				client = new RestClient(props.getUrlRestIoTBroker(),
+						TimeOutConfig.builder().connectTimeout(props.getConnectTimeoutInSec())
+								.readTimeouts(props.getReadTimeoutInSec()).writeTimeout(props.getWriteTimeoutInSec())
+								.timeunit(TimeUnit.SECONDS).build());
+				client.connect(props.getToken(), props.getDeviceTemplate(), props.getDevice(), props.isSslverify());
+			}
 		}
 		return this.client;
 	}

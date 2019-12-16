@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.0.3.RELEASE</version>
+		<relativePath/>
+	</parent>
+	<groupId>com.minsait.onesait.platform</groupId>
+	<artifactId>onesaitplatform-web-security-client</artifactId>
+	<version>1.3.1-RELEASE</version>
+	<name>onesaitplatform-web-security-client</name>
+	<description>Demo project for Spring Boot</description>
+	<packaging>jar</packaging>
+
+	<properties>
+		<!--LICENSE INFO -->
+        <license.dir>${basedir}</license.dir>
+        <project.name>onesait Platform</project.name>
+        <project.year>2019</project.year>
+        <project.organization.name>minsait by Indra</project.organization.name>
+        <project.website>https://onesaitplatform.com</project.website>
+		<skip.unit.tests>false</skip.unit.tests>
+		<skip.integration.tests>true</skip.integration.tests>
+		<maven.install>2.5.2</maven.install>
+		
+		<java.version>1.8</java.version>
+		<spring-security-oauth2.version>2.3.6.RELEASE</spring-security-oauth2.version>
+	</properties>
+	
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.security.oauth</groupId>
+			<artifactId>spring-security-oauth2</artifactId>
+			<version>${spring-security-oauth2.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	
+	<profiles>
+	    <profile>
+	      <id>releases</id>
+	      <activation>
+		      <activeByDefault>false</activeByDefault>
+	      </activation>      
+	      <distributionManagement>
+				<repository>
+					<id>releases</id>
+					<url>http://nexus.onesaitplatform.com/nexus/content/repositories/releases/</url>
+				</repository>	      
+	      </distributionManagement>
+	    </profile>
+	    
+	    <profile>
+	      <id>snapshots</id>
+	      <activation>
+		      <activeByDefault>false</activeByDefault>
+	      </activation>      
+	      <distributionManagement>
+				<repository>
+					<id>snapshots</id>
+					<url>http://nexus.onesaitplatform.com/nexus/content/repositories/snapshots/</url>
+				</repository>	      
+	      </distributionManagement>
+	    </profile>	    
+	</profiles>	
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.mycila</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
+					<header>${license.dir}/../LICENSE-code</header>
+					<properties>
+						<owner>Indra</owner>
+						<email>onesaitplatform@minsait.com</email>
+					</properties>
+					<includes>
+						<include>**/*.java</include>
+						<include>src/main/resources/templates/**/*.html</include>
+					</includes>
+					<excludes>
+						<exclude>**/*.xml</exclude>
+						<exclude>**/*.js</exclude>
+						<exclude>**/*.css</exclude>
+						<exclude>src/test/resources/**</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>format</goal>
+						</goals>
+						<phase>process-sources</phase>
+					</execution>
+				</executions>
+			</plugin>
+			
+		</plugins>
+		
+		<resources> 
+		  <resource>
+			<directory>src/main/resources</directory>
+			<includes>
+			  <include>**/*.properties</include>
+			  <include>**/*.yml</include>
+			  <include>**/*.*</include>
+			</includes>
+		  </resource>
+		</resources>
+	</build>
+
+</project>
