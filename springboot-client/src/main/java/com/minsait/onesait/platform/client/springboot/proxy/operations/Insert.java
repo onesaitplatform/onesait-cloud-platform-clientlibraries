@@ -27,7 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minsait.onesait.platform.client.Transaction;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
+import com.minsait.onesait.platform.client.springboot.proxy.operations.Transaction.OperationType;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,7 @@ public class Insert implements Operation {
 	@Autowired
 	private OperationUtil util;
 
+	@Override
 	public Object operation(Method method, Object[] args, ClientIoTBroker client, String ontology,
 			Class<?> parametrizedType, boolean renewSession) throws SSAPConnectionException {
 		Object toReturn;
@@ -74,6 +77,12 @@ public class Insert implements Operation {
 			log.error("Error in Insert operation", e);
 			throw new SSAPConnectionException("Error in Insert", e);
 		}
+	}
+
+	@Override
+	public Object operationTx(Method method, Object[] args, Transaction tx, String ontology, Class<?> parametrizedType,
+			boolean renewSession, OperationType operationType) throws SSAPConnectionException {
+		return null;
 	}
 
 }
