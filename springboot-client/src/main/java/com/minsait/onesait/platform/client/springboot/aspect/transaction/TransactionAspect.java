@@ -49,8 +49,6 @@ public class TransactionAspect {
 	@Autowired
 	private ConnectionProperties props;
 
-	private Integer transactions = 0;
-
 	@Before("@annotation(IoTBrokerTransaction)")
 	public void startTx() {
 		log.info("Start transaction.");
@@ -62,22 +60,22 @@ public class TransactionAspect {
 
 			String transactionId = tx.start(props.getToken(), props.getDeviceTemplate(), props.getDevice());
 			if (transactionId != null) {
-				TransactionDTO ctx = new TransactionDTO(tx, transactionId);
+				TransactionDTO ctx = new TransactionDTO(tx, transactionId, 1);
 				TransactionContext.setTransactionContext(ctx);
-				transactions++;
 			} else {
 				log.error("Error starting transaction.");
 			}
 		} else {
 			log.info("The transaction already exists. Transaction is NOT open again.");
-			transactions++;
+			Integer numTransaction = TransactionContext.getTransactionContext().getNumTransactions() + 1;
+			TransactionContext.getTransactionContext().setNumTransactions(numTransaction);
 		}
 	}
 
 	@AfterReturning("@annotation(IoTBrokerTransaction)")
 	public void commitTx(JoinPoint jp) {
 		log.info("Commit transaction.");
-		if (transactions == 1) {
+		if (TransactionContext.getTransactionContext().getNumTransactions() == 1) {
 			MethodSignature signature = (MethodSignature) jp.getSignature();
 			Method method = signature.getMethod();
 			IoTBrokerTransaction annotation = (IoTBrokerTransaction) method.getAnnotations()[0];
@@ -85,7 +83,8 @@ public class TransactionAspect {
 			TransactionContext.clear();
 		} else {
 			log.info("This transaction is not the last one. Transaction is NOT commited already.");
-			transactions--;
+			Integer numTransaction = TransactionContext.getTransactionContext().getNumTransactions() - 1;
+			TransactionContext.getTransactionContext().setNumTransactions(numTransaction);
 		}
 	}
 

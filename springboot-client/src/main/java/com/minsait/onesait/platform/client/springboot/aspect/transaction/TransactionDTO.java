@@ -29,10 +29,15 @@ public class TransactionDTO {
 	@Setter
 	private String transactionId;
 
-	public TransactionDTO(Transaction tx, String transactionId) {
+	@Getter
+	@Setter
+	private Integer numTransactions;
+
+	public TransactionDTO(Transaction tx, String transactionId, Integer numTransactions) {
 		super();
 		this.tx = tx;
 		this.transactionId = transactionId;
+		this.numTransactions = numTransactions;
 	}
 
 }
