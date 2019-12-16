@@ -12,20 +12,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.minsait.onesait.platform.comms.protocol.enums;
+package com.minsait.onesait.platform.client.springboot.aspect.transaction;
 
-public enum SSAPMessageTypes {
-	NONE,
+import com.minsait.onesait.platform.client.Transaction;
 
-	JOIN, LEAVE,
+import lombok.Getter;
+import lombok.Setter;
 
-	INSERT, UPDATE, UPDATE_BY_ID, DELETE, DELETE_BY_ID,
+public class TransactionDTO {
 
-	QUERY,
+	@Getter
+	@Setter
+	private Transaction tx;
 
-	SUBSCRIBE, UNSUBSCRIBE, INDICATION,
+	@Getter
+	@Setter
+	private String transactionId;
 
-	COMMAND, STATUS, LOG,
+	@Getter
+	@Setter
+	private Integer numTransactions;
 
-	START_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION
+	public TransactionDTO(Transaction tx, String transactionId, Integer numTransactions) {
+		super();
+		this.tx = tx;
+		this.transactionId = transactionId;
+		this.numTransactions = numTransactions;
+	}
+
 }

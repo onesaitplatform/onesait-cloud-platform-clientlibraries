@@ -12,20 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.minsait.onesait.platform.comms.protocol.enums;
+package com.minsait.onesait.platform.client.springboot.aspect.transaction;
 
-public enum SSAPMessageTypes {
-	NONE,
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-	JOIN, LEAVE,
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface IoTBrokerTransaction {
 
-	INSERT, UPDATE, UPDATE_BY_ID, DELETE, DELETE_BY_ID,
+	boolean lockOntologies() default false;
 
-	QUERY,
-
-	SUBSCRIBE, UNSUBSCRIBE, INDICATION,
-
-	COMMAND, STATUS, LOG,
-
-	START_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION
 }

@@ -20,15 +20,17 @@
  ******************************************************************************/
 package com.minsait.onesait.platform.client.springboot.proxy.operations;
 
-import java.lang.reflect.Method;	
+import java.lang.reflect.Method;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minsait.onesait.platform.client.Transaction;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
 import com.minsait.onesait.platform.client.springboot.fromjson.DeleteResult;
+import com.minsait.onesait.platform.client.springboot.proxy.operations.Transaction.OperationType;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,7 @@ public class Delete implements Operation {
 	@Autowired
 	private OperationUtil util;
 
+	@Override
 	public Object operation(Method method, Object[] args, ClientIoTBroker client, String ontology,
 			Class<?> parametrizedType, boolean renewSession) throws SSAPConnectionException {
 		String idInstance = null;
@@ -48,7 +51,8 @@ public class Delete implements Operation {
 				log.error("We need at least 1 parameter: delete(String identification)");
 				throw new SSAPConnectionException("We need at least 1 parameter: delete(String identification)");
 			}
-			if (!method.getReturnType().isAssignableFrom(void.class) && !method.getReturnType().isAssignableFrom(DeleteResult.class)) {
+			if (!method.getReturnType().isAssignableFrom(void.class)
+					&& !method.getReturnType().isAssignableFrom(DeleteResult.class)) {
 				log.error("@IoTBrokerDelete must return void");
 				throw new SSAPConnectionException("@IoTBrokerDelete must return void");
 			}
@@ -60,7 +64,7 @@ public class Delete implements Operation {
 			if (method.getReturnType().getName().equals("void")) {
 				client.init().delete(ontology, idInstance);
 				return null;
-			}else {
+			} else {
 				JsonNode data = client.init().deleteWithConfirmation(ontology, idInstance);
 				Object toReturn = new ObjectMapper().readValue(data.toString(), method.getReturnType());
 				return toReturn;
@@ -72,6 +76,12 @@ public class Delete implements Operation {
 			log.error("Error in Delete operation", e);
 			throw new SSAPConnectionException("Error in Delete", e);
 		}
+	}
+
+	@Override
+	public Object operationTx(Method method, Object[] args, Transaction tx, String ontology, Class<?> parametrizedType,
+			boolean renewSession, OperationType operationType) throws SSAPConnectionException {
+		return null;
 	}
 
 }

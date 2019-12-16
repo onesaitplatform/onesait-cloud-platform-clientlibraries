@@ -12,20 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.minsait.onesait.platform.comms.protocol.enums;
+package com.minsait.onesait.platform.client.springboot.aspect.transaction;
 
-public enum SSAPMessageTypes {
-	NONE,
+public class TransactionContext {
+	private static final ThreadLocal<TransactionDTO> CONTEXT = new ThreadLocal<>();
 
-	JOIN, LEAVE,
+	public static void setTransactionContext(TransactionDTO properties) {
+		CONTEXT.set(properties);
+	}
 
-	INSERT, UPDATE, UPDATE_BY_ID, DELETE, DELETE_BY_ID,
+	public static TransactionDTO getTransactionContext() {
+		return CONTEXT.get();
+	}
 
-	QUERY,
-
-	SUBSCRIBE, UNSUBSCRIBE, INDICATION,
-
-	COMMAND, STATUS, LOG,
-
-	START_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION
+	public static void clear() {
+		CONTEXT.remove();
+	}
 }

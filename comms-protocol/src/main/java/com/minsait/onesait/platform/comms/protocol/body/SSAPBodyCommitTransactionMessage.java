@@ -12,20 +12,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.minsait.onesait.platform.comms.protocol.enums;
+package com.minsait.onesait.platform.comms.protocol.body;
 
-public enum SSAPMessageTypes {
-	NONE,
+import com.minsait.onesait.platform.comms.protocol.body.parent.SSAPBodyMessage;
 
-	JOIN, LEAVE,
+public class SSAPBodyCommitTransactionMessage extends SSAPBodyMessage {
 
-	INSERT, UPDATE, UPDATE_BY_ID, DELETE, DELETE_BY_ID,
+	private boolean lockOntologies;
 
-	QUERY,
+	@Override
+	public boolean isSessionKeyMandatory() {
+		return true;
+	}
 
-	SUBSCRIBE, UNSUBSCRIBE, INDICATION,
+	@Override
+	public boolean isOntologyMandatory() {
+		return false;
+	}
 
-	COMMAND, STATUS, LOG,
+	public boolean isLockOntologies() {
+		return lockOntologies;
+	}
 
-	START_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION
+	public void setLockOntologies(boolean lockOntologies) {
+		this.lockOntologies = lockOntologies;
+	}
+
 }
