@@ -5,13 +5,13 @@
 	<parent>
 		<groupId>com.minsait.onesait.platform</groupId>
 		<artifactId>onesaitplatform-client-libraries-parent</artifactId>
-		<version>1.3.2</version>
+		<version>1.3.8</version>
 		<relativePath>..</relativePath>
 	</parent>
 	
     <artifactId>onesaitplatform-iotclient4springboot</artifactId>
 
-	<version>1.3.2</version>
+	<version>1.3.8</version>
     <packaging>jar</packaging>
     <name>onesaitplatform-iotclient4springboot</name>
     <description>Client of the IoT Broker for use with Spring Boot</description>	
