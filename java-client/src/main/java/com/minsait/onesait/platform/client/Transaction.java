@@ -1,11 +1,22 @@
 package com.minsait.onesait.platform.client;
 
-import jline.internal.Log;
-import lombok.Getter;
+import java.util.Properties;
 
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class Transaction {
 
 	private static final String START_ERROR = "Error starting transaction. {}";
+
+	public enum ConnectionType {
+		REST, MQTT
+	}
+
+	public enum RestProperty {
+		URL
+	}
 
 	@Getter
 	private String transactionId;
@@ -13,8 +24,10 @@ public class Transaction {
 	@Getter
 	private RestClientTransactional restclientTx;
 
-	public Transaction(String restClient) {
-		this.restclientTx = new RestClientTransactional(restClient);
+	public void configureConnection(ConnectionType type, Properties prop) {
+		if (type.equals(ConnectionType.REST)) {
+			this.restclientTx = new RestClientTransactional(prop.getProperty(RestProperty.URL.name()));
+		}
 	}
 
 	public String start(String token, String deviceTemplate, String device) {
@@ -24,12 +37,12 @@ public class Transaction {
 				transactionId = response;
 				return response;
 			} else {
-				Log.error(START_ERROR);
-				return START_ERROR;
+				log.error(START_ERROR);
+				return null;
 			}
 		} catch (Exception e) {
-			Log.error(START_ERROR, e);
-			return START_ERROR;
+			log.error(START_ERROR, e);
+			return null;
 		}
 	}
 
@@ -37,7 +50,7 @@ public class Transaction {
 		try {
 			return restclientTx.insert(ontology, instance, transactionId);
 		} catch (Exception e) {
-			Log.error("Error inserting instance with transaction id {} . {}", transactionId, e);
+			log.error("Error inserting instance with transaction id {} . {}", transactionId, e);
 			return "Error inserting instance in transaction.";
 		}
 	}
@@ -46,7 +59,7 @@ public class Transaction {
 		try {
 			return restclientTx.updateById(ontology, instance, id, transactionId);
 		} catch (Exception e) {
-			Log.error("Error updating instance with transaction id {} . {}", transactionId, e);
+			log.error("Error updating instance with transaction id {} . {}", transactionId, e);
 			return "Error updating instance in transaction.";
 		}
 	}
@@ -55,7 +68,7 @@ public class Transaction {
 		try {
 			return restclientTx.updateByQuery(ontology, query, transactionId);
 		} catch (Exception e) {
-			Log.error("Error updating instance with transaction id {} . {}", transactionId, e);
+			log.error("Error updating instance with transaction id {} . {}", transactionId, e);
 			return "Error updating instance in transaction.";
 		}
 	}
@@ -64,7 +77,7 @@ public class Transaction {
 		try {
 			return restclientTx.deleteById(ontology, id, transactionId);
 		} catch (Exception e) {
-			Log.error("Error updating instance with transaction id {} . {}", transactionId, e);
+			log.error("Error updating instance with transaction id {} . {}", transactionId, e);
 			return "Error updating instance in transaction.";
 		}
 	}
@@ -73,7 +86,7 @@ public class Transaction {
 		try {
 			return restclientTx.deleteByQuery(ontology, query, transactionId);
 		} catch (Exception e) {
-			Log.error("Error updating instance with transaction id {} . {}", transactionId, e);
+			log.error("Error updating instance with transaction id {} . {}", transactionId, e);
 			return "Error updating instance in transaction.";
 		}
 	}
@@ -82,7 +95,7 @@ public class Transaction {
 		try {
 			return restclientTx.commit(transactionId, lockOntologies);
 		} catch (Exception e) {
-			Log.error("Error commiting transaction with id {} . {}", transactionId, e);
+			log.error("Error commiting transaction with id {} . {}", transactionId, e);
 			return "Error commiting transaction.";
 		}
 	}
@@ -91,7 +104,7 @@ public class Transaction {
 		try {
 			return restclientTx.rollback(transactionId);
 		} catch (Exception e) {
-			Log.error("Error rollback transaction with id {} . {}", transactionId, e);
+			log.error("Error rollback transaction with id {} . {}", transactionId, e);
 			return "Error tollback transaction.";
 		}
 	}
