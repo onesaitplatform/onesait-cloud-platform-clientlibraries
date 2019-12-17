@@ -28,9 +28,8 @@ public class Transaction {
 		REST, MQTT
 	}
 
-	public enum RestProperty {
-		URL
-	}
+	public static final String CONNECTION_TYPE = "CONNECTION_TYPE";
+	public static final String DIGITAL_BROKER_REST_ENDPOINT = "DIGITAL_BROKER_REST_ENDPOINT";
 
 	@Getter
 	private String transactionId;
@@ -38,9 +37,9 @@ public class Transaction {
 	@Getter
 	private RestClientTransactional restclientTx;
 
-	public void configureConnection(ConnectionType type, Properties prop) {
-		if (type.equals(ConnectionType.REST)) {
-			this.restclientTx = new RestClientTransactional(prop.getProperty(RestProperty.URL.name()));
+	public void configureConnection(Properties prop) {
+		if (prop.getProperty(CONNECTION_TYPE).equals(ConnectionType.REST.name())) {
+			this.restclientTx = new RestClientTransactional(prop.getProperty(DIGITAL_BROKER_REST_ENDPOINT));
 		}
 	}
 

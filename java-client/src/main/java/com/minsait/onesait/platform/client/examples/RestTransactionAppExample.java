@@ -19,8 +19,6 @@ import java.util.Properties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minsait.onesait.platform.client.RestClient;
 import com.minsait.onesait.platform.client.Transaction;
-import com.minsait.onesait.platform.client.Transaction.ConnectionType;
-import com.minsait.onesait.platform.client.Transaction.RestProperty;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -36,9 +34,10 @@ public class RestTransactionAppExample {
 		final String ontology = "Ticket";
 		final ObjectMapper mapper = new ObjectMapper();
 		Properties prop = new Properties();
-		prop.put(RestProperty.URL, "http://localhost:19000/iot-broker");
+		prop.put(Transaction.DIGITAL_BROKER_REST_ENDPOINT, "http://localhost:19000/iot-broker");
+		prop.put(Transaction.CONNECTION_TYPE, Transaction.ConnectionType.REST.name());
 		Transaction tx = new Transaction();
-		tx.configureConnection(ConnectionType.REST, prop);
+		tx.configureConnection(prop);
 		RestClient client = null;
 		try {
 
