@@ -29,8 +29,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.minsait.onesait.platform.client.Transaction;
-import com.minsait.onesait.platform.client.Transaction.ConnectionType;
-import com.minsait.onesait.platform.client.Transaction.RestProperty;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ConnectionProperties;
 
 import lombok.Getter;
@@ -55,8 +53,9 @@ public class TransactionAspect {
 		if (TransactionContext.getTransactionContext() == null) {
 			tx = new Transaction();
 			Properties prop = new Properties();
-			prop.put(RestProperty.URL.name(), props.getUrlRestIoTBroker());
-			tx.configureConnection(ConnectionType.REST, prop);
+			prop.put(Transaction.DIGITAL_BROKER_REST_ENDPOINT, props.getUrlRestIoTBroker());
+			prop.put(Transaction.CONNECTION_TYPE, Transaction.ConnectionType.REST.name());
+			tx.configureConnection(prop);
 
 			String transactionId = tx.start(props.getToken(), props.getDeviceTemplate(), props.getDevice());
 			if (transactionId != null) {
