@@ -59,48 +59,48 @@ public class Transaction {
 		}
 	}
 
-	public String insert(String ontology, String instance) {
+	public String insert(String ontology, String instance) throws Exception {
 		try {
 			return restclientTx.insert(ontology, instance, transactionId);
 		} catch (Exception e) {
 			log.error("Error inserting instance with transaction id {} . {}", transactionId, e);
-			return "Error inserting instance in transaction.";
+			throw new Exception("Error inserting instance with transaction id: " + transactionId);
 		}
 	}
 
-	public String update(String ontology, String instance, String id) {
+	public String update(String ontology, String instance, String id) throws Exception {
 		try {
 			return restclientTx.updateById(ontology, instance, id, transactionId);
 		} catch (Exception e) {
 			log.error("Error updating instance with transaction id {} . {}", transactionId, e);
-			return "Error updating instance in transaction.";
+			throw new Exception("Error inserting instance with transaction id: " + transactionId);
 		}
 	}
 
-	public String updateByQuery(String ontology, String query) {
+	public String updateByQuery(String ontology, String query) throws Exception {
 		try {
 			return restclientTx.updateByQuery(ontology, query, transactionId);
 		} catch (Exception e) {
 			log.error("Error updating instance with transaction id {} . {}", transactionId, e);
-			return "Error updating instance in transaction.";
+			throw new Exception("Error inserting instance with transaction id: " + transactionId);
 		}
 	}
 
-	public String delete(String ontology, String id) {
+	public String delete(String ontology, String id) throws Exception {
 		try {
 			return restclientTx.deleteById(ontology, id, transactionId);
 		} catch (Exception e) {
 			log.error("Error updating instance with transaction id {} . {}", transactionId, e);
-			return "Error updating instance in transaction.";
+			throw new Exception("Error inserting instance with transaction id: " + transactionId);
 		}
 	}
 
-	public String deleteByQuery(String ontology, String query) {
+	public String deleteByQuery(String ontology, String query) throws Exception {
 		try {
 			return restclientTx.deleteByQuery(ontology, query, transactionId);
 		} catch (Exception e) {
 			log.error("Error updating instance with transaction id {} . {}", transactionId, e);
-			return "Error updating instance in transaction.";
+			throw new Exception("Error inserting instance with transaction id: " + transactionId);
 		}
 	}
 
@@ -109,7 +109,7 @@ public class Transaction {
 			return restclientTx.commit(transactionId, lockOntologies);
 		} catch (Exception e) {
 			log.error("Error commiting transaction with id {} . {}", transactionId, e);
-			return "Error commiting transaction.";
+			return "Error inserting instance with transaction id: " + transactionId;
 		}
 	}
 
@@ -118,7 +118,7 @@ public class Transaction {
 			return restclientTx.rollback(transactionId);
 		} catch (Exception e) {
 			log.error("Error rollback transaction with id {} . {}", transactionId, e);
-			return "Error tollback transaction.";
+			return "Error inserting instance with transaction id: " + transactionId;
 		}
 	}
 

@@ -89,9 +89,16 @@ public class TransactionAspect {
 
 	@AfterThrowing(pointcut = "@annotation(IoTBrokerTransaction)", throwing = "e")
 	public void rollbackTx(Throwable e) {
-		log.error("Rollback transaction. Exception ocurred: {}.", e);
-		tx.rollback();
-		TransactionContext.clear();
+		if (TransactionContext.getTransactionContext().getNumTransactions() == 1) {
+			log.error("Rollback transaction. Exception ocurred: {}.", e);
+			tx.rollback();
+			TransactionContext.clear();
+		} else {
+			log.info("This transaction is not the last one. Transaction is NOT rollback already.");
+			Integer numTransaction = TransactionContext.getTransactionContext().getNumTransactions() - 1;
+			TransactionContext.getTransactionContext().setNumTransactions(numTransaction);
+		}
+
 	}
 
 }
