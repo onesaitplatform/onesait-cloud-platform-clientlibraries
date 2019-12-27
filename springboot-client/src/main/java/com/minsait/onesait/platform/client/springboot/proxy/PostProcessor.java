@@ -23,7 +23,12 @@ import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -32,6 +37,8 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 
 import com.minsait.onesait.platform.client.springboot.aspect.IoTBrokerRepository;
@@ -62,6 +69,9 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 			log.warn("Unable to load resources from path '{}'", scanPath, e);
 			return;
 		}
+
+		List<String> packagesToScan = this.getComponentScanPackages();
+
 		while (resources.hasMoreElements()) {
 			URL resourceUrl = resources.nextElement();
 			String resourceName = resourceUrl.toString();
@@ -69,8 +79,10 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 			boolean isLibrary = resourceName.contains("BOOT-INF/lib");
 			boolean isJarFile = resourceName.startsWith("jar:file");
 			if (!isLibrary && isJarFile) {
-				processJarResource(resourceName, beanFactory);
+				log.debug("Processing as Jar file, name: {}, path: {}", resourceName, resourceUrl.getPath());
+				processJarResource(resourceName, beanFactory, Optional.empty());
 			} else if (!isLibrary) {
+				log.debug("Processing as class, name: {}, path: {}", resourceName, resourceUrl.getPath());
 				try {
 					File directory = new File(new URI(resourceName).getPath());
 					findClasses(directory, scanPath, applicationContext, beanFactory);
@@ -79,12 +91,15 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 				} catch (Exception e) {
 					log.warn("Exception captured: '{}'", resourceName, e);
 				}
+			} else {
+				log.debug("Processing as library, name: {}, path: {}", resourceName, resourceUrl.getPath());
+				processJarResource(resourceName, beanFactory, Optional.of(packagesToScan));
 			}
 		}
 	}
 
-	private void processJarResource(String resourceName, ConfigurableListableBeanFactory beanFactory) {
-		log.debug("Processing Jar resource {}", resourceName);
+	private void processJarResource(String resourceName, ConfigurableListableBeanFactory beanFactory,
+			Optional<List<String>> packagesToScan) {
 		try {
 			URL url = new URL(resourceName);
 			JarURLConnection connection = (JarURLConnection) url.openConnection();
@@ -92,11 +107,25 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 			Enumeration<JarEntry> entries = jarFile.entries();
 			while (entries.hasMoreElements()) {
 				JarEntry entry = entries.nextElement();
-				log.debug("Entry name: {}, D: {}, ", entry.getName(), entry.isDirectory());
+				// log.debug("Entry name: {}, D: {}, ", entry.getName(), entry.isDirectory());
 				if (!entry.isDirectory() && entry.getName().endsWith(CLASS_STR)) {
 					String className = entry.getName().replace("/", ".").replace(CLASS_STR, "");
-					log.info("Registering bean class '{}' from scanned file: '{}'", className, entry.getName());
-					registerClassByName(className, beanFactory);
+					if (!packagesToScan.isPresent()) {
+						log.debug("Scanning annnotations for class '{}' from scanned file: '{}'", className,
+								entry.getName());
+						registerClassByName(className, beanFactory);
+					} else {
+						List<String> lPackagesToScan = packagesToScan.get();
+						boolean found = false;
+						for (int i = 0; i < lPackagesToScan.size() && !found; i++) {
+							if (className.startsWith(lPackagesToScan.get(i))) {
+								found = true;
+								log.debug("Scanning annnotations for class '{}' from scanned file: '{}'", className,
+										entry.getName());
+								registerClassByName(className, beanFactory);
+							}
+						}
+					}
 				}
 			}
 		} catch (MalformedURLException e) {
@@ -104,6 +133,26 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 		} catch (IOException e) {
 			log.warn("IO exception", e);
 		}
+	}
+
+	private List<String> getComponentScanPackages() {
+
+		List<String> scanPackages = new ArrayList<String>();
+
+		applicationContext.getBeansWithAnnotation(ComponentScan.class).forEach((name, instance) -> {
+
+			Set<ComponentScan> scans = AnnotatedElementUtils.findMergedRepeatableAnnotations(instance.getClass(),
+					ComponentScan.class);
+
+			for (ComponentScan scan : scans) {
+				scanPackages.addAll(Arrays.asList(scan.basePackages()));
+			}
+
+		});
+
+		log.debug("Scanning annnotations in packages {}", Arrays.toString(scanPackages.toArray()));
+		return scanPackages;
+
 	}
 
 	private void registerClassByName(String className, ConfigurableListableBeanFactory beanFactory) {
@@ -133,7 +182,7 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 				log.info("Registered proxy for {}", className);
 
 			}
-		} catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException | NoClassDefFoundError e) {
 			log.warn("Unable to get class for name: {}", className);
 		}
 	}

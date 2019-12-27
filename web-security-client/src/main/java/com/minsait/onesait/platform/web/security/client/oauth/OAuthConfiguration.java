@@ -14,6 +14,7 @@
  */
 package com.minsait.onesait.platform.web.security.client.oauth;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,34 +23,35 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 
-
 @Configuration
 @EnableResourceServer
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class OAuthConfiguration {
-	
+
 	@Value("${openplatform.api.auth.token.clientId}")
 	private String CLIENT_ID;
-	
+
 	@Value("${openplatform.api.auth.token.password}")
-    private String CLIENT_SECRET;
-	
+	private String CLIENT_SECRET;
+
 	@Value("${openplatform.api.baseurl}")
 	private String OAUTHSERVER_URL;
-	
-	@Value("${openplatform.api.auth.token.verify.path}")
-    private String CHECK_TOKEN_ENDPOINT_URL;
-    
-    @Primary
-	@Bean
-    public RemoteTokenServices remoteTokenServices() {
-        final RemoteTokenServices tokenServices = new RemoteTokenServices();
-        tokenServices.setCheckTokenEndpointUrl(OAUTHSERVER_URL+CHECK_TOKEN_ENDPOINT_URL);
-        tokenServices.setClientId(CLIENT_ID);
-        tokenServices.setClientSecret(CLIENT_SECRET);
-        return tokenServices;
-    }   
 
-   
- 	
+	@Value("${openplatform.api.auth.token.verify.path}")
+	private String CHECK_TOKEN_ENDPOINT_URL;
+
+	@Autowired
+	CustomAccessTokenConverter tokenConverter;
+
+	@Primary
+	@Bean
+	public RemoteTokenServices remoteTokenServices() {
+		final RemoteTokenServices tokenServices = new RemoteTokenServices();
+		tokenServices.setCheckTokenEndpointUrl(OAUTHSERVER_URL + CHECK_TOKEN_ENDPOINT_URL);
+		tokenServices.setClientId(CLIENT_ID);
+		tokenServices.setClientSecret(CLIENT_SECRET);
+		tokenServices.setAccessTokenConverter(tokenConverter);
+		return tokenServices;
+	}
+
 }

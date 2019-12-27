@@ -27,8 +27,10 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minsait.onesait.platform.client.Transaction;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
 import com.minsait.onesait.platform.client.springboot.fromjson.UpdateResult;
+import com.minsait.onesait.platform.client.springboot.proxy.operations.Transaction.OperationType;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,7 @@ public class Update implements Operation {
 	@Autowired
 	private OperationUtil util;
 
+	@Override
 	public Object operation(Method method, Object[] args, ClientIoTBroker client, String ontology,
 			Class<?> parametrizedType, boolean renewSession) throws SSAPConnectionException {
 		ObjectMapper mapper = new ObjectMapper();
@@ -51,7 +54,8 @@ public class Update implements Operation {
 				throw new SSAPConnectionException(
 						"We need at least 2 parameters: update(String identification,Object objectToUpdate)");
 			}
-			if (!method.getReturnType().isAssignableFrom(void.class) && !method.getReturnType().isAssignableFrom(UpdateResult.class)) {
+			if (!method.getReturnType().isAssignableFrom(void.class)
+					&& !method.getReturnType().isAssignableFrom(UpdateResult.class)) {
 				log.error("@IoTBrokerUpdate must return void");
 				throw new SSAPConnectionException("@IoTBrokerUpdate must return void");
 			}
@@ -62,23 +66,28 @@ public class Update implements Operation {
 				idInstance = (String) args[1];
 				instanceInString = mapper.writeValueAsString(args[0]);
 			}
-			
+
 			if (method.getReturnType().getName().equals("void")) {
 				client.init().update(ontology, instanceInString, idInstance);
 				return null;
-			}else {
+			} else {
 				JsonNode data = client.init().updateWithConfirmation(ontology, instanceInString, idInstance);
 				Object toReturn = new ObjectMapper().readValue(data.toString(), method.getReturnType());
 				return toReturn;
 			}
-			
-			
+
 		} catch (SSAPConnectionException e) {
 			throw e;
 		} catch (Exception e) {
 			log.error("Error in Update operation", e);
 			throw new SSAPConnectionException("Error in Update", e);
 		}
+	}
+
+	@Override
+	public Object operationTx(Method method, Object[] args, Transaction tx, String ontology, Class<?> parametrizedType,
+			boolean renewSession, OperationType operationType) throws SSAPConnectionException {
+		return null;
 	}
 
 }

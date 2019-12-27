@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 NAME = "onesaitplatform-client-services"
 
-VERSION = "1.1.2"
+VERSION = "1.3.0"
 
 DESCRIPTION = "Python Implementation of the Onesait Platform utilities"
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.md')).read()
@@ -34,7 +34,7 @@ if __name__ == '__main__':
         long_description_content_type="text/markdown",
         license=LICENSE,
         packages=PACKAGES,
-        url="https://onesait-git.cwbyminsait.com/onesait-platform/onesait-cloud-platform-clientlibraries.git",
+        url="",
         install_requires=REQUIRED_PACKAGES,
         keywords=KEYWORDS,
         namespace_packages=NAMESPACE_PACKAGES,

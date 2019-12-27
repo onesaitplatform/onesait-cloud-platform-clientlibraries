@@ -61,7 +61,7 @@ public class BinaryRepositoryClient {
 	private final String server;
 	private final ObjectMapper mapper = new ObjectMapper();
 	private final static String BINARY_REPO_PATH = "binary-repository";
-	private final String oauthPathTemplate = "api-ops/login/username/{{username}}/password/{{password}}";
+	private final String oauthPathTemplate = "api/login/username/{{username}}/password/{{password}}";
 	private String oauthPath;
 	private OkHttpClient client;
 	private final static long MAX_SIZE = 52428800;
