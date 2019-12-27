@@ -168,21 +168,21 @@ class ApiManagerClient(Client):
                                                 )
             headers = self.__headers
             response = self.call(RestMethods.GET.value, url, headers=headers)
-            log.info("Response: {} - {}".format(response.status_code, response.text))
-            self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
+            log.info("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
+            self.add_to_debug_trace("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
 
             if response.status_code == 200:
                 _res = response.json()
-                log.info("Query result: {}".format(response.text))
-                self.add_to_debug_trace("Query result: {}".format(response.text))
+                log.info("Query result: {text}".format(text=response.text))
+                self.add_to_debug_trace("Query result: {text}".format(text=response.text))
                 _ok = True
 
             else:
-                raise Exception("Response: {} - {}".format(response.status_code, response.text))
+                raise Exception("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
 
         except Exception as e:
-            log.error("Not possible to query api-manager: {}".format(e))
-            self.add_to_debug_trace("Not possible to query api-manager: {}".format(e))
+            log.error("Not possible to query api-manager: {exception}".format(exception=e))
+            self.add_to_debug_trace("Not possible to query api-manager: {exception}".format(exception=e))
             _res = e
 
         return _ok, _res
@@ -209,21 +209,21 @@ class ApiManagerClient(Client):
                                                 )
             headers = self.__headers
             response = self.call(RestMethods.POST.value, url, headers=headers, body=json_obj)
-            log.info("Response: {} - {}".format(response.status_code, response.text))
-            self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
+            log.info("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
+            self.add_to_debug_trace("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
 
             if response.status_code == 200:
                 _res = response.json()
-                log.info("Query result: {}".format(response.text))
-                self.add_to_debug_trace("Query result: {}".format(response.text))
+                log.info("Query result: {text}".format(text=response.text))
+                self.add_to_debug_trace("Query result: {text}".format(text=response.text))
                 _ok = True
 
             else:
-                raise Exception("Response: {} - {}".format(response.status_code, response.text))
+                raise Exception("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
 
         except Exception as e:
-            log.error("Not possible to query api-manager: {}".format(e))
-            self.add_to_debug_trace("Not possible to query api-manager: {}".format(e))
+            log.error("Not possible to query api-manager: {exception}".format(exception=e))
+            self.add_to_debug_trace("Not possible to query api-manager: {exception}".format(exception=e))
             _res = e
 
         return _ok, _res
@@ -253,21 +253,21 @@ class ApiManagerClient(Client):
                                                 )
             headers = self.__headers
             response = self.call(RestMethods.DELETE.value, url, headers=headers)
-            log.info("Response: {} - {}".format(response.status_code, response.text))
-            self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
+            log.info("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
+            self.add_to_debug_trace("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
 
             if response.status_code == 200:
                 _res = response.json()
-                log.info("Query result: {}".format(response.text))
-                self.add_to_debug_trace("Query result: {}".format(response.text))
+                log.info("Query result: {text}".format(text=response.text))
+                self.add_to_debug_trace("Query result: {text}".format(text=response.text))
                 _ok = True
 
             else:
-                raise Exception("Response: {} - {}".format(response.status_code, response.text))
+                raise Exception("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
 
         except Exception as e:
-            log.error("Not possible to query api-manager: {}".format(e))
-            self.add_to_debug_trace("Not possible to query api-manager: {}".format(e))
+            log.error("Not possible to query api-manager: {exception}".format(exception=e))
+            self.add_to_debug_trace("Not possible to query api-manager: {exception}".format(exception=e))
             _res = e
 
         return _ok, _res
@@ -343,21 +343,21 @@ class ApiManagerClient(Client):
                                                 )
             headers = self.__headers
             response = self.call(method, url, headers=headers, body=body)
-            log.info("Response: {} - {}".format(response.status_code, response.text))
-            self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
+            log.info("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
+            self.add_to_debug_trace("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
 
             if response.status_code == 200:
                 _res = response.json()
-                log.info("Query result: {}".format(response.text))
-                self.add_to_debug_trace("Query result: {}".format(response.text))
+                log.info("Query result: {text}".format(text=response.text))
+                self.add_to_debug_trace("Query result: {text}".format(text=response.text))
                 _ok = True
 
             else:
-                raise Exception("Response: {} - {}".format(response.status_code, response.text))
+                raise Exception("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
 
         except Exception as e:
-            log.error("Not possible to query api-manager: {}".format(e))
-            self.add_to_debug_trace("Not possible to query api-manager: {}".format(e))
+            log.error("Not possible to query api-manager: {exception}".format(exception=e))
+            self.add_to_debug_trace("Not possible to query api-manager: {exception}".format(exception=e))
             _res = e
 
         return _ok, _res
@@ -382,7 +382,7 @@ class ApiManagerClient(Client):
                                                 )
             headers = self.__headers
             response = self.call(RestMethods.GET.value, url, headers=headers)
-            log.info("Response: {} - {}".format(response.status_code, response.text))
+            log.info("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
             self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
 
             if response.status_code == 200:
@@ -392,11 +392,11 @@ class ApiManagerClient(Client):
                 _ok = True
 
             else:
-                raise Exception("Response: {} - {}".format(response.status_code, response.text))
+                raise Exception("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
 
         except Exception as e:
-            log.error("Not possible to query api-manager: {}".format(e))
-            self.add_to_debug_trace("Not possible to query api-manager: {}".format(e))
+            log.error("Not possible to query api-manager: {exception}".format(exception=e))
+            self.add_to_debug_trace("Not possible to query api-manager: {exception}".format(exception=e))
             _res = e
 
         return _ok, _res
