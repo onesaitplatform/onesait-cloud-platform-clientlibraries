@@ -26,6 +26,7 @@ class DigitalClient(Client):
     __leave_template = Template("$protocol://$host$path/rest/client/leave")
     __query_template = Template("$protocol://$host$path/rest/ontology/$ontology")
     __insert_template = Template("$protocol://$host$path/rest/ontology/$ontology")
+    __delete_template = Template("$protocol://$host$path/rest/ontology/$ontology/$entity")
 
     __query_batch_sql = Template("$query offset $start limit $end")
     __query_batch_mongo = Template("$query.skip($start).limit($end)")
@@ -451,6 +452,77 @@ class DigitalClient(Client):
         except Exception as e:
             log.error("Not possible to insert with iot-broker: {}".format(e))
             self.add_to_debug_trace("Not possible to insert with iot-broker: {}".format(e))
+            self.raise_exception_if_enabled(e)
+            _res = e
+
+        return _ok, _res
+
+    def raw_delete(self, ontology, entity_id, return_ids=True):
+        """
+        Make a delete to iot-broker service of the platform
+
+        @param ontology     ontology name
+        @param entity_id    entity object id
+        @param return_ids   return ids in response (optional, default: True)
+
+        @return response
+        """
+        assert ontology != None, "Invalid input ontology"
+        assert entity_id != None, "Invalid input entity_id"
+
+        if return_ids: return_ids = "true"
+        else: return_ids = "false"
+
+        log.info("Making delete to ontology:{}, entity_id:{}".format(ontology, entity_id))
+
+        url = self.__delete_template.substitute(protocol=self.protocol, host=self.hostport,
+                                            path=self.__iot_broker_path, ontology=ontology,
+                                            entity=entity_id)
+        params = {"ids": return_ids}
+        headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
+        response = self.call(RestMethods.DELETE.value, url, headers=headers, params=params)
+
+        if response.status_code != 200:
+            log.info("Session expired, reconnecting...")
+            is_reconnected, _ = self.restart()
+            log.info("Reconnected: {}".format(is_reconnected))
+            self.add_to_debug_trace("Reconnected: {}".format(is_reconnected))
+
+            if is_reconnected:
+                headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
+                response = self.call(RestMethods.DELETE.value, url, headers=headers, params=params)
+
+        return response
+
+    def delete(self, ontology, entity_id, return_ids=True):
+        """
+        Make a insert to iot-broker service of the platform
+
+        @param ontology     ontology name
+        @param entity_id    entity object id
+        @param return_ids   return ids in response (optional, default: True)
+
+        @return ok, info
+        """
+        _ok = False
+        _res = None
+        try:
+            response = self.raw_delete(ontology, entity_id, return_ids)
+
+            if self.is_correct_status_code(response.status_code):
+                _res = response.json()
+                log.info("Query result: {}".format(response.text))
+                self.add_to_debug_trace("Query result: {}".format(response.text))
+                _ok = True
+
+            else:
+                log.info("Bad response: {} - {}".format(response.status_code, response.text))
+                self.add_to_debug_trace("Bad response: {} - {}".format(response.status_code, response.text))
+                _res = response.text
+
+        except Exception as e:
+            log.error("Not possible to delete with iot-broker: {}".format(e))
+            self.add_to_debug_trace("Not possible to delete with iot-broker: {}".format(e))
             self.raise_exception_if_enabled(e)
             _res = e
 
