@@ -38,6 +38,7 @@ import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionExcep
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.FormBody;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -72,6 +73,7 @@ public class RestClient {
 
 	public static final String CORRELATION_ID_LOG_VAR_NAME = "correlationId";
 	public static final String CORRELATION_ID_HEADER_NAME = "X-Correlation-Id";
+	private static final int MAX_LENGTH_BYTES = 1500;
 
 	protected OkHttpClient client;
 	private final ObjectMapper mapper = new ObjectMapper();
@@ -104,11 +106,15 @@ public class RestClient {
 	/**
 	 * Creates a REST session.
 	 *
-	 * @param token              The token associated with the device/client
-	 * @param deviceTemplate     The device/client identification
-	 * @param device             The instance of the device
-	 * @param avoidSSLValidation Indicates if the connection will avoid to validate
-	 *                           SSL certificates
+	 * @param token
+	 *            The token associated with the device/client
+	 * @param deviceTemplate
+	 *            The device/client identification
+	 * @param device
+	 *            The instance of the device
+	 * @param avoidSSLValidation
+	 *            Indicates if the connection will avoid to validate SSL
+	 *            certificates
 	 * @return The session key for the session established between client and IoT
 	 *         Broker
 	 * @throws RestException
@@ -207,13 +213,25 @@ public class RestClient {
 		try {
 			final String usedSessionKey = new String(sessionKey);
 			final String processedQuery = URLEncoder.encode(query, UTF_8);
-			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
-					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
-					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(LIST_GET)
-					.addPathSegment(ontology).addEncodedQueryParameter(QUERY_STR, processedQuery)
-					.addQueryParameter("queryType", SSAPQueryType.valueOf(queryType.name()).name()).build();
-			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
+			if (processedQuery.length() < MAX_LENGTH_BYTES) {
+				url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
+						.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
+						.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0))
+						.addEncodedPathSegments(LIST_GET).addPathSegment(ontology)
+						.addEncodedQueryParameter(QUERY_STR, processedQuery)
+						.addQueryParameter("queryType", SSAPQueryType.valueOf(queryType.name()).name()).build();
+				request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+						.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
+			} else {
+				url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
+						.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
+						.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0))
+						.addEncodedPathSegments(LIST_GET).addPathSegment(ontology).addEncodedPathSegments(QUERY_STR)
+						.addQueryParameter("queryType", SSAPQueryType.valueOf(queryType.name()).name()).build();
+				final RequestBody formBody = new FormBody.Builder().add(QUERY_STR, query).build();
+				request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+						.addHeader(AUTHORIZATION_STR, usedSessionKey).post(formBody).build();
+			}
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -221,7 +239,7 @@ public class RestClient {
 					log.info(SESSIONKEY_EXP);
 					try {
 						lockRenewSession.lock();
-						if (this.sessionKey.equals(usedSessionKey)) {
+						if (sessionKey.equals(usedSessionKey)) {
 							createConnection(token, deviceTemplate, device);
 						}
 					} catch (final Exception e) {
@@ -285,7 +303,7 @@ public class RestClient {
 
 					try {
 						lockRenewSession.lock();
-						if (this.sessionKey.equals(usedSessionKey)) {
+						if (sessionKey.equals(usedSessionKey)) {
 							createConnection(token, deviceTemplate, device);
 						}
 					} catch (final Exception e) {
@@ -335,7 +353,7 @@ public class RestClient {
 
 					try {
 						lockRenewSession.lock();
-						if (this.sessionKey.equals(usedSessionKey)) {
+						if (sessionKey.equals(usedSessionKey)) {
 							createConnection(token, deviceTemplate, device);
 						}
 					} catch (final Exception e) {
@@ -416,7 +434,7 @@ public class RestClient {
 
 					try {
 						lockRenewSession.lock();
-						if (this.sessionKey.equals(usedSessionKey)) {
+						if (sessionKey.equals(usedSessionKey)) {
 							createConnection(token, deviceTemplate, device);
 						}
 					} catch (final Exception e) {
@@ -477,7 +495,7 @@ public class RestClient {
 
 					try {
 						lockRenewSession.lock();
-						if (this.sessionKey.equals(usedSessionKey)) {
+						if (sessionKey.equals(usedSessionKey)) {
 							createConnection(token, deviceTemplate, device);
 						}
 					} catch (final Exception e) {
@@ -529,8 +547,8 @@ public class RestClient {
 
 			// Es una update by query, va por PUT
 			final String usedSessionKey = new String(sessionKey);
-			MediaType JSON = MediaType.parse(APP_JSON);
-			RequestBody body = RequestBody.create(JSON, query);
+			final MediaType JSON = MediaType.parse(APP_JSON);
+			final RequestBody body = RequestBody.create(JSON, query);
 
 			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
 					.addHeader(AUTHORIZATION_STR, usedSessionKey).put(body).build();
@@ -542,7 +560,7 @@ public class RestClient {
 
 					try {
 						lockRenewSession.lock();
-						if (this.sessionKey.equals(usedSessionKey)) {
+						if (sessionKey.equals(usedSessionKey)) {
 							createConnection(token, deviceTemplate, device);
 						}
 					} catch (final Exception e) {
@@ -571,8 +589,10 @@ public class RestClient {
 	/**
 	 * Deletes ontology instance by Id.
 	 *
-	 * @param ontology Ontology associated with the message
-	 * @param id       Id of the instance in DB
+	 * @param ontology
+	 *            Ontology associated with the message
+	 * @param id
+	 *            Id of the instance in DB
 	 *
 	 * @throws IOException
 	 * @throws RestException
@@ -613,7 +633,7 @@ public class RestClient {
 
 					try {
 						lockRenewSession.lock();
-						if (this.sessionKey.equals(usedSessionKey)) {
+						if (sessionKey.equals(usedSessionKey)) {
 							createConnection(token, deviceTemplate, device);
 						}
 					} catch (final Exception e) {
@@ -677,7 +697,7 @@ public class RestClient {
 
 					try {
 						lockRenewSession.lock();
-						if (this.sessionKey.equals(usedSessionKey)) {
+						if (sessionKey.equals(usedSessionKey)) {
 							createConnection(token, deviceTemplate, device);
 						}
 					} catch (final Exception e) {
@@ -708,8 +728,10 @@ public class RestClient {
 	/**
 	 * Sends command to connected rest device
 	 *
-	 * @param command The command
-	 * @param data    The command parameters
+	 * @param command
+	 *            The command
+	 * @param data
+	 *            The command parameters
 	 * @throws IOException
 	 */
 
@@ -734,7 +756,7 @@ public class RestClient {
 
 					try {
 						lockRenewSession.lock();
-						if (this.sessionKey.equals(usedSessionKey)) {
+						if (sessionKey.equals(usedSessionKey)) {
 							createConnection(token, deviceTemplate, device);
 						}
 					} catch (final Exception e) {
@@ -761,9 +783,12 @@ public class RestClient {
 	/**
 	 * Sends command to others device
 	 *
-	 * @param toDeviceSession Session key of others device
-	 * @param command         The command
-	 * @param data            The command parameters
+	 * @param toDeviceSession
+	 *            Session key of others device
+	 * @param command
+	 *            The command
+	 * @param data
+	 *            The command parameters
 	 * @throws IOException
 	 */
 	public void sendCommand(String toDeviceSession, String command, JsonNode data) throws SSAPConnectionException {
@@ -787,7 +812,7 @@ public class RestClient {
 					log.info(SESSIONKEY_EXP);
 					try {
 						lockRenewSession.lock();
-						if (this.sessionKey.equals(usedSessionKey)) {
+						if (sessionKey.equals(usedSessionKey)) {
 							createConnection(token, deviceTemplate, device);
 						}
 					} catch (final Exception e) {
@@ -796,7 +821,7 @@ public class RestClient {
 						lockRenewSession.unlock();
 					}
 
-					this.sendCommand(this.sessionKey, command, data);
+					this.sendCommand(sessionKey, command, data);
 					return;
 
 				}
