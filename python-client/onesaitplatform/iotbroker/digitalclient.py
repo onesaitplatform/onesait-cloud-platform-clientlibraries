@@ -26,7 +26,9 @@ class DigitalClient(Client):
     __leave_template = Template("$protocol://$host$path/rest/client/leave")
     __query_template = Template("$protocol://$host$path/rest/ontology/$ontology")
     __insert_template = Template("$protocol://$host$path/rest/ontology/$ontology")
+    __update_template = Template("$protocol://$host$path/rest/ontology/$ontology/update")
     __delete_template = Template("$protocol://$host$path/rest/ontology/$ontology/$entity")
+    
 
     __query_batch_sql = Template("$query offset $start limit $end")
     __query_batch_mongo = Template("$query.skip($start).limit($end)")
@@ -457,7 +459,168 @@ class DigitalClient(Client):
 
         return _ok, _res
 
+    def raw_update(self, ontology, query=None, query_type="NATIVE", data=None, where=None, return_ids=True):
+        """
+        Make a update to iot-broker service of the platform
 
+        @param ontology     ontology name
+        @param query        query expression
+        @param query_type   query type ['NATIVE']
+        @param data         Optional - data to update, only if not using query
+        @param where        OptionaL - selection criteria for the update, only if not using query
+        @param return_ids   Optional - return ids in response (default: True)
+
+        @return response
+        """
+        assert ontology is not None, "Invalid input ontology"
+
+        if return_ids: return_ids = "true"
+        else: return_ids = "false"
+
+        if query is None:
+            assert data is not None, "Invalid data"
+            assert isinstance(data, dict), "Invalid data type"
+            if where is None:
+                where = {}
+            log.info("Making update to ontology:{}, elements:{}".format(ontology, data))
+
+        if data is None:
+            assert query is not None, "Invalid query"
+            log.info("Making query update to ontology:{}, query:{}, query_type:{}".format(ontology, query, query_type))
+
+        url = self.__update_template.substitute(protocol=self.protocol, host=self.hostport,
+                                            path=self.__iot_broker_path, ontology=ontology)
+
+        body = query
+
+        if not query:
+            parameters = {"multi": "true"}  # It could be added as a parameter on a future release
+            body = "db.{}.update({},{},{})".format(ontology, where, data, parameters)
+
+        params = {"ids": return_ids}
+        headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
+
+        response = self.call(RestMethods.PUT.value, url, headers=headers, params=params, body=body)
+
+        if response.status_code != 200:
+            log.info("Session expired, reconnecting...")
+            is_reconnected, _ = self.restart()
+            log.info("Reconnected: {}".format(is_reconnected))
+            self.add_to_debug_trace("Reconnected: {}".format(is_reconnected))
+
+            if is_reconnected:
+                headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
+                response = self.call(RestMethods.PUT.value, url, headers=headers, body=body, params={"ids": True})
+
+        return response
+
+    def update(self, ontology, query=None, query_type="NATIVE", data=None, where=None, return_ids=True):
+        """
+        Make a update to iot-broker service of the platform
+
+        @param ontology     ontology name
+        @param query        query expression
+        @param query_type   quert type ['NATIVE']
+        @param data         data to update
+        @param where        selection criteria for the update
+        @param return_ids   return ids in response (optional, default: True)
+
+        @return ok, info
+        """
+        _ok = False
+        _res = None
+        try:
+            response = self.raw_update(ontology, query, query_type, data, where, return_ids)
+
+            if self.is_correct_status_code(response.status_code):
+                _res = response.json()
+                log.info("Query result: {}".format(response.text))
+                self.add_to_debug_trace("Query result: {}".format(response.text))
+                _ok = True
+
+            else:
+                log.info("Bad response: {} - {}".format(response.status_code, response.text))
+                self.add_to_debug_trace("Bad response: {} - {}".format(response.status_code, response.text))
+                _res = response.text
+
+        except Exception as e:
+            log.error("Not possible to update with iot-broker: {}".format(e))
+            self.add_to_debug_trace("Not possible to update with iot-broker: {}".format(e))
+            self.raise_exception_if_enabled(e)
+            _res = e
+
+        return _ok, _res
+
+    def raw_delete(self, ontology, entity_id, return_ids=True):
+        """
+        Make a delete to iot-broker service of the platform
+
+        @param ontology     ontology name
+        @param entity_id    entity object id
+        @param return_ids   return ids in response (optional, default: True)
+
+        @return response
+        """
+        assert ontology != None, "Invalid input ontology"
+        assert entity_id != None, "Invalid input entity_id"
+
+        if return_ids: return_ids = "true"
+        else: return_ids = "false"
+
+        log.info("Making delete to ontology:{}, entity_id:{}".format(ontology, entity_id))
+
+        url = self.__delete_template.substitute(protocol=self.protocol, host=self.hostport,
+                                            path=self.__iot_broker_path, ontology=ontology,
+                                            entity=entity_id)
+        params = {"ids": return_ids}
+        headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
+        response = self.call(RestMethods.DELETE.value, url, headers=headers, params=params)
+
+        if response.status_code != 200:
+            log.info("Session expired, reconnecting...")
+            is_reconnected, _ = self.restart()
+            log.info("Reconnected: {}".format(is_reconnected))
+            self.add_to_debug_trace("Reconnected: {}".format(is_reconnected))
+
+            if is_reconnected:
+                headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
+                response = self.call(RestMethods.DELETE.value, url, headers=headers, params=params)
+
+        return response
+
+    def delete(self, ontology, entity_id, return_ids=True):
+        """
+        Make a insert to iot-broker service of the platform
+
+        @param ontology     ontology name
+        @param entity_id    entity object id
+        @param return_ids   return ids in response (optional, default: True)
+
+        @return ok, info
+        """
+        _ok = False
+        _res = None
+        try:
+            response = self.raw_delete(ontology, entity_id, return_ids)
+
+            if self.is_correct_status_code(response.status_code):
+                _res = response.json()
+                log.info("Query result: {}".format(response.text))
+                self.add_to_debug_trace("Query result: {}".format(response.text))
+                _ok = True
+
+            else:
+                log.info("Bad response: {} - {}".format(response.status_code, response.text))
+                self.add_to_debug_trace("Bad response: {} - {}".format(response.status_code, response.text))
+                _res = response.text
+
+        except Exception as e:
+            log.error("Not possible to delete with iot-broker: {}".format(e))
+            self.add_to_debug_trace("Not possible to delete with iot-broker: {}".format(e))
+            self.raise_exception_if_enabled(e)
+            _res = e
+
+        return _ok, _res
 
     def connect(self):
         return self.join()
