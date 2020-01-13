@@ -49,7 +49,7 @@
 	<repositories>
 		<repository>
             <id>onesait</id>
-            <url>http://nexus.onesaitplatform.com/nexus/content/repositories/releases/</url>
+            <url>https://nexus.onesaitplatform.com/nexus/content/repositories/releases/</url>
         </repository>
     </repositories>
 
