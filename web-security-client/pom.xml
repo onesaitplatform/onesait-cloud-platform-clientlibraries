@@ -60,6 +60,19 @@
 	</dependencies>
 	
 	<profiles>
+		<profile>
+			<id>releases-ssdd</id>
+	      <activation>
+		      <activeByDefault>false</activeByDefault>
+	      </activation>      
+	      <distributionManagement>
+				<repository>
+					<id>releases-ssdd</id>
+					<url>https://nexus-ssdd.onesaitplatform.com/repository/maven-releases/</url>
+				</repository>	
+	      </distributionManagement>
+	    </profile>
+	    	
 	    <profile>
 	      <id>releases</id>
 	      <activation>
