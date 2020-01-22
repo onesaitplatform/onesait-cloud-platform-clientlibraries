@@ -60,6 +60,19 @@
 	</dependencies>
 	
 	<profiles>
+		<profile>
+			<id>releases-ssdd</id>
+	      <activation>
+		      <activeByDefault>false</activeByDefault>
+	      </activation>      
+	      <distributionManagement>
+				<repository>
+					<id>releases-ssdd</id>
+					<url>https://nexus-ssdd.onesaitplatform.com/repository/maven-releases/</url>
+				</repository>	
+	      </distributionManagement>
+	    </profile>
+	    	
 	    <profile>
 	      <id>releases</id>
 	      <activation>
@@ -68,7 +81,7 @@
 	      <distributionManagement>
 				<repository>
 					<id>releases</id>
-					<url>http://nexus.onesaitplatform.com/nexus/content/repositories/releases/</url>
+					<url>https://nexus.onesaitplatform.com/nexus/content/repositories/releases/</url>
 				</repository>	      
 	      </distributionManagement>
 	    </profile>
@@ -81,7 +94,7 @@
 	      <distributionManagement>
 				<repository>
 					<id>snapshots</id>
-					<url>http://nexus.onesaitplatform.com/nexus/content/repositories/snapshots/</url>
+					<url>https://nexus.onesaitplatform.com/nexus/content/repositories/snapshots/</url>
 				</repository>	      
 	      </distributionManagement>
 	    </profile>	    
