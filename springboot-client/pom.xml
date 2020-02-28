@@ -17,6 +17,7 @@
     <description>Client of the IoT Broker for use with Spring Boot</description>	
 	<properties>
 		<license.dir>${project.parent.basedir}</license.dir>
+		<mockito.version>3.2.4</mockito.version>
 	</properties>
 
     <dependencies>    
@@ -47,6 +48,12 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version> <!-- To use MockitoJUnitRunner -->
+            <scope>test</scope>
+        </dependency>
 		<dependency>
 		    <groupId>org.aspectj</groupId>
 		    <artifactId>aspectjweaver</artifactId>
