@@ -14,25 +14,16 @@
  */
 package com.minsait.onesait.platform.client.springboot.proxy;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
-import java.net.JarURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
-import org.springframework.beans.BeansException;
+import org.reflections.Reflections;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -51,88 +42,27 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 
 	private ApplicationContext applicationContext;
 
-	private static final String CLASS_STR = ".class";
-
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
 	}
 
-	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		log.info("Scanning for resources...");
-		String scanPath = "";
-		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
-		Enumeration<URL> resources;
-		try {
-			resources = classLoader.getResources(scanPath);
-		} catch (IOException e) {
-			log.warn("Unable to load resources from path '{}'", scanPath, e);
-			return;
-		}
+		Set<Class<?>> classSet = new HashSet<>();
 
 		List<String> packagesToScan = this.getComponentScanPackages();
-
-		while (resources.hasMoreElements()) {
-			URL resourceUrl = resources.nextElement();
-			String resourceName = resourceUrl.toString();
-			log.info("Processing resource, name: {}, path: {}", resourceName, resourceUrl.getPath());
-			boolean isLibrary = resourceName.contains("BOOT-INF/lib");
-			boolean isJarFile = resourceName.startsWith("jar:file");
-			if (!isLibrary && isJarFile) {
-				log.debug("Processing as Jar file, name: {}, path: {}", resourceName, resourceUrl.getPath());
-				processJarResource(resourceName, beanFactory, Optional.empty());
-			} else if (!isLibrary) {
-				log.debug("Processing as class, name: {}, path: {}", resourceName, resourceUrl.getPath());
-				try {
-					File directory = new File(new URI(resourceName).getPath());
-					findClasses(directory, scanPath, applicationContext, beanFactory);
-				} catch (ClassNotFoundException e) {
-					log.warn("Class not found", e);
-				} catch (Exception e) {
-					log.warn("Exception captured: '{}'", resourceName, e);
-				}
-			} else {
-				log.debug("Processing as library, name: {}, path: {}", resourceName, resourceUrl.getPath());
-				processJarResource(resourceName, beanFactory, Optional.of(packagesToScan));
+		for (String packages : packagesToScan) {
+			Reflections ref = new Reflections(packages);
+			for (Class<?> cl : ref.getTypesAnnotatedWith(IoTBrokerRepository.class)) {
+				classSet.add(cl);
 			}
 		}
-	}
 
-	private void processJarResource(String resourceName, ConfigurableListableBeanFactory beanFactory,
-			Optional<List<String>> packagesToScan) {
-		try {
-			URL url = new URL(resourceName);
-			JarURLConnection connection = (JarURLConnection) url.openConnection();
-			JarFile jarFile = connection.getJarFile();
-			Enumeration<JarEntry> entries = jarFile.entries();
-			while (entries.hasMoreElements()) {
-				JarEntry entry = entries.nextElement();
-				// log.debug("Entry name: {}, D: {}, ", entry.getName(), entry.isDirectory());
-				if (!entry.isDirectory() && entry.getName().endsWith(CLASS_STR)) {
-					String className = entry.getName().replace("/", ".").replace(CLASS_STR, "");
-					if (!packagesToScan.isPresent()) {
-						log.debug("Scanning annnotations for class '{}' from scanned file: '{}'", className,
-								entry.getName());
-						registerClassByName(className, beanFactory);
-					} else {
-						List<String> lPackagesToScan = packagesToScan.get();
-						boolean found = false;
-						for (int i = 0; i < lPackagesToScan.size() && !found; i++) {
-							if (className.startsWith(lPackagesToScan.get(i))) {
-								found = true;
-								log.debug("Scanning annnotations for class '{}' from scanned file: '{}'", className,
-										entry.getName());
-								registerClassByName(className, beanFactory);
-							}
-						}
-					}
-				}
-			}
-		} catch (MalformedURLException e) {
-			log.warn("Bad url: {}", resourceName);
-		} catch (IOException e) {
-			log.warn("IO exception", e);
+		for (Class<?> cl : classSet) {
+			registerClassByName(cl, beanFactory);
 		}
+
 	}
 
 	private List<String> getComponentScanPackages() {
@@ -155,15 +85,14 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 
 	}
 
-	private void registerClassByName(String className, ConfigurableListableBeanFactory beanFactory) {
+	private void registerClassByName(Class<?> clazz, ConfigurableListableBeanFactory beanFactory) {
 		try {
-			Class clazz = Class.forName(className);
 			boolean isInterface = clazz.isInterface();
 			boolean isSofiaRepository = clazz.isAnnotationPresent(IoTBrokerRepository.class);
 
 			if (isInterface && isSofiaRepository) {
 				ClassLoader classLoader = clazz.getClassLoader();
-				Class[] classes = new java.lang.Class[] { clazz };
+				Class<?>[] classes = new java.lang.Class[] { clazz };
 				String annotationValue = ((IoTBrokerRepository) clazz.getAnnotation(IoTBrokerRepository.class)).value();
 
 				Class<?> typeArgument = null;
@@ -179,62 +108,11 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 						typeArgument);
 				Object proxy = Proxy.newProxyInstance(classLoader, classes, invocationHandler);
 				beanFactory.registerSingleton(clazz.getCanonicalName(), proxy);
-				log.info("Registered proxy for {}", className);
+				log.info("Registered proxy for {}", clazz.getName());
 
 			}
-		} catch (ClassNotFoundException | NoClassDefFoundError e) {
-			log.warn("Unable to get class for name: {}", className);
-		}
-	}
-
-	/**
-	 * Fetch interfaces annotated with @Sofia2Repository, creates proxies for them
-	 * and registers beans.
-	 * 
-	 * @param directory
-	 * @param packageName
-	 * @param context
-	 * @throws ClassNotFoundException
-	 */
-	private void findClasses(File directory, String packageName, ApplicationContext context,
-			ConfigurableListableBeanFactory beanFactory) throws ClassNotFoundException {
-
-		log.info("Looking for IoTBrokerClient annotations");
-
-		File[] files = directory.listFiles();
-		for (File file : files) {
-			if (file.isDirectory()) {
-				if (packageName.equals("")) {
-					findClasses(file, file.getName(), context, beanFactory);
-				} else {
-					findClasses(file, packageName + "." + file.getName(), context, beanFactory);
-				}
-			} else if (file.getName().endsWith(CLASS_STR)) {
-				Class clazz;
-				if (packageName.equals("")) {
-					clazz = Class.forName(file.getName().substring(0, file.getName().length() - 6));
-				} else {
-					clazz = Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
-				}
-				if (clazz.isInterface() && clazz.getAnnotations().length > 0
-						&& clazz.getAnnotations()[0] instanceof IoTBrokerRepository) {
-
-					Class<?> typeArgument = null;
-					Type[] typeGenericInterfaces = clazz.getGenericInterfaces();
-					if (typeGenericInterfaces.length > 0) {
-						ParameterizedType parameterizedType = (ParameterizedType) clazz.getGenericInterfaces()[0];
-						Type[] typeArguments = parameterizedType.getActualTypeArguments();
-						typeArgument = (Class<?>) typeArguments[0];
-						log.info(typeArgument.getName());
-					}
-
-					Object object = Proxy.newProxyInstance(clazz.getClassLoader(), new java.lang.Class[] { clazz },
-							new InvocationHandler(((IoTBrokerRepository) clazz.getAnnotations()[0]).value(),
-									applicationContext, typeArgument));
-					beanFactory.registerSingleton(clazz.getCanonicalName(), object);
-					log.info("Created proxy bean for '{}'", clazz.getCanonicalName());
-				}
-			}
+		} catch (NoClassDefFoundError e) {
+			log.warn("Unable to get class for name: {}", clazz.getName());
 		}
 	}
 
