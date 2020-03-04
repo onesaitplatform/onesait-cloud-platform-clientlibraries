@@ -76,7 +76,7 @@ public class SSAPMessageGenerator {
 	}
 
 	public static SSAPMessage<SSAPBodySubscribeMessage> generateRequestSubscriptionMessage(String subscription,
-			String queryValue, String callback, String sessionKey) {
+			String queryValue, String callback, String sessionKey, String clientId) {
 
 		final SSAPMessage<SSAPBodySubscribeMessage> subscriptionMessage = new SSAPMessage<>();
 		subscriptionMessage.setSessionKey(sessionKey);
@@ -86,6 +86,7 @@ public class SSAPMessageGenerator {
 		body.setCallback(callback);
 		body.setQueryValue(queryValue);
 		body.setSubscription(subscription);
+		body.setClientId(clientId);
 		subscriptionMessage.setBody(body);
 
 		return subscriptionMessage;
@@ -106,7 +107,7 @@ public class SSAPMessageGenerator {
 	}
 
 	public static SSAPMessage<SSAPBodyIndicationMessage> generateResponseIndicationMessage(String subscriptionId,
-			String data) {
+			String data, String sessionKey) {
 		final SSAPMessage<SSAPBodyIndicationMessage> indication = new SSAPMessage<SSAPBodyIndicationMessage>();
 
 		final SSAPBodyIndicationMessage body = new SSAPBodyIndicationMessage();
@@ -116,6 +117,7 @@ public class SSAPMessageGenerator {
 		indication.setBody(body);
 		indication.setDirection(SSAPMessageDirection.RESPONSE);
 		indication.setMessageType(SSAPMessageTypes.INDICATION);
+		indication.setSessionKey(sessionKey);
 		return indication;
 	}
 

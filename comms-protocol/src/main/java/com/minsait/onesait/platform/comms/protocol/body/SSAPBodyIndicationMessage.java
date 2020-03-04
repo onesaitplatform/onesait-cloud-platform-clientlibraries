@@ -37,6 +37,14 @@ public class SSAPBodyIndicationMessage extends SSAPBodyOntologyMessage {
 		this.data = data;
 	}
 
+	public String getSubscriptionId() {
+		return subscriptionId;
+	}
+
+	public void setSubscriptionId(String subscriptionId) {
+		this.subscriptionId = subscriptionId;
+	}
+
 	@Override
 	public boolean isSessionKeyMandatory() {
 		return true;
@@ -44,7 +52,7 @@ public class SSAPBodyIndicationMessage extends SSAPBodyOntologyMessage {
 
 	@Override
 	public boolean isOntologyMandatory() {
-		return true;
+		return false;
 	}
 
 }

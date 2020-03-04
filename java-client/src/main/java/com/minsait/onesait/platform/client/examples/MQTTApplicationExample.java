@@ -59,7 +59,7 @@ public class MQTTApplicationExample {
 			System.out.println(ASTERISKS);
 			System.out.println("Trying >MQTTApplicationExample tcp://s4citiespro.westeurope.cloudapp.azure.com:1883");
 
-			url = "tcp://s4citiespro.westeurope.cloudapp.azure.com:1883";
+			url = "tcp://localhost:1883";
 
 		} else if (args.length == 3) {
 			url = args[0];
@@ -77,11 +77,13 @@ public class MQTTApplicationExample {
 			clientSecure = new MQTTClient(url, false);
 		}
 
-		final int timeout = 50;
+		final int timeout = 500;
 		final String token = "e7ef0742d09d4de5a3687f0cfdf7f626";
 		final String deviceTemplate = "TicketingApp";
-		final String device = "MQTT Example App";
+		final String device = "MQTTApp01";
 		final String ontology = "Ticket";
+		final String subscription = "ticketStatus";
+		final String queryValue = "DONE";
 		final ObjectMapper mapper = new ObjectMapper();
 		final JsonNode deviceConfig = mapper.readTree(
 				"[{\"action_power\":{\"shutdown\":0,\"start\":1,\"reboot\":2}},{\"action_light\":{\"on\":1,\"off\":0}}]");
@@ -108,18 +110,30 @@ public class MQTTApplicationExample {
 			}
 
 		});
-		final String subsId = clientSecure.subscribe(ontology, new SubscriptionListener() {
+		final String subsId = clientSecure.subscribe(subscription, queryValue, new SubscriptionListener() {
 
 			@Override
 			public void onMessageArrived(String message) {
 				try {
 					final JsonNode cmdMsg = mapper.readTree(message);
-					System.out.println("["
-							+ cmdMsg.get("data").get(0).get("DeviceLog").get("location").get("coordinates")
-									.get("latitude").asDouble()
-							+ "," + cmdMsg.get("data").get(0).get("DeviceLog").get("location").get("coordinates")
-									.get("longitude").asDouble()
-							+ "]");
+					System.out.println(message);
+
+				} catch (final IOException e) {
+
+					log.error(e.getMessage());
+				}
+
+			}
+
+		});
+
+		final String subsId2 = clientSecure.subscribe("ticketStatus2", "PENDING", new SubscriptionListener() {
+
+			@Override
+			public void onMessageArrived(String message) {
+				try {
+					final JsonNode cmdMsg = mapper.readTree(message);
+					System.out.println(message);
 
 				} catch (final IOException e) {
 

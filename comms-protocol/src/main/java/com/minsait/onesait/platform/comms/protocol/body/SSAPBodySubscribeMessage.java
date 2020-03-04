@@ -21,6 +21,7 @@ public class SSAPBodySubscribeMessage extends SSAPBodyOntologyMessage {
 	private String queryValue;
 	private String callback;
 	private String subscription;
+	private String clientId;
 
 	@Override
 	public boolean isSessionKeyMandatory() {
@@ -54,6 +55,14 @@ public class SSAPBodySubscribeMessage extends SSAPBodyOntologyMessage {
 
 	public void setSubscription(String subscription) {
 		this.subscription = subscription;
+	}
+
+	public String getClientId() {
+		return clientId;
+	}
+
+	public void setClientId(String clientId) {
+		this.clientId = clientId;
 	}
 
 }
