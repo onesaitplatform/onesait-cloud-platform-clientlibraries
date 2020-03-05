@@ -127,22 +127,24 @@ public class MQTTApplicationExample {
 
 		});
 
-		final String subsId2 = clientSecure.subscribe("ticketStatus2", "PENDING", new SubscriptionListener() {
+//		final String subsId2 = clientSecure.subscribe("ticketStatus2", "PENDING", new SubscriptionListener() {
+//
+//			@Override
+//			public void onMessageArrived(String message) {
+//				try {
+//					final JsonNode cmdMsg = mapper.readTree(message);
+//					System.out.println(message);
+//
+//				} catch (final IOException e) {
+//
+//					log.error(e.getMessage());
+//				}
+//
+//			}
+//
+//		});
 
-			@Override
-			public void onMessageArrived(String message) {
-				try {
-					final JsonNode cmdMsg = mapper.readTree(message);
-					System.out.println(message);
-
-				} catch (final IOException e) {
-
-					log.error(e.getMessage());
-				}
-
-			}
-
-		});
+//		clientSecure.unsubscribe(subsId);
 	}
 
 	public static void generateLogMessage(MQTTClient client, int timeout, JsonNode responseMsg)
