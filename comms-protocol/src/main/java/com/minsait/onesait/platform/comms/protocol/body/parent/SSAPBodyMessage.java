@@ -19,9 +19,11 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyCommandMessage;
+import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyCommitTransactionMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyDeleteByIdMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyDeleteMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyEmptyMessage;
+import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyEmptySessionMandatoryMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyIndicationMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyInsertMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyJoinMessage;
@@ -35,12 +37,13 @@ import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyUpdateMessage;
 
 @JsonTypeInfo(use = Id.NAME)
 @JsonSubTypes({ @JsonSubTypes.Type(SSAPBodyDeleteByIdMessage.class), @JsonSubTypes.Type(SSAPBodyDeleteMessage.class),
-		@JsonSubTypes.Type(SSAPBodyEmptyMessage.class), @JsonSubTypes.Type(SSAPBodyInsertMessage.class),
-		@JsonSubTypes.Type(SSAPBodyJoinMessage.class), @JsonSubTypes.Type(SSAPBodyLeaveMessage.class),
-		@JsonSubTypes.Type(SSAPBodyQueryMessage.class), @JsonSubTypes.Type(SSAPBodyReturnMessage.class),
-		@JsonSubTypes.Type(SSAPBodyUpdateByIdMessage.class), @JsonSubTypes.Type(SSAPBodyUpdateMessage.class),
-		@JsonSubTypes.Type(SSAPBodySubscribeMessage.class), @JsonSubTypes.Type(SSAPBodyUnsubscribeMessage.class),
-		@JsonSubTypes.Type(SSAPBodyIndicationMessage.class), @JsonSubTypes.Type(SSAPBodyCommandMessage.class) })
+		@JsonSubTypes.Type(SSAPBodyEmptyMessage.class), @JsonSubTypes.Type(SSAPBodyEmptySessionMandatoryMessage.class),
+		@JsonSubTypes.Type(SSAPBodyInsertMessage.class), @JsonSubTypes.Type(SSAPBodyJoinMessage.class),
+		@JsonSubTypes.Type(SSAPBodyLeaveMessage.class), @JsonSubTypes.Type(SSAPBodyQueryMessage.class),
+		@JsonSubTypes.Type(SSAPBodyReturnMessage.class), @JsonSubTypes.Type(SSAPBodyUpdateByIdMessage.class),
+		@JsonSubTypes.Type(SSAPBodyUpdateMessage.class), @JsonSubTypes.Type(SSAPBodySubscribeMessage.class),
+		@JsonSubTypes.Type(SSAPBodyUnsubscribeMessage.class), @JsonSubTypes.Type(SSAPBodyIndicationMessage.class),
+		@JsonSubTypes.Type(SSAPBodyCommandMessage.class), @JsonSubTypes.Type(SSAPBodyCommitTransactionMessage.class) })
 public abstract class SSAPBodyMessage {
 	@JsonIgnore
 	public abstract boolean isSessionKeyMandatory();

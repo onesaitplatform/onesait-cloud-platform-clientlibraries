@@ -3,7 +3,7 @@ import logging
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
-from onesaitplatform.iotbroker import IotBrokerClient
+from onesaitplatform.iotbroker import DigitalClient
 from Orange.widgets.credentials import CredentialManager
 
 log = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ def printt(msg):
 class OspQuery(OWWidget):
 
     name = "Query"
-    description = "Makes an ontology query with iot-broker"
+    description = "Makes an ontology query with digital-broker"
     icon = "icons/iot_client_query.svg"
 
     # fields
@@ -78,11 +78,11 @@ class OspQuery(OWWidget):
 
     @Inputs.connection
     def set_connection(self, connection):
-        """Set input 'IotBrokerClient'"""   
+        """Set input 'DigitalClient'"""   
         printt("Setting recieved connection: {}".format(connection)) 
         log.info("Setting recieved connection: {}".format(connection)) 
         if connection is not None:    
-            self.connection = IotBrokerClient.from_json(connection)
+            self.connection = DigitalClient.from_json(connection)
         else:
             self.connection = connection
 

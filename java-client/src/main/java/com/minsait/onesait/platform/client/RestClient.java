@@ -48,38 +48,40 @@ import okhttp3.Response;
 @Slf4j
 public class RestClient {
 	@Getter
-	private String sessionKey;
+	protected String sessionKey;
 	@Getter
-	private final String restServer;
+	protected final String restServer;
 	private final static String JOIN_GET = "rest/client/join";
 	private final static String LEAVE_GET = "rest/client/leave";
 	private final static String LIST_GET = "rest/ontology";
-	private final static String INSERT_POST = "rest/ontology";
-	private final static String UPDATE = "rest/ontology";
-	private final static String DELETE = "rest/ontology";
+	protected final static String INSERT_POST = "rest/ontology";
+	protected final static String UPDATE = "rest/ontology";
+	protected final static String DELETE = "rest/ontology";
 	private final static String COMMAND = "commandAsync";
 
-	private final static String NULL_CLIENT = "Client is null. Use connect() before.";
-	private final static String UTF_8 = "UTF-8";
-	private final static String QUERY_STR = "query";
-	private final static String AUTHORIZATION_STR = "Authorization";
-	private final static String SESSIONKEY_EXP = "Expired sessionkey detected. Regenerating";
-	private final static String REGENERATING_ERROR = "Error regenerating sessionkey";
+	protected final static String NULL_CLIENT = "Client is null. Use connect() before.";
+	protected final static String UTF_8 = "UTF-8";
+	protected final static String QUERY_STR = "query";
+	protected final static String AUTHORIZATION_STR = "Authorization";
+	protected final static String SESSIONKEY_EXP = "Expired sessionkey detected. Regenerating";
+	protected final static String REGENERATING_ERROR = "Error regenerating sessionkey";
 	private final static String QUERY_ERROR = "Error in query . Response:";
-	private final static String APP_JSON = "application/json; charset=utf-8";
+	protected final static String APP_JSON = "application/json; charset=utf-8";
 	private final static String UPDATE_ERROR = "Error in update . Response:";
 	private final static String DELETE_ERROR = "Error in delete . Response:";
 
 	public static final String CORRELATION_ID_LOG_VAR_NAME = "correlationId";
 	public static final String CORRELATION_ID_HEADER_NAME = "X-Correlation-Id";
 
-	private OkHttpClient client;
+	protected OkHttpClient client;
 	private final ObjectMapper mapper = new ObjectMapper();
 	private TimeOutConfig timeout = null;
 
-	private String token;
-	private String deviceTemplate;
-	private String device;
+	protected String token;
+	protected String deviceTemplate;
+	protected String device;
+
+	protected boolean sessionRetry = false;
 
 	private final Lock lockConnection = new ReentrantLock();
 	private final Lock lockRenewSession = new ReentrantLock();
@@ -153,7 +155,8 @@ public class RestClient {
 		}
 	}
 
-	private String createConnection(String token, String deviceTemplate, String device) throws SSAPConnectionException {
+	protected String createConnection(String token, String deviceTemplate, String device)
+			throws SSAPConnectionException {
 		this.token = token;
 		this.deviceTemplate = deviceTemplate;
 		this.device = device;
@@ -264,7 +267,6 @@ public class RestClient {
 		HttpUrl url = null;
 		Request request = null;
 		Response response = null;
-		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
 			final String usedSessionKey = new String(sessionKey);
 			final String processedQuery = URLEncoder.encode(query, UTF_8);
@@ -518,19 +520,20 @@ public class RestClient {
 		HttpUrl url = null;
 		Request request = null;
 		Response response = null;
-		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
-			final String processedQuery = URLEncoder.encode(query, UTF_8);
 			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(UPDATE)
 					.addPathSegment(ontology).addEncodedPathSegments("update")
-					.addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addEncodedQueryParameter("ids", Boolean.toString(getIds)).build();
-			// Es una update by query, va por GET
+
+			// Es una update by query, va por PUT
 			final String usedSessionKey = new String(sessionKey);
+			MediaType JSON = MediaType.parse(APP_JSON);
+			RequestBody body = RequestBody.create(JSON, query);
+
 			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).put(body).build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -653,7 +656,6 @@ public class RestClient {
 		HttpUrl url = null;
 		Request request = null;
 		Response response = null;
-		final TypeFactory typeFactory = mapper.getTypeFactory();
 		try {
 			final String processedQuery = URLEncoder.encode(query, UTF_8);
 			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
@@ -871,7 +873,7 @@ public class RestClient {
 		}
 	}
 
-	private String logId() {
+	protected String logId() {
 		final String logId = MDC.get(CORRELATION_ID_LOG_VAR_NAME);
 		if (null == logId)
 			return new String("");

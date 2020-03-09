@@ -22,9 +22,10 @@ package com.minsait.onesait.platform.client.springboot.proxy.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minsait.onesait.platform.client.Transaction;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
 import com.minsait.onesait.platform.client.springboot.fromjson.UpdateResult;
-import com.minsait.onesait.platform.comms.protocol.enums.SSAPQueryType;
+import com.minsait.onesait.platform.client.springboot.proxy.operations.Transaction.OperationType;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -44,7 +45,6 @@ public class Update implements Operation {
 	protected static final String QUERY_BY_OBJECT_ID="select _id, c.* from %s as c where _id = %s";
 	@Autowired
 	private OperationUtil util;
-
 	private Field getVersionField(Class c){
 		List<Field> fieldsWithVersion=FieldUtils.getFieldsListWithAnnotation(c, Version.class);
 		if(fieldsWithVersion.size()==0){
@@ -55,7 +55,7 @@ public class Update implements Operation {
 			throw new SSAPConnectionException("Entity only can have one Version Field");
 		}
 	}
-
+	@Override
 	public Object operation(Method method, Object[] args, ClientIoTBroker client, String ontology,
 			Class<?> parametrizedType, boolean renewSession) throws SSAPConnectionException {
 		ObjectMapper mapper = new ObjectMapper();
@@ -67,7 +67,8 @@ public class Update implements Operation {
 				throw new SSAPConnectionException(
 						"We need at least 2 parameters: update(String identification,Object objectToUpdate)");
 			}
-			if (!method.getReturnType().isAssignableFrom(void.class) && !method.getReturnType().isAssignableFrom(UpdateResult.class)) {
+			if (!method.getReturnType().isAssignableFrom(void.class)
+					&& !method.getReturnType().isAssignableFrom(UpdateResult.class)) {
 				log.error("@IoTBrokerUpdate must return void");
 				throw new SSAPConnectionException("@IoTBrokerUpdate must return void");
 			}
@@ -108,6 +109,12 @@ public class Update implements Operation {
 			log.error("Error in Update operation", e);
 			throw new SSAPConnectionException("Error in Update", e);
 		}
+	}
+
+	@Override
+	public Object operationTx(Method method, Object[] args, Transaction tx, String ontology, Class<?> parametrizedType,
+			boolean renewSession, OperationType operationType) throws SSAPConnectionException {
+		return null;
 	}
 
 }

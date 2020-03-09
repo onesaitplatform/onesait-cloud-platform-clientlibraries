@@ -17,11 +17,16 @@ package com.minsait.onesait.platform.client.springboot.proxy.operations;
 import java.lang.reflect.Method;
 
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
+import com.minsait.onesait.platform.client.springboot.proxy.operations.Transaction.OperationType;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
 
 public interface Operation {
 
 	Object operation(Method method, Object[] args, ClientIoTBroker kp, String ontology, Class<?> parametrizedType,
 			boolean renewSession) throws SSAPConnectionException;
+
+	Object operationTx(Method method, Object[] args, com.minsait.onesait.platform.client.Transaction tx,
+			String ontology, Class<?> parametrizedType, boolean renewSession, OperationType operationType)
+			throws SSAPConnectionException;
 
 }
