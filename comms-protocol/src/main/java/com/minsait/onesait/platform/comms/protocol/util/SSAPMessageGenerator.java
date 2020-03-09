@@ -108,11 +108,11 @@ public class SSAPMessageGenerator {
 
 	public static SSAPMessage<SSAPBodyIndicationMessage> generateResponseIndicationMessage(String subscriptionId,
 			String data, String sessionKey) {
-		final SSAPMessage<SSAPBodyIndicationMessage> indication = new SSAPMessage<SSAPBodyIndicationMessage>();
+		final SSAPMessage<SSAPBodyIndicationMessage> indication = new SSAPMessage<>();
 
 		final SSAPBodyIndicationMessage body = new SSAPBodyIndicationMessage();
 		body.setData(data);
-		body.setSubsciptionId(subscriptionId);
+		body.setSubscriptionId(subscriptionId);
 
 		indication.setBody(body);
 		indication.setDirection(SSAPMessageDirection.RESPONSE);

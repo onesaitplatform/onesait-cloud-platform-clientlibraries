@@ -314,6 +314,8 @@ public class MQTTClient {
 					this.connect(token, deviceTemplate, device, sessionKey);
 					return subscribe(subscription, queryValue, listener);
 
+				} else {
+					log.error("Error subscribing client to topic. {}", response.getBody().getError());
 				}
 
 			}
@@ -850,7 +852,7 @@ public class MQTTClient {
 
 		final JsonNode indMsg = mapper.createObjectNode();
 		((ObjectNode) indMsg).set("data", mapper.readTree(message).get("body").get("data"));
-		final String subsId = mapper.readTree(message).get("body").get("subsciptionId").asText();
+		final String subsId = mapper.readTree(message).get("body").get("subscriptionId").asText();
 		((ObjectNode) indMsg).put("subscriptionId", subsId);
 		final SubscriptionListener listener = subscriptions.get(subsId);
 		new Thread(new Runnable() {

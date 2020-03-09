@@ -21,14 +21,6 @@ public class SSAPBodyIndicationMessage extends SSAPBodyOntologyMessage {
 	private String subscriptionId;
 	private String data;
 
-	public String getSubsciptionId() {
-		return subscriptionId;
-	}
-
-	public void setSubsciptionId(String subsciptionId) {
-		this.subscriptionId = subsciptionId;
-	}
-
 	public String getData() {
 		return data;
 	}
