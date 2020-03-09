@@ -26,6 +26,7 @@ import com.minsait.onesait.platform.client.Transaction;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
 import com.minsait.onesait.platform.client.springboot.fromjson.UpdateResult;
 import com.minsait.onesait.platform.client.springboot.proxy.operations.Transaction.OperationType;
+import com.minsait.onesait.platform.comms.protocol.enums.SSAPQueryType;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -45,6 +46,7 @@ public class Update implements Operation {
 	protected static final String QUERY_BY_OBJECT_ID="select _id, c.* from %s as c where _id = %s";
 	@Autowired
 	private OperationUtil util;
+
 	private Field getVersionField(Class c){
 		List<Field> fieldsWithVersion=FieldUtils.getFieldsListWithAnnotation(c, Version.class);
 		if(fieldsWithVersion.size()==0){
@@ -94,11 +96,12 @@ public class Update implements Operation {
 
 				}
 			}
+			String instanceInString = mapper.writeValueAsString(entityInstance);
 			if (method.getReturnType().getName().equals("void")) {
-				client.init().update(ontology, mapper.writeValueAsString(entityInstance), idInstance);
+				client.init().update(ontology, instanceInString, idInstance);
 				return null;
 			}else {
-				JsonNode data = client.init().updateWithConfirmation(ontology, mapper.writeValueAsString(entityInstance), idInstance);
+				JsonNode data = client.init().updateWithConfirmation(ontology, instanceInString, idInstance);
 				return new ObjectMapper().readValue(data.toString(), method.getReturnType());
 			}
 
