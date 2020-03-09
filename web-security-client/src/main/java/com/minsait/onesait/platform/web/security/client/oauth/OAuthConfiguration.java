@@ -15,6 +15,7 @@
 package com.minsait.onesait.platform.web.security.client.oauth;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
+import org.springframework.web.client.RestOperations;
 
 @Configuration
 @EnableResourceServer
@@ -45,12 +47,13 @@ public class OAuthConfiguration {
 
 	@Primary
 	@Bean
-	public RemoteTokenServices remoteTokenServices() {
+	public RemoteTokenServices remoteTokenServices(@Qualifier("oauthRestTemplate") RestOperations restOperations) {
 		final RemoteTokenServices tokenServices = new RemoteTokenServices();
 		tokenServices.setCheckTokenEndpointUrl(OAUTHSERVER_URL + CHECK_TOKEN_ENDPOINT_URL);
 		tokenServices.setClientId(CLIENT_ID);
 		tokenServices.setClientSecret(CLIENT_SECRET);
 		tokenServices.setAccessTokenConverter(tokenConverter);
+		tokenServices.setRestTemplate(restOperations);
 		return tokenServices;
 	}
 
