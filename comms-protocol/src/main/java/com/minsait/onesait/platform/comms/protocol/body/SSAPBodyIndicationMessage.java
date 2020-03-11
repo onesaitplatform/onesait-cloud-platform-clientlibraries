@@ -14,37 +14,27 @@
  */
 package com.minsait.onesait.platform.comms.protocol.body;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.minsait.onesait.platform.comms.protocol.body.parent.SSAPBodyOntologyMessage;
 
 public class SSAPBodyIndicationMessage extends SSAPBodyOntologyMessage {
 
 	private String subscriptionId;
-	private String query;
-	private JsonNode data;
+	private String data;
 
-	public String getSubsciptionId() {
-		return subscriptionId;
-	}
-
-	public void setSubsciptionId(String subsciptionId) {
-		this.subscriptionId = subsciptionId;
-	}
-
-	public String getQuery() {
-		return query;
-	}
-
-	public void setQuery(String query) {
-		this.query = query;
-	}
-
-	public JsonNode getData() {
+	public String getData() {
 		return data;
 	}
 
-	public void setData(JsonNode data) {
+	public void setData(String data) {
 		this.data = data;
+	}
+
+	public String getSubscriptionId() {
+		return subscriptionId;
+	}
+
+	public void setSubscriptionId(String subscriptionId) {
+		this.subscriptionId = subscriptionId;
 	}
 
 	@Override
@@ -54,7 +44,7 @@ public class SSAPBodyIndicationMessage extends SSAPBodyOntologyMessage {
 
 	@Override
 	public boolean isOntologyMandatory() {
-		return true;
+		return false;
 	}
 
 }

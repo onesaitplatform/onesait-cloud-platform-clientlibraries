@@ -58,6 +58,8 @@ public class RestClient {
 	protected final static String INSERT_POST = "rest/ontology";
 	protected final static String UPDATE = "rest/ontology";
 	protected final static String DELETE = "rest/ontology";
+	protected final static String SUBSCRIBE = "rest/subscribe";
+	protected final static String UNSUBSCRIBE = "rest/unsubscribe";
 	private final static String COMMAND = "commandAsync";
 
 	protected final static String NULL_CLIENT = "Client is null. Use connect() before.";
@@ -106,15 +108,11 @@ public class RestClient {
 	/**
 	 * Creates a REST session.
 	 *
-	 * @param token
-	 *            The token associated with the device/client
-	 * @param deviceTemplate
-	 *            The device/client identification
-	 * @param device
-	 *            The instance of the device
-	 * @param avoidSSLValidation
-	 *            Indicates if the connection will avoid to validate SSL
-	 *            certificates
+	 * @param token              The token associated with the device/client
+	 * @param deviceTemplate     The device/client identification
+	 * @param device             The instance of the device
+	 * @param avoidSSLValidation Indicates if the connection will avoid to validate
+	 *                           SSL certificates
 	 * @return The session key for the session established between client and IoT
 	 *         Broker
 	 * @throws RestException
@@ -200,6 +198,103 @@ public class RestClient {
 			throw new SSAPConnectionException("Error in get Session Key", e);
 		}
 		return sessionKey;
+	}
+
+	public JsonNode subscribe(String subscription, String queryValue, String callback) throws SSAPConnectionException {
+		HttpUrl url = null;
+		Request request = null;
+		Response response = null;
+		try {
+			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
+					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
+					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(SUBSCRIBE)
+					.addPathSegment(subscription).addQueryParameter("queryValue", queryValue)
+					.addQueryParameter("callback", callback).build();
+
+			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), "");
+
+			final String usedSessionKey = new String(sessionKey);
+			request = new Request.Builder().url(url).post(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).build();
+
+			response = client.newCall(request).execute();
+			if (!response.isSuccessful()) {
+				if (response.code() == 401) {// Expired sessionkey
+					log.info(SESSIONKEY_EXP);
+
+					try {
+						lockRenewSession.lock();
+						if (sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
+					} catch (final Exception e) {
+						log.error(REGENERATING_ERROR, e);
+					} finally {
+						lockRenewSession.unlock();
+					}
+					return subscribe(subscription, queryValue, callback);
+				}
+
+				log.error("Error in subscribe . Response:" + response.body().string());
+				throw new SSAPConnectionException("Error in subscribe . Response:" + response.body().string());
+			}
+
+			return mapper.readTree(response.body().string());
+
+		} catch (final SSAPConnectionException e) {
+			throw e;
+		} catch (final Exception e) {
+			log.error("Error in insert instance:", e);
+			throw new SSAPConnectionException("Error in insert instance: ", e);
+		}
+	}
+
+	public JsonNode unsubscribe(String subscription) throws SSAPConnectionException {
+		HttpUrl url = null;
+		Request request = null;
+		Response response = null;
+		try {
+			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
+					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
+					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(UNSUBSCRIBE)
+					.addPathSegment(subscription).build();
+
+			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), "");
+
+			final String usedSessionKey = new String(sessionKey);
+			request = new Request.Builder().url(url).post(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
+					.addHeader(AUTHORIZATION_STR, usedSessionKey).build();
+
+			response = client.newCall(request).execute();
+			if (!response.isSuccessful()) {
+				if (response.code() == 401) {// Expired sessionkey
+					log.info(SESSIONKEY_EXP);
+
+					try {
+						lockRenewSession.lock();
+						if (sessionKey.equals(usedSessionKey)) {
+							createConnection(token, deviceTemplate, device);
+						}
+					} catch (final Exception e) {
+						log.error(REGENERATING_ERROR, e);
+					} finally {
+						lockRenewSession.unlock();
+					}
+					return unsubscribe(subscription);
+				}
+
+				log.error("Error in unsubscribe . Response:" + response.body().string());
+				throw new SSAPConnectionException("Error in unsubscribe . Response:" + response.body().string());
+			}
+
+			return mapper.readTree(response.body().string());
+
+		} catch (final SSAPConnectionException e) {
+			throw e;
+		} catch (final Exception e) {
+			log.error("Error in unsubscribe instance:", e);
+			throw new SSAPConnectionException("Error in unsubscribe instance: ", e);
+		}
 	}
 
 	// Todo --> Hay que añadir otro este método
@@ -589,10 +684,8 @@ public class RestClient {
 	/**
 	 * Deletes ontology instance by Id.
 	 *
-	 * @param ontology
-	 *            Ontology associated with the message
-	 * @param id
-	 *            Id of the instance in DB
+	 * @param ontology Ontology associated with the message
+	 * @param id       Id of the instance in DB
 	 *
 	 * @throws IOException
 	 * @throws RestException
@@ -728,10 +821,8 @@ public class RestClient {
 	/**
 	 * Sends command to connected rest device
 	 *
-	 * @param command
-	 *            The command
-	 * @param data
-	 *            The command parameters
+	 * @param command The command
+	 * @param data    The command parameters
 	 * @throws IOException
 	 */
 
@@ -783,12 +874,9 @@ public class RestClient {
 	/**
 	 * Sends command to others device
 	 *
-	 * @param toDeviceSession
-	 *            Session key of others device
-	 * @param command
-	 *            The command
-	 * @param data
-	 *            The command parameters
+	 * @param toDeviceSession Session key of others device
+	 * @param command         The command
+	 * @param data            The command parameters
 	 * @throws IOException
 	 */
 	public void sendCommand(String toDeviceSession, String command, JsonNode data) throws SSAPConnectionException {
