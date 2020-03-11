@@ -48,16 +48,16 @@ public class MQTTApplicationExample {
 		MQTTClient clientSecure;
 
 		if (args == null || args.length == 0) {
-			System.out.println(ASTERISKS);
-			System.out.println("** onesait Platform - MQTT Example");
-			System.out.println(ASTERISKS);
-			System.out.println("You can  >>MQTTApplicationExample <URL_MQTT_Server>"
+			log.info(ASTERISKS);
+			log.info("** onesait Platform - MQTT Example");
+			log.info(ASTERISKS);
+			log.info("You can  >>MQTTApplicationExample <URL_MQTT_Server>"
 					+ " (where URL_MQTT_Server has this way ssl://s4citiespro.westeurope.cloudapp.azure.com:8443)");
-			System.out.println("OR >>MQTTApplicationExample <URL_MQTT_Server> <?.jks> <password>"
+			log.info("OR >>MQTTApplicationExample <URL_MQTT_Server> <?.jks> <password>"
 					+ " (where <?.jks> can be clientdevelkeystore.jks and <password> changeIt!)");
 
-			System.out.println(ASTERISKS);
-			System.out.println("Trying >MQTTApplicationExample tcp://s4citiespro.westeurope.cloudapp.azure.com:1883");
+			log.info(ASTERISKS);
+			log.info("Trying >MQTTApplicationExample tcp://s4citiespro.westeurope.cloudapp.azure.com:1883");
 
 			url = "tcp://localhost:1883";
 
@@ -126,25 +126,6 @@ public class MQTTApplicationExample {
 			}
 
 		});
-
-//		final String subsId2 = clientSecure.subscribe("ticketStatus2", "PENDING", new SubscriptionListener() {
-//
-//			@Override
-//			public void onMessageArrived(String message) {
-//				try {
-//					final JsonNode cmdMsg = mapper.readTree(message);
-//					System.out.println(message);
-//
-//				} catch (final IOException e) {
-//
-//					log.error(e.getMessage());
-//				}
-//
-//			}
-//
-//		});
-
-//		clientSecure.unsubscribe(subsId);
 	}
 
 	public static void generateLogMessage(MQTTClient client, int timeout, JsonNode responseMsg)
