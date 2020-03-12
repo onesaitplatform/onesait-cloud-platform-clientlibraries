@@ -48,18 +48,18 @@ public class MQTTApplicationExample {
 		MQTTClient clientSecure;
 
 		if (args == null || args.length == 0) {
-			System.out.println(ASTERISKS);
-			System.out.println("** onesait Platform - MQTT Example");
-			System.out.println(ASTERISKS);
-			System.out.println("You can  >>MQTTApplicationExample <URL_MQTT_Server>"
+			log.info(ASTERISKS);
+			log.info("** onesait Platform - MQTT Example");
+			log.info(ASTERISKS);
+			log.info("You can  >>MQTTApplicationExample <URL_MQTT_Server>"
 					+ " (where URL_MQTT_Server has this way ssl://s4citiespro.westeurope.cloudapp.azure.com:8443)");
-			System.out.println("OR >>MQTTApplicationExample <URL_MQTT_Server> <?.jks> <password>"
+			log.info("OR >>MQTTApplicationExample <URL_MQTT_Server> <?.jks> <password>"
 					+ " (where <?.jks> can be clientdevelkeystore.jks and <password> changeIt!)");
 
-			System.out.println(ASTERISKS);
-			System.out.println("Trying >MQTTApplicationExample tcp://s4citiespro.westeurope.cloudapp.azure.com:1883");
+			log.info(ASTERISKS);
+			log.info("Trying >MQTTApplicationExample tcp://s4citiespro.westeurope.cloudapp.azure.com:1883");
 
-			url = "tcp://s4citiespro.westeurope.cloudapp.azure.com:1883";
+			url = "tcp://localhost:1883";
 
 		} else if (args.length == 3) {
 			url = args[0];
@@ -77,11 +77,13 @@ public class MQTTApplicationExample {
 			clientSecure = new MQTTClient(url, false);
 		}
 
-		final int timeout = 50;
+		final int timeout = 500;
 		final String token = "e7ef0742d09d4de5a3687f0cfdf7f626";
 		final String deviceTemplate = "TicketingApp";
-		final String device = "MQTT Example App";
+		final String device = "MQTTApp01";
 		final String ontology = "Ticket";
+		final String subscription = "ticketStatus";
+		final String queryValue = "DONE";
 		final ObjectMapper mapper = new ObjectMapper();
 		final JsonNode deviceConfig = mapper.readTree(
 				"[{\"action_power\":{\"shutdown\":0,\"start\":1,\"reboot\":2}},{\"action_light\":{\"on\":1,\"off\":0}}]");
@@ -108,18 +110,13 @@ public class MQTTApplicationExample {
 			}
 
 		});
-		final String subsId = clientSecure.subscribe(ontology, new SubscriptionListener() {
+		final String subsId = clientSecure.subscribe(subscription, queryValue, new SubscriptionListener() {
 
 			@Override
 			public void onMessageArrived(String message) {
 				try {
 					final JsonNode cmdMsg = mapper.readTree(message);
-					System.out.println("["
-							+ cmdMsg.get("data").get(0).get("DeviceLog").get("location").get("coordinates")
-									.get("latitude").asDouble()
-							+ "," + cmdMsg.get("data").get(0).get("DeviceLog").get("location").get("coordinates")
-									.get("longitude").asDouble()
-							+ "]");
+					System.out.println(message);
 
 				} catch (final IOException e) {
 

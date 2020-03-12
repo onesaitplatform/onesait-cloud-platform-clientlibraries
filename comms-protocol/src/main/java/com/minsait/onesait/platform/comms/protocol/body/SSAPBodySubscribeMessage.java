@@ -15,12 +15,13 @@
 package com.minsait.onesait.platform.comms.protocol.body;
 
 import com.minsait.onesait.platform.comms.protocol.body.parent.SSAPBodyOntologyMessage;
-import com.minsait.onesait.platform.comms.protocol.enums.SSAPQueryType;
 
 public class SSAPBodySubscribeMessage extends SSAPBodyOntologyMessage {
 
-	private String query;
-	private SSAPQueryType queryType;
+	private String queryValue;
+	private String callback;
+	private String subscription;
+	private String clientId;
 
 	@Override
 	public boolean isSessionKeyMandatory() {
@@ -29,23 +30,39 @@ public class SSAPBodySubscribeMessage extends SSAPBodyOntologyMessage {
 
 	@Override
 	public boolean isOntologyMandatory() {
-		return true;
+		return false;
 	}
 
-	public SSAPQueryType getQueryType() {
-		return queryType;
+	public String getQueryValue() {
+		return queryValue;
 	}
 
-	public void setQueryType(SSAPQueryType queryType) {
-		this.queryType = queryType;
+	public void setQueryValue(String queryValue) {
+		this.queryValue = queryValue;
 	}
 
-	public String getQuery() {
-		return query;
+	public String getCallback() {
+		return callback;
 	}
 
-	public void setQuery(String query) {
-		this.query = query;
+	public void setCallback(String callback) {
+		this.callback = callback;
+	}
+
+	public String getSubscription() {
+		return subscription;
+	}
+
+	public void setSubscription(String subscription) {
+		this.subscription = subscription;
+	}
+
+	public String getClientId() {
+		return clientId;
+	}
+
+	public void setClientId(String clientId) {
+		this.clientId = clientId;
 	}
 
 }

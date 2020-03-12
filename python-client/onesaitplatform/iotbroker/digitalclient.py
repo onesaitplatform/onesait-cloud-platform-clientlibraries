@@ -294,8 +294,8 @@ class DigitalClient(Client):
         response = self.call(RestMethods.GET.value, url, headers=headers, params=querystring)
 
         if response.status_code != 200:
-            log.warn("Response: {} - {}".format(response.status_code, response.text))
-            self.add_to_debug_trace("Response: {} - {}".format(response.status_code, response.text))
+            log.warn("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
+            self.add_to_debug_trace("Response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
             log.info("Not possible to connect ({}) - {}, reconnecting...".format(response.status_code, response.text))
             _ok_reconnect, _res_reconnect = self.restart()
             log.info("Reconnected: {} - {}".format(_ok_reconnect, _res_reconnect))
@@ -329,8 +329,8 @@ class DigitalClient(Client):
                 _ok = True
 
             else:
-                log.info("Bad response: {} - {}".format(response.status_code, response.text))
-                self.add_to_debug_trace("Bad response: {} - {}".format(response.status_code, response.text))
+                log.info("Bad response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
+                self.add_to_debug_trace("Bad response: {status_code} - {text}".format(status_code=response.status_code, text=response.text))
                 _res = response.text
 
         except Exception as e:

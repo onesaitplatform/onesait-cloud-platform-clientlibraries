@@ -35,11 +35,9 @@ import com.minsait.onesait.platform.web.security.client.domain.OAuth2Authenticat
 import com.minsait.onesait.platform.web.security.client.domain.OAuth2Token;
 import com.minsait.onesait.platform.web.security.client.domain.OAuth2TokenVerification;
 
-
-
 @Component
 public class LoginServiceImpl implements LoginService {
-	
+
 	@Value("${openplatform.api.auth.login.path}")
 	private String loginPostUrl;
 
@@ -58,43 +56,42 @@ public class LoginServiceImpl implements LoginService {
 	@Value("${openplatform.api.auth.token.scope}")
 	private String scope;
 
+	@Value("${openplatform.api.auth.token.vertical:onesaitplatform}")
+	private String vertical;
 
-	 @Value("${openplatform.api.auth.token.password}")
-	 private String pwdLoginOP;
+	@Value("${openplatform.api.auth.token.password}")
+	private String pwdLoginOP;
 
-	 
-	 private RestTemplate loginRestTemplate;
-	 
-	 
-	 @PostConstruct
-	 public void init() {
-		 this.loginRestTemplate = new RestTemplate();
-		 this.loginRestTemplate.getInterceptors().add(new BasicAuthorizationInterceptor(clientId, pwdLoginOP));
-	 }
+	private RestTemplate loginRestTemplate;
 
-	
+	@PostConstruct
+	public void init() {
+		loginRestTemplate = new RestTemplate();
+		loginRestTemplate.getInterceptors().add(new BasicAuthorizationInterceptor(clientId, pwdLoginOP));
+	}
 
 	@Override
 	public OAuth2Token login(String username, String credentials) throws Exception {
-		HttpHeaders httpHeaders = new HttpHeaders();
+		final HttpHeaders httpHeaders = new HttpHeaders();
 		httpHeaders.clear();
 		httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-		MultiValueMap<String, String> mvm = new LinkedMultiValueMap<>();
+		final MultiValueMap<String, String> mvm = new LinkedMultiValueMap<>();
 		mvm.add("grant_type", grantType);
 		mvm.add("clientId", clientId);
 		mvm.add("scope", scope);
 		mvm.add("username", username);
 		mvm.add("password", credentials);
+		mvm.add("vertical", vertical);
 
 		final HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(mvm, httpHeaders);
 
 		ResponseEntity<OAuth2AuthenticationDTO> auth = null;
 
 		try {
-			auth = this.loginRestTemplate.postForEntity(baseUrl + loginPostUrl, entity, OAuth2AuthenticationDTO.class);
-		} catch (RestClientException e) {
-	    	if (e instanceof HttpClientErrorException) {
+			auth = loginRestTemplate.postForEntity(baseUrl + loginPostUrl, entity, OAuth2AuthenticationDTO.class);
+		} catch (final RestClientException e) {
+			if (e instanceof HttpClientErrorException) {
 				throw (HttpClientErrorException) e;
 			} else {
 				throw e;
@@ -102,37 +99,36 @@ public class LoginServiceImpl implements LoginService {
 
 		}
 
-		OAuth2Token login = new OAuth2Token();
+		final OAuth2Token login = new OAuth2Token();
 		if (auth.getBody().getAccessToken() != null && !"".equals(auth.getBody().getAccessToken())) {
 			login.setToken(auth.getBody().getAccessToken());
 			login.setTokenType(auth.getBody().getTokenType());
 			login.setExpiresIn(auth.getBody().getExpiresIn());
 		} else {
 			throw new Exception("User information and authentication token could not be retrieved");
-		
+
 		}
 		return login;
 	}
 
 	@Override
 	public OAuth2TokenVerification verifyToken(String token) {
-		HttpHeaders httpHeaders = new HttpHeaders();
+		final HttpHeaders httpHeaders = new HttpHeaders();
 		httpHeaders.clear();
 		httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 		httpHeaders.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-		
-		
-		MultiValueMap<String, String> map= new LinkedMultiValueMap<String, String>();
+
+		final MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
 		map.add("token", token);
-		
-		final HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<MultiValueMap<String, String>>(map, httpHeaders);
+		map.add("vertical", vertical);
+
+		final HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(map, httpHeaders);
 
 		ResponseEntity<OAuth2TokenVerification> auth = null;
 
-
 		try {
-			auth = this.loginRestTemplate.postForEntity(baseUrl + loginVerifyPostUrl, entity, OAuth2TokenVerification.class);
-		} catch (RestClientException e) {
+			auth = loginRestTemplate.postForEntity(baseUrl + loginVerifyPostUrl, entity, OAuth2TokenVerification.class);
+		} catch (final RestClientException e) {
 			if (e instanceof HttpClientErrorException) {
 				throw (HttpClientErrorException) e;
 			} else {

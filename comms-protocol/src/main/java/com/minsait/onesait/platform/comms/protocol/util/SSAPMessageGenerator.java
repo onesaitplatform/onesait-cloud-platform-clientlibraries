@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.minsait.onesait.platform.comms.protocol.SSAPMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyDeleteByIdMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyDeleteMessage;
+import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyIndicationMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyInsertMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyJoinMessage;
 import com.minsait.onesait.platform.comms.protocol.body.SSAPBodyLeaveMessage;
@@ -74,20 +75,21 @@ public class SSAPMessageGenerator {
 
 	}
 
-	public static SSAPMessage<SSAPBodySubscribeMessage> generateRequestSubscriptionMessage(String ontology,
-			String query, String queryType, String sessionKey) {
+	public static SSAPMessage<SSAPBodySubscribeMessage> generateRequestSubscriptionMessage(String subscription,
+			String queryValue, String callback, String sessionKey, String clientId) {
 
-		final SSAPMessage<SSAPBodySubscribeMessage> subscription = new SSAPMessage<SSAPBodySubscribeMessage>();
-		subscription.setSessionKey(sessionKey);
+		final SSAPMessage<SSAPBodySubscribeMessage> subscriptionMessage = new SSAPMessage<>();
+		subscriptionMessage.setSessionKey(sessionKey);
+		subscriptionMessage.setDirection(SSAPMessageDirection.REQUEST);
+		subscriptionMessage.setMessageType(SSAPMessageTypes.SUBSCRIBE);
 		final SSAPBodySubscribeMessage body = new SSAPBodySubscribeMessage();
-		body.setOntology(ontology);
-		body.setQueryType(SSAPQueryType.valueOf(queryType));
-		body.setQuery(query);
-		subscription.setBody(body);
-		subscription.setDirection(SSAPMessageDirection.REQUEST);
-		subscription.setMessageType(SSAPMessageTypes.SUBSCRIBE);
+		body.setCallback(callback);
+		body.setQueryValue(queryValue);
+		body.setSubscription(subscription);
+		body.setClientId(clientId);
+		subscriptionMessage.setBody(body);
 
-		return subscription;
+		return subscriptionMessage;
 	}
 
 	public static SSAPMessage<SSAPBodyUnsubscribeMessage> generateRequestUnsubscribeMessage(String sessionKey,
@@ -102,6 +104,21 @@ public class SSAPMessageGenerator {
 		unsubscribe.setDirection(SSAPMessageDirection.REQUEST);
 		unsubscribe.setMessageType(SSAPMessageTypes.UNSUBSCRIBE);
 		return unsubscribe;
+	}
+
+	public static SSAPMessage<SSAPBodyIndicationMessage> generateResponseIndicationMessage(String subscriptionId,
+			String data, String sessionKey) {
+		final SSAPMessage<SSAPBodyIndicationMessage> indication = new SSAPMessage<>();
+
+		final SSAPBodyIndicationMessage body = new SSAPBodyIndicationMessage();
+		body.setData(data);
+		body.setSubscriptionId(subscriptionId);
+
+		indication.setBody(body);
+		indication.setDirection(SSAPMessageDirection.RESPONSE);
+		indication.setMessageType(SSAPMessageTypes.INDICATION);
+		indication.setSessionKey(sessionKey);
+		return indication;
 	}
 
 	public static SSAPMessage<SSAPBodyLogMessage> generateLogMessage(String sessionKey, double latitude,

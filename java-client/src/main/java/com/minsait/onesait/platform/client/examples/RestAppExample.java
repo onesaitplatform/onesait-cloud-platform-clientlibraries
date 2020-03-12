@@ -33,6 +33,9 @@ public class RestAppExample {
 		final String deviceTemplate = "TicketingApp";
 		final String device = "TicketMachine1";
 		final String ontology = "Ticket";
+		final String subscription = "ticketStatus";
+		final String queryValue = "DONE";
+		final String callback = "http://localhost:10000/turbine/rest/notify";
 		final ObjectMapper mapper = new ObjectMapper();
 		RestClient client = null;
 		try {
@@ -57,19 +60,27 @@ public class RestAppExample {
 			final List<JsonNode> instancesFiltered = client.query(ontology, query, SSAPQueryType.SQL);
 			log.info("...Instances returned truncated:" + instancesFiltered.toString());
 
+			log.info("4. Subscribing to subscription:" + subscription);
+			JsonNode subscriptionId = client.subscribe(subscription, queryValue, callback);
+			log.info("...Subscribed with id:" + subscriptionId.asText());
+
 			String instance = "{\"Ticket\":{\"identification\":\"\",\"status\":\"DONE\",\"email\":\"iex@email.com\",\"name\":\"Alberto\",\"response_via\":\"email\",\"file\":{\"data\":\"\",\"media\":{\"name\":\"\",\"storageArea\":\"SERIALIZED\",\"binaryEncoding\":\"Base64\",\"mime\":\"application/pdf\"}},\"coordinates\":{\"coordinates\":{\"latitude\":45.456,\"longitude\":-41.283},\"type\":\"Point\"}}}";
-			log.info("4. Inserting one instance:" + instance);
+			log.info("5. Inserting one instance:" + instance);
 			final String idInsert = client.insert(ontology, mapper.readTree(instance).toString());
 			log.info("...Inserted with id {}" + idInsert);
 
 			instance = "{\"Ticket\":{\"identification\":\"\",\"status\":\"DONE\",\"email\":\"iex@email.com\",\"name\":\"Alberto\",\"response_via\":\"email\",\"file\":{\"data\":\"\",\"media\":{\"name\":\"updated\",\"storageArea\":\"SERIALIZED\",\"binaryEncoding\":\"Base64\",\"mime\":\"application/pdf\"}},\"coordinates\":{\"coordinates\":{\"latitude\":45.456,\"longitude\":-41.283},\"type\":\"Point\"}}}";
-			log.info("5. Updating instance with id {}", idInsert);
+			log.info("6. Updating instance with id {}", idInsert);
 			client.update(ontology, mapper.readTree(instance).toString(), idInsert);
 			log.info("...Updated instance");
 
-			log.info("6. Deleting instance with id {}", idInsert);
+			log.info("7. Deleting instance with id {}", idInsert);
 			client.delete(ontology, idInsert);
 			log.info("...Deleted instance");
+
+			log.info("8. Unsubscribe id {}", subscriptionId.asText());
+			client.unsubscribe(subscriptionId.get("subscriptionId").asText());
+			log.info("...Unsubscribed");
 
 			log.info("7. Disconnecting");
 			client.disconnect();
