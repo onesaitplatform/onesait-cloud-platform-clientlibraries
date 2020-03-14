@@ -64,7 +64,7 @@ class AuthClientTest(unittest.TestCase):
         # replace with real credentials
         self.credentials = {
             "username": "<username>",
-            "password": "<password>!",
+            "password": "<password>",
             "vertical": "onesaitplatform"
         }
 
