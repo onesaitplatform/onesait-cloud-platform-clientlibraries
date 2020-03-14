@@ -36,13 +36,29 @@ pip install onesaitplatform-client-services
 
 ## Samples usage
 
-### IotBrokerClient
+### DigitalClient
 
-An example of IotBrokerClient is available in [IotBrokerClient tutorial](./examples/IotBrokerClient.ipynb)
+An example of DigitalClient is available in [DigitalClient tutorial](./examples/DigitalClient.ipynb)
+
+[See documentation](./DOC/digital_broker.md)
+
+### ApiManagerClient
+
+An example of ApiManagerClient is available in [ApiManagerClient tutorial](./examples/ApiManagerClient.ipynb)
+
+[See documentation](./DOC/api_manager.md)
 
 ### FileManager
 
 An example of FileManager is available in [FileManager tutorial](./examples/FileManager.ipynb)
+
+[See documentation](./DOC/file_manager.md)
+
+### AuthClient
+
+An example of AuthClient is available in [AuthClient tutorial](./examples/AuthClient.ipynb)
+
+[See documentation](./DOC/auth_client.md)
 
 ### MQTTClient
 

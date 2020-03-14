@@ -11,6 +11,10 @@ HOST = "www.onesaitplatform.online"
 DEBUG_TRACE_LIMIT = 25
 PROTOCOL = "https"
 
+# Onesait Platform General
+CONTROL_PANEL_HOST = "controlpanelservice"
+CONTROL_PANEL_PATH = "/controlpanel"
+
 # DigitalClient
 IOT_BROKER_HOST = "iotbrokerservice"
 IOT_BROKER_AVOID_SSL_CERTIFICATE = True
@@ -35,3 +39,4 @@ FILE_MANAGER_FILES_PATH = "/controlpanel/files"
 USER_TOKEN = "Bearer ..."
 
 # ModelServiceClient
+

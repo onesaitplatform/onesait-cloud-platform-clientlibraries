@@ -4,9 +4,9 @@ from string import Template
 import json
 import logging
 import onesaitplatform.common.config as config
-from onesaitplatform.enum import RestHeaders
-from onesaitplatform.enum import RestMethods
-from onesaitplatform.enum import RestProtocols
+from onesaitplatform.enums import RestHeaders
+from onesaitplatform.enums import RestMethods
+from onesaitplatform.enums import RestProtocols
 from onesaitplatform.common.log import log
 
 try:
