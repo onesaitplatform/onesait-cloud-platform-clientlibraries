@@ -4,7 +4,7 @@ import json
 import logging
 from onesaitplatform.base import Client
 import onesaitplatform.common.config as config
-from onesaitplatform.enum import QueryType, RestMethods, RestHeaders
+from onesaitplatform.enums import QueryType, RestMethods, RestHeaders
 from onesaitplatform.common.log import log
 
 try:

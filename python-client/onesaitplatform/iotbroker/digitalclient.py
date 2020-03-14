@@ -5,7 +5,7 @@ import logging
 from onesaitplatform.base import Client
 from onesaitplatform.common.utils import wait
 import onesaitplatform.common.config as config
-from onesaitplatform.enum import RestMethods, QueryType, RestHeaders
+from onesaitplatform.enums import RestMethods, QueryType, RestHeaders
 from onesaitplatform.common.log import log
 
 try:
