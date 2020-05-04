@@ -27,6 +27,7 @@ If you want to use this client-library:
 ```
 2. Go to package ** com.minsait.onesait.platform.client.examples** and review examples:
 	* RestAppExample: example of client connecting with REST protocol
+	* RestTransactionAppExample: example of client connecting with REST protocol and transaction operations.
 	* MQTTApplicationExample: example communicating with MQTT protocol
 	* Client4IoTBrokerConsole: console example shown in previous step
 	* BinaryRepoAppExample: example for manage binaries with the IoTBroker
@@ -58,16 +59,10 @@ To connect client to Broker, you need to call method "connect()" with aguments: 
 ![](./images/exampleConnect.png)
 
 
-### Publish
-
-You can publish messages through method "publish()", arguments needed: ontology identification name, ontology instance as string (must be json format!), and timeout in seconds.
-
-![](./images/examplePub.png)
-
-
 ## Subscribe
+Remember that ,first it is necessary to register the subscription through the control panel of the platform.
 
-You can subscribe to an ontology through method "subscribe()", by specifying the Query (filter), the ontology identification, the type of query (Native or SQL), timeout in seconds for waiting subscription ACK response, and lastly, a handler/listener is needed for handling incoming messages from the subscription. 
+You can subscribe to an ontology through method "subscribe()", by specifying the Subscription identification (created on controlpanel), the query value to which you want to subscribe (filter) and lastly, a handler/listener is needed for handling incoming messages from the subscription. 
 
 By calling this method you get a String with the subscriptionId, needed to unsubscribe.
 
