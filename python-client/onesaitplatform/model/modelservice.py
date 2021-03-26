@@ -5,6 +5,7 @@ import json
 import shutil
 import logging
 import zipfile
+import requests
 from datetime import datetime
 
 import pandas as pd
@@ -12,6 +13,7 @@ import pandas as pd
 from onesaitplatform.iotbroker import DigitalClient
 from onesaitplatform.files import FileManager
 
+DATETIME_PATTERN = "%Y-%m-%dT%H:%M:%SZ"
 DIGITAL_CLIENT_JOIN_MESSAGE = "Digital Client joining server"
 DIGITAL_CLIENT_GET_ERROR_MESSAGE = "Not possible to get data from server with Digital Client: {}"
 DIGITAL_CLIENT_JOIN_ERROR_MESSAGE = "Not possible to join server with Digital Client: {}"
@@ -19,6 +21,55 @@ DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE = "Digital Client joined server: {}"
 
 logger = logging.getLogger('onesait.platform.model.BaseModelService')
 logger.setLevel(logging.INFO)
+
+class AuditClient(object):
+    """Client to API for audit in Platform"""
+
+    def __init__(self, protocol=None, host=None, port=None, token=None):
+
+        ERROR_MESSAGE = 'Mandatory attribute {} not specified'
+        if protocol is None:
+            raise AttributeError(ERROR_MESSAGE.format('protocol'))
+        if host is None:
+            raise AttributeError(ERROR_MESSAGE.format('host'))
+        if port is None:
+            raise AttributeError(ERROR_MESSAGE.format('port'))
+        if token is None:
+            raise AttributeError(ERROR_MESSAGE.format('token'))
+
+        port = str(port)
+        url = "{protocol}://{host}:{port}/controlpanel/api/audit/".format(
+            protocol=protocol, host=host, port=port
+            )
+        headers = {
+            'Authorization': token,
+            'Content-Type': 'application/json',
+            'accept': '*/*'
+            }
+
+        self.url = url
+        self.headers = headers
+
+    def report(
+        self, message=None, ontology=None, operation_type=None,
+        other_type=None, result_operation=None, type_=None
+        ):
+        now = datetime.now()
+        date_formated = now.strftime(DATETIME_PATTERN)
+        data = [{
+            "formatedTimeStamp": date_formated,
+            "message": message,
+            "ontology": ontology,
+            "operationType": operation_type,
+            "otherType": other_type,
+            "resultOperation": result_operation,
+            "timeStamp": datetime.timestamp(now),
+            "type": type_
+            }]
+        response = requests.post(
+            self.url, headers=self.headers, json=data, timeout=5
+            )
+        return response.status_code, response.text
 
 class Config(object):
     """Class that manages configuration"""
@@ -74,6 +125,7 @@ class BaseModelService(object):
         self.config = Config(parameters=config)
         self.digital_client = self.create_digital_client()
         self.file_manager = self.create_file_manager()
+        self.audit_client = self.create_audit_client()
         logger.info('Searching best available model')
         best_model_info = self.get_best_model_in_ontology()
         if best_model_info:
@@ -100,6 +152,24 @@ class BaseModelService(object):
         logger.info('Digital Client created: {}'.format(digital_client.to_json()))
         
         return digital_client
+
+    def create_audit_client(self):
+        """Creates a audit client to send logs to platform audit ontology"""
+        
+        host = self.config.PLATFORM_HOST
+        port = self.config.PLATFORM_PORT
+        token = self.config.PLATFORM_USER_TOKEN
+        protocol = self.config.PLATFORM_DIGITAL_CLIENT_PROTOCOL
+
+        audit_client = AuditClient(
+            host=host, port=port, protocol=protocol, token=token
+        )
+
+        logger.info('Audit Client created: {}'.format(
+            [protocol, host, port, token]
+        ))
+        
+        return audit_client
 
     def create_file_manager(self):
         """Creates a file manager to interact with Platform file system"""
@@ -179,7 +249,7 @@ class BaseModelService(object):
                 'name': name,
                 'version': version,
                 'description': description,
-                'date': datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                'date': datetime.now().strftime(DATETIME_PATTERN),
                 'metrics': [create_list_item(key, value) for key, value in metrics.items()],
                 'hyperparameters': [create_list_item(key, value) for key, value in hyperparameters.items()],
                 'model_path': model_file_id,
