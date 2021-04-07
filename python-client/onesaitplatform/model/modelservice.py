@@ -171,6 +171,18 @@ class BaseModelService(object):
         
         return audit_client
 
+    def join_digital_client(self):
+        """Digital client connects the server"""
+        if not self.digital_client.is_connected:
+            logger.info(DIGITAL_CLIENT_JOIN_MESSAGE)
+            ok_join, res_join = self.digital_client.join()
+            if not ok_join:
+                raise ConnectionError(
+            DIGITAL_CLIENT_JOIN_ERROR_MESSAGE.format(self.digital_client.to_json())
+            )
+            else:
+                logger.info(DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE.format(res_join))
+
     def create_file_manager(self):
         """Creates a file manager to interact with Platform file system"""
 
@@ -188,15 +200,7 @@ class BaseModelService(object):
     def get_best_model_in_ontology(self):
         """Search the model active in models ontology"""
 
-        if not self.digital_client.is_connected:
-            logger.info(DIGITAL_CLIENT_JOIN_MESSAGE)
-            ok_join, res_join = self.digital_client.join()
-            if not ok_join:
-                raise ConnectionError(
-            DIGITAL_CLIENT_JOIN_ERROR_MESSAGE.format(self.digital_client.to_json())
-            )
-            else:
-                logger.info(DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE.format(res_join))
+        self.join_digital_client()
 
         ontology = self.config.PLATFORM_ONTOLOGY_MODELS
         query = 'select * from {ontology} as c where c.{ontology}.active = true'.format(ontology=ontology)
@@ -233,15 +237,7 @@ class BaseModelService(object):
             item = {'name': key, 'value': value, 'dtype': dtype}
             return item
 
-        if not self.digital_client.is_connected:
-            logger.info(DIGITAL_CLIENT_JOIN_MESSAGE)
-            ok_join, res_join = self.digital_client.join()
-            if not ok_join:
-                raise ConnectionError(
-            DIGITAL_CLIENT_JOIN_ERROR_MESSAGE.format(self.digital_client.to_json())
-            )
-            else:
-                logger.info(DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE.format(res_join))
+        self.join_digital_client()
 
         model_info = {
             self.config.PLATFORM_ONTOLOGY_MODELS: {
@@ -398,15 +394,7 @@ class BaseModelService(object):
         query_type = 'NATIVE'
         query_batch_size = 900
 
-        if not self.digital_client.is_connected:
-            logger.info(DIGITAL_CLIENT_JOIN_MESSAGE)
-            ok_join, res_join = self.digital_client.join()
-            if not ok_join:
-                raise ConnectionError(
-            DIGITAL_CLIENT_JOIN_ERROR_MESSAGE.format(self.digital_client.to_json())
-            )
-            else:
-                logger.info(DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE.format(res_join))
+        self.join_digital_client()
 
         ok_query, res_query = self.digital_client.query_batch(
             ontology_dataset, query, query_type, batch_size=query_batch_size
