@@ -51,12 +51,13 @@ class AuditClient(object):
         self.headers = headers
 
     def report(
-        self, message=None, ontology=None, operation_type=None,
+        self, module=None, message=None, ontology=None, operation_type=None,
         other_type=None, result_operation=None, type_=None
         ):
         now = datetime.now()
         date_formated = now.strftime(DATETIME_PATTERN)
         data = [{
+            "module": module,
             "formatedTimeStamp": date_formated,
             "message": message,
             "ontology": ontology,
