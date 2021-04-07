@@ -20,7 +20,7 @@ DIGITAL_CLIENT_JOIN_ERROR_MESSAGE = "Not possible to join server with Digital Cl
 DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE = "Digital Client joined server: {}"
 
 logger = logging.getLogger('onesait.platform.model.BaseModelService')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
 
 class AuditClient(object):
     """Client to API for audit in Platform"""
@@ -69,6 +69,7 @@ class AuditClient(object):
         response = requests.post(
             self.url, headers=self.headers, json=data, timeout=5
             )
+
         return response.status_code, response.text
 
 class Config(object):
@@ -314,7 +315,7 @@ class BaseModelService(object):
             message = "Not possible to upload with File Manager: {}".format(self.file_manager.to_json())
             self.audit_client.report(
                 message=message, result_operation='ERROR',
-                type_='FILEMANAGER', operation_type='UPLOAD'
+                type_='GENERAL', operation_type='INSERT'
                 )
             raise ConnectionError(message)
         else:
@@ -322,7 +323,7 @@ class BaseModelService(object):
             logger.info(message)
             self.audit_client.report(
                 message=message, result_operation='SUCCESS',
-                type_='FILEMANAGER', operation_type='UPLOAD'
+                type_='GENERAL', operation_type='INSERT'
                 )
 
         saved_file_id = info['id']
@@ -354,7 +355,7 @@ class BaseModelService(object):
             message = "Not possible to download with File Manager: {}".format(self.file_manager.to_json())
             self.audit_client.report(
                 message=message, result_operation='ERROR',
-                type_='FILEMANAGER', operation_type='DOWNLOAD'
+                type_='GENERAL', operation_type='QUERY'
                 )
             raise ConnectionError(message)
         else:
@@ -362,7 +363,7 @@ class BaseModelService(object):
             logger.info(message)
             self.audit_client.report(
                 message=message, result_operation='SUCCESS',
-                type_='FILEMANAGER', operation_type='DOWNLOAD'
+                type_='GENERAL', operation_type='QUERY'
                 )
         zip_path = info['name']
         zip_obj = zipfile.ZipFile(zip_path)
@@ -392,7 +393,7 @@ class BaseModelService(object):
             message = "Not possible to download with File Manager: {}".format(self.file_manager.to_json())
             self.audit_client.report(
                 message=message, result_operation='ERROR',
-                type_='FILEMANAGER', operation_type='DOWNLOAD'
+                type_='GENERAL', operation_type='QUERY'
                 )
             raise ConnectionError(message)
         else:
@@ -400,7 +401,7 @@ class BaseModelService(object):
             logger.info(message)
             self.audit_client.report(
                 message=message, result_operation='SUCCESS',
-                type_='FILEMANAGER', operation_type='DOWNLOAD'
+                type_='GENERAL', operation_type='QUERY'
                 )
 
         dataset_path = info['name']
