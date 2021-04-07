@@ -5,6 +5,7 @@ import json
 import shutil
 import logging
 import zipfile
+import requests
 from datetime import datetime
 
 import pandas as pd
@@ -12,13 +13,64 @@ import pandas as pd
 from onesaitplatform.iotbroker import DigitalClient
 from onesaitplatform.files import FileManager
 
+DATETIME_PATTERN = "%Y-%m-%dT%H:%M:%SZ"
 DIGITAL_CLIENT_JOIN_MESSAGE = "Digital Client joining server"
 DIGITAL_CLIENT_GET_ERROR_MESSAGE = "Not possible to get data from server with Digital Client: {}"
 DIGITAL_CLIENT_JOIN_ERROR_MESSAGE = "Not possible to join server with Digital Client: {}"
 DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE = "Digital Client joined server: {}"
 
 logger = logging.getLogger('onesait.platform.model.BaseModelService')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
+
+class AuditClient(object):
+    """Client to API for audit in Platform"""
+
+    def __init__(self, protocol=None, host=None, port=None, token=None):
+
+        ERROR_MESSAGE = 'Mandatory attribute {} not specified'
+        if protocol is None:
+            raise AttributeError(ERROR_MESSAGE.format('protocol'))
+        if host is None:
+            raise AttributeError(ERROR_MESSAGE.format('host'))
+        if port is None:
+            raise AttributeError(ERROR_MESSAGE.format('port'))
+        if token is None:
+            raise AttributeError(ERROR_MESSAGE.format('token'))
+
+        port = str(port)
+        url = "{protocol}://{host}:{port}/controlpanel/api/audit/".format(
+            protocol=protocol, host=host, port=port
+            )
+        headers = {
+            'Authorization': token,
+            'Content-Type': 'application/json',
+            'accept': '*/*'
+            }
+
+        self.url = url
+        self.headers = headers
+
+    def report(
+        self, message=None, ontology=None, operation_type=None,
+        other_type=None, result_operation=None, type_=None
+        ):
+        now = datetime.now()
+        date_formated = now.strftime(DATETIME_PATTERN)
+        data = [{
+            "formatedTimeStamp": date_formated,
+            "message": message,
+            "ontology": ontology,
+            "operationType": operation_type,
+            "otherType": other_type,
+            "resultOperation": result_operation,
+            "timeStamp": datetime.timestamp(now),
+            "type": type_
+            }]
+        response = requests.post(
+            self.url, headers=self.headers, json=data, timeout=5
+            )
+
+        return response.status_code, response.text
 
 class Config(object):
     """Class that manages configuration"""
@@ -74,6 +126,7 @@ class BaseModelService(object):
         self.config = Config(parameters=config)
         self.digital_client = self.create_digital_client()
         self.file_manager = self.create_file_manager()
+        self.audit_client = self.create_audit_client()
         logger.info('Searching best available model')
         best_model_info = self.get_best_model_in_ontology()
         if best_model_info:
@@ -101,6 +154,44 @@ class BaseModelService(object):
         
         return digital_client
 
+    def create_audit_client(self):
+        """Creates a audit client to send logs to platform audit ontology"""
+        
+        host = self.config.PLATFORM_HOST
+        port = self.config.PLATFORM_PORT
+        token = self.config.PLATFORM_USER_TOKEN
+        protocol = self.config.PLATFORM_DIGITAL_CLIENT_PROTOCOL
+
+        audit_client = AuditClient(
+            host=host, port=port, protocol=protocol, token=token
+        )
+
+        logger.info('Audit Client created: {}'.format(
+            [protocol, host, port, token]
+        ))
+        
+        return audit_client
+
+    def join_digital_client(self):
+        """Digital client connects the server"""
+        if not self.digital_client.is_connected:
+            logger.info(DIGITAL_CLIENT_JOIN_MESSAGE)
+            ok_join, res_join = self.digital_client.join()
+            if not ok_join:
+                self.audit_client.report(
+                    message=DIGITAL_CLIENT_JOIN_MESSAGE, result_operation='ERROR',
+                    type_='IOTBROKER', operation_type='JOIN'
+                    )
+                raise ConnectionError(
+            DIGITAL_CLIENT_JOIN_ERROR_MESSAGE.format(self.digital_client.to_json())
+            )
+            else:
+                logger.info(DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE.format(res_join))
+                self.audit_client.report(
+                    message=DIGITAL_CLIENT_JOIN_MESSAGE, result_operation='SUCCESS',
+                    type_='IOTBROKER', operation_type='JOIN'
+                    )
+
     def create_file_manager(self):
         """Creates a file manager to interact with Platform file system"""
 
@@ -118,25 +209,25 @@ class BaseModelService(object):
     def get_best_model_in_ontology(self):
         """Search the model active in models ontology"""
 
-        if not self.digital_client.is_connected:
-            logger.info(DIGITAL_CLIENT_JOIN_MESSAGE)
-            ok_join, res_join = self.digital_client.join()
-            if not ok_join:
-                raise ConnectionError(
-            DIGITAL_CLIENT_JOIN_ERROR_MESSAGE.format(self.digital_client.to_json())
-            )
-            else:
-                logger.info(DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE.format(res_join))
+        self.join_digital_client()
 
         ontology = self.config.PLATFORM_ONTOLOGY_MODELS
         query = 'select * from {ontology} as c where c.{ontology}.active = true'.format(ontology=ontology)
         ok_query, res_query = self.digital_client.query(ontology=ontology, query=query, query_type="SQL")
         if not ok_query:
-            raise ConnectionError(
-        DIGITAL_CLIENT_GET_ERROR_MESSAGE.format(self.digital_client.to_json())
-        )
+            message = DIGITAL_CLIENT_GET_ERROR_MESSAGE.format(self.digital_client.to_json())
+            self.audit_client.report(
+                message=message, result_operation='ERROR',
+                type_='IOTBROKER', operation_type='QUERY'
+                )
+            raise ConnectionError(message)
         else:
-            logger.info("Digital Client got models information")
+            message = "Digital Client got models information"
+            logger.info(message)
+            self.audit_client.report(
+                message=message, result_operation='SUCCESS',
+                type_='IOTBROKER', operation_type='QUERY'
+                )
 
         self.digital_client.leave()
 
@@ -163,15 +254,7 @@ class BaseModelService(object):
             item = {'name': key, 'value': value, 'dtype': dtype}
             return item
 
-        if not self.digital_client.is_connected:
-            logger.info(DIGITAL_CLIENT_JOIN_MESSAGE)
-            ok_join, res_join = self.digital_client.join()
-            if not ok_join:
-                raise ConnectionError(
-            DIGITAL_CLIENT_JOIN_ERROR_MESSAGE.format(self.digital_client.to_json())
-            )
-            else:
-                logger.info(DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE.format(res_join))
+        self.join_digital_client()
 
         model_info = {
             self.config.PLATFORM_ONTOLOGY_MODELS: {
@@ -179,7 +262,7 @@ class BaseModelService(object):
                 'name': name,
                 'version': version,
                 'description': description,
-                'date': datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                'date': datetime.now().strftime(DATETIME_PATTERN),
                 'metrics': [create_list_item(key, value) for key, value in metrics.items()],
                 'hyperparameters': [create_list_item(key, value) for key, value in hyperparameters.items()],
                 'model_path': model_file_id,
@@ -196,11 +279,19 @@ class BaseModelService(object):
 
         ok_query, res_query = self.digital_client.insert(self.config.PLATFORM_ONTOLOGY_MODELS, [model_info])
         if not ok_query:
-            raise ConnectionError(
-        DIGITAL_CLIENT_JOIN_ERROR_MESSAGE.format(self.digital_client.to_json())
-        )
+            message = "Digital Client could not insert model information: {}".format(res_query)
+            self.audit_client.report(
+                message=message, result_operation='ERROR',
+                type_='IOTBROKER', operation_type='INSERT'
+                )
+            raise ConnectionError(message)
         else:
-            logger.info("Digital Client inserted model information: {}".format(res_query))
+            message = "Digital Client inserted model information: {}".format(res_query)
+            logger.info(message)
+            self.audit_client.report(
+                message=message, result_operation='SUCCESS',
+                type_='IOTBROKER', operation_type='INSERT'
+                )
 
         self.digital_client.leave()
 
@@ -221,11 +312,19 @@ class BaseModelService(object):
         model_filename = os.path.basename(zip_path)
         uploaded, info = self.file_manager.upload_file(model_filename, zip_path)
         if not uploaded:
-            raise ConnectionError(
-        "Not possible to upload with File Manager: {}".format(self.file_manager.to_json())
-        )
+            message = "Not possible to upload with File Manager: {}".format(self.file_manager.to_json())
+            self.audit_client.report(
+                message=message, result_operation='ERROR',
+                type_='GENERAL', operation_type='INSERT'
+                )
+            raise ConnectionError(message)
         else:
-            logger.info("File manager uploaded model: {}".format(info))
+            message = "File manager uploaded model: {}".format(info)
+            logger.info(message)
+            self.audit_client.report(
+                message=message, result_operation='SUCCESS',
+                type_='GENERAL', operation_type='INSERT'
+                )
 
         saved_file_id = info['id']
 
@@ -253,11 +352,19 @@ class BaseModelService(object):
             file_id, filepath=tmp_model_folder
             )
         if not downloaded:
-            raise ConnectionError(
-        "Not possible to download with File Manager: {}".format(self.file_manager.to_json())
-        )
+            message = "Not possible to download with File Manager: {}".format(self.file_manager.to_json())
+            self.audit_client.report(
+                message=message, result_operation='ERROR',
+                type_='GENERAL', operation_type='QUERY'
+                )
+            raise ConnectionError(message)
         else:
-            logger.info("File manager downloaded model: {}".format(info))
+            message = "File manager downloaded model: {}".format(info)
+            logger.info(message)
+            self.audit_client.report(
+                message=message, result_operation='SUCCESS',
+                type_='GENERAL', operation_type='QUERY'
+                )
         zip_path = info['name']
         zip_obj = zipfile.ZipFile(zip_path)
         files = zip_obj.namelist()
@@ -283,11 +390,19 @@ class BaseModelService(object):
             dataset_file_id, filepath=tmp_model_folder
             )
         if not downloaded:
-            raise ConnectionError(
-        "Not possible to download with File Manager: {}".format(self.file_manager.to_json())
-        )
+            message = "Not possible to download with File Manager: {}".format(self.file_manager.to_json())
+            self.audit_client.report(
+                message=message, result_operation='ERROR',
+                type_='GENERAL', operation_type='QUERY'
+                )
+            raise ConnectionError(message)
         else:
-            logger.info("File manager downloaded file: {}".format(info))
+            message = "File manager downloaded file: {}".format(info)
+            logger.info(message)
+            self.audit_client.report(
+                message=message, result_operation='SUCCESS',
+                type_='GENERAL', operation_type='QUERY'
+                )
 
         dataset_path = info['name']
         logger.info("Training started with dataset {} and output folder {}".format(
@@ -328,26 +443,26 @@ class BaseModelService(object):
         query_type = 'NATIVE'
         query_batch_size = 900
 
-        if not self.digital_client.is_connected:
-            logger.info(DIGITAL_CLIENT_JOIN_MESSAGE)
-            ok_join, res_join = self.digital_client.join()
-            if not ok_join:
-                raise ConnectionError(
-            DIGITAL_CLIENT_JOIN_ERROR_MESSAGE.format(self.digital_client.to_json())
-            )
-            else:
-                logger.info(DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE.format(res_join))
+        self.join_digital_client()
 
         ok_query, res_query = self.digital_client.query_batch(
             ontology_dataset, query, query_type, batch_size=query_batch_size
             )
         if not ok_query:
-            raise ConnectionError(
-        DIGITAL_CLIENT_GET_ERROR_MESSAGE.format(self.digital_client.to_json())
-        )
+            message = DIGITAL_CLIENT_GET_ERROR_MESSAGE.format(self.digital_client.to_json())
+            self.audit_client.report(
+                message=message, result_operation='ERROR',
+                type_='IOTBROKER', operation_type='BATCH'
+                )
+            raise ConnectionError(message)
         else:
-            logger.info("Digital Client got dataset")
-
+            message = "Digital Client got dataset"
+            logger.info(message)
+            self.audit_client.report(
+                message=message, result_operation='SUCCESS',
+                type_='IOTBROKER', operation_type='BATCH'
+                )
+    
         self.digital_client.leave()
 
         dataset = pd.read_json(json.dumps(res_query))
