@@ -18,6 +18,7 @@ DIGITAL_CLIENT_JOIN_MESSAGE = "Digital Client joining server"
 DIGITAL_CLIENT_GET_ERROR_MESSAGE = "Not possible to get data from server with Digital Client: {}"
 DIGITAL_CLIENT_JOIN_ERROR_MESSAGE = "Not possible to join server with Digital Client: {}"
 DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE = "Digital Client joined server: {}"
+FILE_MANAGER_GET_ERROR_MESSAGE = "Not possible to upload with File Manager: {}"
 
 logger = logging.getLogger('onesait.platform.model.BaseModelService')
 logger.setLevel(logging.WARNING)
@@ -312,7 +313,7 @@ class BaseModelService(object):
         model_filename = os.path.basename(zip_path)
         uploaded, info = self.file_manager.upload_file(model_filename, zip_path)
         if not uploaded:
-            message = "Not possible to upload with File Manager: {}".format(self.file_manager.to_json())
+            message = FILE_MANAGER_GET_ERROR_MESSAGE.format(self.file_manager.to_json())
             self.audit_client.report(
                 message=message, result_operation='ERROR',
                 type_='GENERAL', operation_type='INSERT'
@@ -352,7 +353,7 @@ class BaseModelService(object):
             file_id, filepath=tmp_model_folder
             )
         if not downloaded:
-            message = "Not possible to download with File Manager: {}".format(self.file_manager.to_json())
+            message = FILE_MANAGER_GET_ERROR_MESSAGE.format(self.file_manager.to_json())
             self.audit_client.report(
                 message=message, result_operation='ERROR',
                 type_='GENERAL', operation_type='QUERY'
@@ -390,7 +391,7 @@ class BaseModelService(object):
             dataset_file_id, filepath=tmp_model_folder
             )
         if not downloaded:
-            message = "Not possible to download with File Manager: {}".format(self.file_manager.to_json())
+            message = FILE_MANAGER_GET_ERROR_MESSAGE.format(self.file_manager.to_json())
             self.audit_client.report(
                 message=message, result_operation='ERROR',
                 type_='GENERAL', operation_type='QUERY'
@@ -489,6 +490,116 @@ class BaseModelService(object):
             model_file_id=model_file_id, ontology_dataset=ontology_dataset, hyperparameters=hyperparameters
             )
 
+    def predict_from_ontology(
+        self, input_ontology=None, output_ontology=None
+        ):
+        """Predicts given input in a ontology"""
+
+        logger.info("Predicting from ontology {}".format(input_ontology))
+
+        query = "db.{ontology}.find()".format(ontology=input_ontology)
+        query_type = 'NATIVE'
+        query_batch_size = 900
+
+        self.join_digital_client()
+
+        ok_query, res_query = self.digital_client.query_batch(
+            input_ontology, query, query_type, batch_size=query_batch_size
+            )
+        if not ok_query:
+            message = DIGITAL_CLIENT_GET_ERROR_MESSAGE.format(self.digital_client.to_json())
+            self.audit_client.report(
+                message=message, result_operation='ERROR',
+                type_='IOTBROKER', operation_type='BATCH'
+                )
+            raise ConnectionError(message)
+        else:
+            message = "Digital Client got dataset"
+            logger.info(message)
+            self.audit_client.report(
+                message=message, result_operation='SUCCESS',
+                type_='IOTBROKER', operation_type='BATCH'
+                )
+    
+        self.digital_client.leave()
+
+        logger.info("Inference started with ontology {}".format(input_ontology))
+        predictions = self.predict(inputs=res_query)
+        logger.info("Inference finished")
+
+        if output_ontology is not None:
+            self.insert_dataset_in_ontology(
+                inputs=predictions, ontology=output_ontology
+                )
+
+        return predictions
+
+
+    def predict_from_file_system(
+        self, dataset_file_id=None, output_ontology=None
+        ):
+        """Predics given a file in file system"""
+
+        logger.info("Predicting from file repository: {}".format(dataset_file_id))
+
+        tmp_folder, _ = self.create_tmp_folder_name()
+        os.mkdir(tmp_folder)
+
+        downloaded, info = self.file_manager.download_file(
+            dataset_file_id, filepath=tmp_folder
+            )
+        if not downloaded:
+            message = FILE_MANAGER_GET_ERROR_MESSAGE.format(self.file_manager.to_json())
+            self.audit_client.report(
+                message=message, result_operation='ERROR',
+                type_='GENERAL', operation_type='QUERY'
+                )
+            raise ConnectionError(message)
+        else:
+            message = "File manager downloaded file: {}".format(info)
+            logger.info(message)
+            self.audit_client.report(
+                message=message, result_operation='SUCCESS',
+                type_='GENERAL', operation_type='QUERY'
+                )
+
+        dataset_path = info['name']
+        logger.info("Inference started with dataset {}".format(dataset_path))
+        predictions = self.predict(dataset_path=dataset_path)
+        logger.info("Inference finished")
+        shutil.rmtree(tmp_folder)
+
+        if output_ontology is not None:
+            self.insert_dataset_in_ontology(
+                inputs=predictions, ontology=output_ontology
+                )
+
+        return predictions
+
+    def insert_dataset_in_ontology(self, inputs=None, ontology=None):
+        """Inserts predictions in ontology"""
+        self.join_digital_client()
+
+        logger.info("Digital Client inserting predictions")
+
+        ok_query, res_query = self.digital_client.insert(ontology, inputs)
+        if not ok_query:
+            message = "Digital Client could not insert predictions: {}".format(res_query)
+            self.audit_client.report(
+                message=message, result_operation='ERROR',
+                type_='IOTBROKER', operation_type='INSERT'
+                )
+            raise ConnectionError(message)
+        else:
+            message = "Digital Client inserted predictions: {}".format(res_query)
+            logger.info(message)
+            self.audit_client.report(
+                message=message, result_operation='SUCCESS',
+                type_='IOTBROKER', operation_type='INSERT'
+                )
+
+        self.digital_client.leave()
+
     def load_model(self, model_path=None, hyperparameters=None):
         """Loads the model given input files and/or folders"""
         raise NotImplementedError
@@ -497,6 +608,6 @@ class BaseModelService(object):
         """Trains a model given a dataset"""
         raise NotImplementedError
 
-    def predict(self, inputs=None):
-        """Predicts given a model and an array of inputs"""
+    def predict(self, inputs=None, dataset_path=None):
+        """Predicts given a model and an array of inputs or a dataset"""
         raise NotImplementedError
