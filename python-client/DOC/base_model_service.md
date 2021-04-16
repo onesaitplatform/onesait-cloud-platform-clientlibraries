@@ -159,7 +159,7 @@ HYPERPARAMETERS = {
     ...
 }
 
-model_service.train_from_file_system(
+model_service.train_from_ontology(
     name=MODEL_NAME, version=MODEL_VERSION, description=MODEL_DESCRIPTION,
     ontology_dataset=ONTOLOGY_DATASET, hyperparameters=HYPERPARAMETERS
 )
