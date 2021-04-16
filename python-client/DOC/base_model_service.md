@@ -164,3 +164,49 @@ model_service.train_from_ontology(
     ontology_dataset=ONTOLOGY_DATASET, hyperparameters=HYPERPARAMETERS
 )
 ```
+
+## Predict from dataset in File Repository
+
+```python
+
+DATASET_FILE_ID = 'FileIDInOnesaitPlatformFileRepository'
+
+results = model_service.predict_from_file_system(
+    dataset_file_id=DATASET_FILE_ID
+)
+```
+
+The output can also be saved in a new Ontology
+
+```python
+
+DATASET_FILE_ID = 'FileIDInOnesaitPlatformFileRepository'
+OUTPUT_ONTOLOGY = ' MyOutputOntology'
+
+model_service.predict_from_file_system(
+    dataset_file_id=DATASET_FILE_ID, output_ontology=OUTPUT_ONTOLOGY
+)
+```
+
+## Predict from dataset in Ontology
+
+```python
+
+INPUT_ONTOLOGY = 'MyInputOntology'
+
+results = model_service.predict_from_ontology(
+    input_ontology=INPUT_ONTOLOGY
+)
+```
+
+The output can also be saved in a new Ontology
+
+```python
+
+INPUT_ONTOLOGY = 'MyInputOntology'
+OUTPUT_ONTOLOGY = ' MyOutputOntology'
+
+model_service.predict_from_ontology(
+    dataset_file_id=DATASET_FILE_ID, output_ontology=OUTPUT_ONTOLOGY
+)
+```
