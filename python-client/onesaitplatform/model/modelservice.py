@@ -246,7 +246,7 @@ class BaseModelService(object):
     def get_model_by_id(self, model_id=None):
         """Search the model active in models ontology"""
         ontology = self.config.PLATFORM_ONTOLOGY_MODELS
-        query = 'select * from {ontology} as c where c.{ontology}.id = {model_id}'.format(
+        query = 'select * from {ontology} as c where c.{ontology}.id = "{model_id}"'.format(
             ontology=ontology, model_id=model_id
             )
         model_info = self.get_model_in_ontology(query=query)
