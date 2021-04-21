@@ -462,6 +462,12 @@ class BaseModelService(object):
             self.download_from_file_system(
                 file_id=extra_file_id, local_folder=tmp_extra_folder, unzip=True
                 )
+        if pretrained_model_id:
+            pretrained_model_info = self.get_model_by_id(model_id=pretrained_model_id)
+            model_path = pretrained_model_info['model_path']
+            self.download_from_file_system(
+                file_id=model_path, local_folder=tmp_pretrained_folder, unzip=True
+                )
 
         logger.info("Training started with dataset {} and output folder {}".format(
             dataset_path, tmp_model_folder
@@ -510,6 +516,13 @@ class BaseModelService(object):
         if extra_file_id:
             self.download_from_file_system(
                 file_id=extra_file_id, local_folder=tmp_extra_folder, unzip=True
+                )
+
+        if pretrained_model_id:
+            pretrained_model_info = self.get_model_by_id(model_id=pretrained_model_id)
+            model_path = pretrained_model_info['model_path']
+            self.download_from_file_system(
+                file_id=model_path, local_folder=tmp_pretrained_folder, unzip=True
                 )
 
         query = "db.{ontology}.find()".format(ontology=ontology_dataset)
