@@ -418,7 +418,7 @@ class BaseModelService(object):
     def train_from_file_system(
         self, name=None, version=None, description=None,
         dataset_file_id=None, hyperparameters=None,
-        extra_file_id=None
+        extra_file_id=None, pretrained_model_id=None
         ):
         """Trains a model given a file in file system"""
 
@@ -428,8 +428,9 @@ class BaseModelService(object):
 
         tmp_model_folder, model_name = self.create_tmp_folder_name()
         tmp_extra_folder, _ = self.create_tmp_folder_name(suffix='extra')
+        tmp_pretrained_folder, _ = self.create_tmp_folder_name(suffix='pretrained')
         os.mkdir(tmp_model_folder)
-        os.mkdir(tmp_extra_folder)
+        os.mkdir(tmp_pretrained_folder)
 
         dataset_path = self.download_from_file_system(
             file_id=dataset_file_id, local_folder=tmp_model_folder
@@ -445,7 +446,8 @@ class BaseModelService(object):
             ))
         metrics = self.train(
             dataset_path=dataset_path, hyperparameters=hyperparameters,
-            model_path=tmp_model_folder, extra_path=tmp_extra_folder
+            model_path=tmp_model_folder, extra_path=tmp_extra_folder,
+            pretrained_path=tmp_pretrained_folder
             )
         logger.info("Training finished with metrics: {}".format(metrics))
         os.remove(dataset_path)
@@ -456,6 +458,7 @@ class BaseModelService(object):
             )
         shutil.rmtree(tmp_model_folder)
         shutil.rmtree(tmp_extra_folder)
+        shutil.rmtree(tmp_pretrained_folder)
         os.remove(zip_path)
 
         self.set_new_model_in_ontology(
@@ -467,7 +470,7 @@ class BaseModelService(object):
     def train_from_ontology(
         self, name=None, version=None, description=None,
         ontology_dataset=None, hyperparameters=None,
-        extra_file_id=None
+        extra_file_id=None, pretrained_model_id=None
         ):
         """Trains a model given the content of an ontology"""
 
@@ -477,8 +480,10 @@ class BaseModelService(object):
 
         tmp_model_folder, model_name = self.create_tmp_folder_name()
         tmp_extra_folder, _ = self.create_tmp_folder_name(suffix='extra')
+        tmp_pretrained_folder, _ = self.create_tmp_folder_name(suffix='pretrained')
         os.mkdir(tmp_model_folder)
         os.mkdir(tmp_extra_folder)
+        os.mkdir(tmp_pretrained_folder)
 
         if extra_file_id:
             self.download_from_file_system(
@@ -519,7 +524,9 @@ class BaseModelService(object):
             dataset_path, tmp_model_folder
             ))
         metrics = self.train(
-            dataset_path=dataset_path, hyperparameters=hyperparameters, model_path=tmp_model_folder
+            dataset_path=dataset_path, hyperparameters=hyperparameters,
+            model_path=tmp_model_folder, extra_path=tmp_extra_folder,
+            pretrained_path=tmp_pretrained_folder
             )
         logger.info("Training finished with metrics: {}".format(metrics))
         os.remove(dataset_path)
@@ -530,6 +537,7 @@ class BaseModelService(object):
             )
         shutil.rmtree(tmp_model_folder)
         shutil.rmtree(tmp_extra_folder)
+        shutil.rmtree(tmp_pretrained_folder)
 
         self.set_new_model_in_ontology(
             name=name, version=version, description=description, metrics=metrics,
@@ -651,7 +659,9 @@ class BaseModelService(object):
         """Loads the model given input files and/or folders"""
         raise NotImplementedError
 
-    def train(self, dataset_path=None, hyperparameters=None, model_path=None, extra_path=None):
+    def train(
+        self, dataset_path=None, hyperparameters=None,
+        model_path=None, extra_path=None, pretrained_path=None):
         """Trains a model given a dataset"""
         raise NotImplementedError
 
