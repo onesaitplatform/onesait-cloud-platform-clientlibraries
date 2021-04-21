@@ -133,7 +133,7 @@ class BaseModelService(object):
     def reload_model(self):
         """Reloads best model previously trained"""
         logger.info('Searching best available model')
-        best_model_info = self.get_best_model_in_ontology()
+        best_model_info = self.get_active_model()
         if best_model_info:
             logger.info('Best available model specifications: {}'.format(best_model_info))
             self.load_model_from_file_system(model_info=best_model_info)
@@ -211,14 +211,16 @@ class BaseModelService(object):
         logger.info('File Manager created: {}'.format(file_manager.to_json()))
         return file_manager
 
-    def get_best_model_in_ontology(self):
-        """Search the model active in models ontology"""
+    def get_model_in_ontology(self, query=None):
+        """Search model with specific query"""
 
         self.join_digital_client()
 
         ontology = self.config.PLATFORM_ONTOLOGY_MODELS
-        query = 'select * from {ontology} as c where c.{ontology}.active = true'.format(ontology=ontology)
-        ok_query, res_query = self.digital_client.query(ontology=ontology, query=query, query_type="SQL")
+
+        ok_query, res_query = self.digital_client.query(
+            ontology=ontology, query=query, query_type="SQL"
+            )
         if not ok_query:
             message = DIGITAL_CLIENT_GET_ERROR_MESSAGE.format(self.digital_client.to_json())
             self.audit_client.report(
@@ -240,6 +242,26 @@ class BaseModelService(object):
         if len(res_query):
             best_model = res_query[0][ontology]
         return best_model
+
+    def get_model_by_id(self, model_id=None):
+        """Search the model active in models ontology"""
+        ontology = self.config.PLATFORM_ONTOLOGY_MODELS
+        query = 'select * from {ontology} as c where c.{ontology}.id = {model_id}'.format(
+            ontology=ontology, model_id=model_id
+            )
+        model_info = self.get_model_in_ontology(query=query)
+
+        return model_info
+
+    def get_active_model(self):
+        """Search the model active in models ontology"""
+        ontology = self.config.PLATFORM_ONTOLOGY_MODELS
+        query = 'select * from {ontology} as c where c.{ontology}.active = true'.format(
+            ontology=ontology
+            )
+        model_info = self.get_model_in_ontology(query=query)
+
+        return model_info
 
     def set_new_model_in_ontology(
         self, name=None, version=None, description=None, metrics=None, model_file_id=None,
