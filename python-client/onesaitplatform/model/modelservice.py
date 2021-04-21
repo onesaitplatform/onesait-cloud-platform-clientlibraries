@@ -128,6 +128,10 @@ class BaseModelService(object):
         self.digital_client = self.create_digital_client()
         self.file_manager = self.create_file_manager()
         self.audit_client = self.create_audit_client()
+        self.reload_model()
+
+    def reload_model(self):
+        """Reloads best model previously trained"""
         logger.info('Searching best available model')
         best_model_info = self.get_best_model_in_ontology()
         if best_model_info:
