@@ -276,10 +276,22 @@ class BaseModelService(object):
             }
         }
 
+        ontology = self.config.PLATFORM_ONTOLOGY_MODELS
         if ontology_dataset is not None:
-            model_info[self.config.PLATFORM_ONTOLOGY_MODELS]['ontology_dataset'] = ontology_dataset
+            model_info[ontology]['ontology_dataset'] = ontology_dataset
         if dataset_file_id is not None:
-            model_info[self.config.PLATFORM_ONTOLOGY_MODELS]['dataset_path'] = dataset_file_id
+            model_info[ontology]['dataset_path'] = dataset_file_id
+
+        model_id = '_'.join(
+            [
+                model_info[ontology]['date'],
+                str(model_info[ontology]['name']),
+                str(model_info[ontology]['version'])
+            ]
+        )
+        model_id = model_id.replace('-', '_')
+        model_id = model_id.replace(':', '_')
+        model_info[ontology]['id'] = model_id
 
         logger.info("Digital Client inserting model information: {}".format(model_info))
 
