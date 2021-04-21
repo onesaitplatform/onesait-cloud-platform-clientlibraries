@@ -265,7 +265,8 @@ class BaseModelService(object):
 
     def set_new_model_in_ontology(
         self, name=None, version=None, description=None, metrics=None, model_file_id=None,
-        dataset_file_id=None, ontology_dataset=None, hyperparameters=None, extra_file_id=None
+        dataset_file_id=None, ontology_dataset=None, hyperparameters=None, extra_file_id=None,
+        pretrained_model_id=None
         ):
         """Set the new model in models ontology"""
 
@@ -294,6 +295,7 @@ class BaseModelService(object):
                 'hyperparameters': [create_list_item(key, value) for key, value in hyperparameters.items()],
                 'model_path': model_file_id,
                 'extra_path': extra_file_id,
+                'pretrained_model_id': pretrained_model_id,
                 'active': True
             }
         }
@@ -492,7 +494,8 @@ class BaseModelService(object):
         self.set_new_model_in_ontology(
             name=name, version=version, description=description, metrics=metrics,
             model_file_id=model_file_id, dataset_file_id=dataset_file_id,
-            hyperparameters=hyperparameters, extra_file_id=extra_file_id
+            hyperparameters=hyperparameters, extra_file_id=extra_file_id,
+            pretrained_model_id=pretrained_model_id
             )
 
     def train_from_ontology(
@@ -577,7 +580,8 @@ class BaseModelService(object):
         self.set_new_model_in_ontology(
             name=name, version=version, description=description, metrics=metrics,
             model_file_id=model_file_id, ontology_dataset=ontology_dataset,
-            hyperparameters=hyperparameters, extra_file_id=extra_file_id
+            hyperparameters=hyperparameters, extra_file_id=extra_file_id,
+            pretrained_model_id=pretrained_model_id
             )
 
     def predict_from_ontology(
