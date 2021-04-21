@@ -297,11 +297,14 @@ class BaseModelService(object):
 
         self.digital_client.leave()
 
-    def create_tmp_folder_name(self):
+    def create_tmp_folder_name(self, suffix=None):
         """Creates a name for a temporal folder"""
         tmp_model_name = self.config.NAME + ' ' + datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
         tmp_model_name = re.sub('[/\s:-]', '_', tmp_model_name)
-        tmp_model_folder = self.config.TMP_FOLDER + '/' + tmp_model_name + '/'
+        tmp_model_folder = self.config.TMP_FOLDER + '/' + tmp_model_name
+        if suffix:
+            tmp_model_folder = tmp_model_folder + '_' + str(suffix)
+        tmp_model_folder = tmp_model_folder + '/'
         return tmp_model_folder, tmp_model_name
 
     def upload_model_to_file_system(self, model_folder=None, zip_path=None):
@@ -379,7 +382,7 @@ class BaseModelService(object):
             hyperparameters[name] = value
 
         tmp_model_folder, _ = self.create_tmp_folder_name()
-        tmp_extra_folder = tmp_model_folder + '_extra'
+        tmp_extra_folder, _ = self.create_tmp_folder_name(suffix='extra')
         os.mkdir(tmp_model_folder)
         os.mkdir(tmp_extra_folder)
         self.download_from_file_system(
@@ -408,7 +411,7 @@ class BaseModelService(object):
         ))
 
         tmp_model_folder, model_name = self.create_tmp_folder_name()
-        tmp_extra_folder = tmp_model_folder + '_extra'
+        tmp_extra_folder, _ = self.create_tmp_folder_name(suffix='extra')
         os.mkdir(tmp_model_folder)
         os.mkdir(tmp_extra_folder)
 
@@ -457,7 +460,7 @@ class BaseModelService(object):
         ))
 
         tmp_model_folder, model_name = self.create_tmp_folder_name()
-        tmp_extra_folder = tmp_model_folder + '_extra'
+        tmp_extra_folder, _ = self.create_tmp_folder_name(suffix='extra')
         os.mkdir(tmp_model_folder)
         os.mkdir(tmp_extra_folder)
 
