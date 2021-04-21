@@ -177,6 +177,13 @@ class BaseModelService(object):
         
         return audit_client
 
+    def report(self, message=None, result=None):
+        """Report event in audit"""
+        self.audit_client.report(
+            message=message, result_operation=result,
+            type_='GENERAL', operation_type='INDICATION'
+            )
+
     def join_digital_client(self):
         """Digital client connects the server"""
         if not self.digital_client.is_connected:
