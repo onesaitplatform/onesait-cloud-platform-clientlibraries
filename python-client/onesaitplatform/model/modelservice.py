@@ -331,6 +331,35 @@ class BaseModelService(object):
 
         return saved_file_id
 
+    def download_from_file_system(
+        self, file_id=None, local_folder=None, unzip=None
+        ):
+        """Download file from file repository to local folder"""
+        downloaded, info = self.file_manager.download_file(
+            file_id, filepath=local_folder
+            )
+        if not downloaded:
+            message = FILE_MANAGER_GET_ERROR_MESSAGE.format(self.file_manager.to_json())
+            self.audit_client.report(
+                message=message, result_operation='ERROR',
+                type_='GENERAL', operation_type='QUERY'
+                )
+            raise ConnectionError(message)
+        else:
+            message = "File manager downloaded file: {}".format(info)
+            logger.info(message)
+            self.audit_client.report(
+                message=message, result_operation='SUCCESS',
+                type_='GENERAL', operation_type='QUERY'
+                )
+        if unzip:
+            zip_path = info['name']
+            zip_obj = zipfile.ZipFile(zip_path)
+            files = zip_obj.namelist()
+            for file in files:
+                zip_obj.extract(file, local_folder)
+        return info['name']
+
     def load_model_from_file_system(self, model_info=None):
         """Downloads a zip from File System and creates a model"""
 
@@ -349,28 +378,9 @@ class BaseModelService(object):
 
         tmp_model_folder, _ = self.create_tmp_folder_name()
         os.mkdir(tmp_model_folder)
-        downloaded, info = self.file_manager.download_file(
-            file_id, filepath=tmp_model_folder
-            )
-        if not downloaded:
-            message = FILE_MANAGER_GET_ERROR_MESSAGE.format(self.file_manager.to_json())
-            self.audit_client.report(
-                message=message, result_operation='ERROR',
-                type_='GENERAL', operation_type='QUERY'
-                )
-            raise ConnectionError(message)
-        else:
-            message = "File manager downloaded model: {}".format(info)
-            logger.info(message)
-            self.audit_client.report(
-                message=message, result_operation='SUCCESS',
-                type_='GENERAL', operation_type='QUERY'
-                )
-        zip_path = info['name']
-        zip_obj = zipfile.ZipFile(zip_path)
-        files = zip_obj.namelist()
-        for file in files:
-            zip_obj.extract(file, tmp_model_folder)
+        self.download_from_file_system(
+            file_id=file_id, local_folder=tmp_model_folder, unzip=True
+        )
         self.load_model(model_path=tmp_model_folder, hyperparameters=hyperparameters)
         shutil.rmtree(tmp_model_folder)
 
@@ -387,25 +397,10 @@ class BaseModelService(object):
         tmp_model_folder, model_name = self.create_tmp_folder_name()
         os.mkdir(tmp_model_folder)
 
-        downloaded, info = self.file_manager.download_file(
-            dataset_file_id, filepath=tmp_model_folder
-            )
-        if not downloaded:
-            message = FILE_MANAGER_GET_ERROR_MESSAGE.format(self.file_manager.to_json())
-            self.audit_client.report(
-                message=message, result_operation='ERROR',
-                type_='GENERAL', operation_type='QUERY'
-                )
-            raise ConnectionError(message)
-        else:
-            message = "File manager downloaded file: {}".format(info)
-            logger.info(message)
-            self.audit_client.report(
-                message=message, result_operation='SUCCESS',
-                type_='GENERAL', operation_type='QUERY'
-                )
+        dataset_path = self.download_from_file_system(
+            file_id=dataset_file_id, local_folder=tmp_model_folder
+        )
 
-        dataset_path = info['name']
         logger.info("Training started with dataset {} and output folder {}".format(
             dataset_path, tmp_model_folder
             ))
