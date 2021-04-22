@@ -19,7 +19,7 @@ DIGITAL_CLIENT_GET_ERROR_MESSAGE = "Not possible to get data from server with Di
 DIGITAL_CLIENT_JOIN_ERROR_MESSAGE = "Not possible to join server with Digital Client: {}"
 DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE = "Digital Client joined server: {}"
 FILE_MANAGER_GET_ERROR_MESSAGE = "Not possible to upload with File Manager: {}"
-
+TRAINING_SUCCESS_MESSAGE = "Training finished with metrics: {}"
 logger = logging.getLogger('onesait.platform.model.BaseModelService')
 logger.setLevel(logging.WARNING)
 
@@ -486,7 +486,7 @@ class BaseModelService(object):
             model_path=tmp_model_folder, extra_path=tmp_extra_folder,
             pretrained_path=tmp_pretrained_folder
             )
-        logger.info("Training finished with metrics: {}".format(metrics))
+        logger.info(TRAINING_SUCCESS_MESSAGE.format(metrics))
         os.remove(dataset_path)
 
         zip_path = self.config.TMP_FOLDER + '/' + model_name + '.zip'
@@ -573,7 +573,7 @@ class BaseModelService(object):
             model_path=tmp_model_folder, extra_path=tmp_extra_folder,
             pretrained_path=tmp_pretrained_folder
             )
-        logger.info("Training finished with metrics: {}".format(metrics))
+        logger.info(TRAINING_SUCCESS_MESSAGE.format(metrics))
         os.remove(dataset_path)
 
         zip_path = self.config.TMP_FOLDER + '/' + model_name + '.zip'
@@ -589,6 +589,57 @@ class BaseModelService(object):
             model_file_id=model_file_id, ontology_dataset=ontology_dataset,
             hyperparameters=hyperparameters, extra_file_id=extra_file_id,
             pretrained_model_id=pretrained_model_id
+            )
+
+    def train_from_external_source(
+        self, name=None, version=None, description=None, hyperparameters=None,
+        extra_file_id=None, pretrained_model_id=None
+        ):
+        """Trains a model given am external source"""
+
+        logger.info("Training model from external source: {}".format(
+            [name, version, hyperparameters]
+        ))
+
+        tmp_model_folder, model_name = self.create_tmp_folder_name()
+        tmp_extra_folder, _ = self.create_tmp_folder_name(suffix='extra')
+        tmp_pretrained_folder, _ = self.create_tmp_folder_name(suffix='pretrained')
+        os.mkdir(tmp_model_folder)
+        os.mkdir(tmp_pretrained_folder)
+
+        if extra_file_id:
+            self.download_from_file_system(
+                file_id=extra_file_id, local_folder=tmp_extra_folder, unzip=True
+                )
+        if pretrained_model_id:
+            pretrained_model_info = self.get_model_by_id(model_id=pretrained_model_id)
+            model_path = pretrained_model_info['model_path']
+            self.download_from_file_system(
+                file_id=model_path, local_folder=tmp_pretrained_folder, unzip=True
+                )
+
+        logger.info("Training started with external source and output folder {}".format(
+            tmp_model_folder
+            ))
+        metrics = self.train(
+            hyperparameters=hyperparameters, model_path=tmp_model_folder, extra_path=tmp_extra_folder,
+            pretrained_path=tmp_pretrained_folder
+            )
+        logger.info(TRAINING_SUCCESS_MESSAGE.format(metrics))
+
+        zip_path = self.config.TMP_FOLDER + '/' + model_name + '.zip'
+        model_file_id = self.upload_model_to_file_system(
+            model_folder=tmp_model_folder, zip_path=zip_path
+            )
+        shutil.rmtree(tmp_model_folder)
+        shutil.rmtree(tmp_extra_folder)
+        shutil.rmtree(tmp_pretrained_folder)
+        os.remove(zip_path)
+
+        self.set_new_model_in_ontology(
+            name=name, version=version, description=description, metrics=metrics,
+            model_file_id=model_file_id, hyperparameters=hyperparameters,
+            extra_file_id=extra_file_id, pretrained_model_id=pretrained_model_id
             )
 
     def predict_from_ontology(
