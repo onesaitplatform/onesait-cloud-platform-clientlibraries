@@ -605,6 +605,7 @@ class BaseModelService(object):
         tmp_extra_folder, _ = self.create_tmp_folder_name(suffix='extra')
         tmp_pretrained_folder, _ = self.create_tmp_folder_name(suffix='pretrained')
         os.mkdir(tmp_model_folder)
+        os.mkdir(tmp_extra_folder)
         os.mkdir(tmp_pretrained_folder)
 
         if extra_file_id:
@@ -636,6 +637,10 @@ class BaseModelService(object):
         shutil.rmtree(tmp_pretrained_folder)
         os.remove(zip_path)
 
+        if not metrics:
+            metrics = {}
+        if not hyperparameters:
+            hyperparameters = {}
         self.set_new_model_in_ontology(
             name=name, version=version, description=description, metrics=metrics,
             model_file_id=model_file_id, hyperparameters=hyperparameters,
