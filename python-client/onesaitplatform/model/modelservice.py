@@ -18,7 +18,7 @@ DIGITAL_CLIENT_JOIN_MESSAGE = "Digital Client joining server"
 DIGITAL_CLIENT_GET_ERROR_MESSAGE = "Not possible to get data from server with Digital Client: {}"
 DIGITAL_CLIENT_JOIN_ERROR_MESSAGE = "Not possible to join server with Digital Client: {}"
 DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE = "Digital Client joined server: {}"
-FILE_MANAGER_GET_ERROR_MESSAGE = "Not possible to upload with File Manager: {}"
+FILE_MANAGER_GET_ERROR_MESSAGE = "Not possible to download with File Manager: {}"
 TRAINING_SUCCESS_MESSAGE = "Training finished with metrics: {}"
 logger = logging.getLogger('onesait.platform.model.BaseModelService')
 logger.setLevel(logging.WARNING)
@@ -301,8 +301,6 @@ class BaseModelService(object):
                 'metrics': [create_list_item(key, value) for key, value in metrics.items()],
                 'hyperparameters': [create_list_item(key, value) for key, value in hyperparameters.items()],
                 'model_path': model_file_id,
-                'extra_path': extra_file_id,
-                'pretrained_model_id': pretrained_model_id,
                 'active': True
             }
         }
@@ -312,6 +310,10 @@ class BaseModelService(object):
             model_info[ontology]['ontology_dataset'] = ontology_dataset
         if dataset_file_id is not None:
             model_info[ontology]['dataset_path'] = dataset_file_id
+        if extra_file_id is not None:
+            model_info[ontology]['extra_path'] = extra_file_id
+        if pretrained_model_id is not None:
+            model_info[ontology]['pretrained_model_id'] = pretrained_model_id
 
         model_id = '_'.join(
             [
@@ -364,7 +366,9 @@ class BaseModelService(object):
         model_filename = os.path.basename(zip_path)
         uploaded, info = self.file_manager.upload_file(model_filename, zip_path)
         if not uploaded:
-            message = FILE_MANAGER_GET_ERROR_MESSAGE.format(self.file_manager.to_json())
+            message = "Not possible to upload with File Manager: {}".format(
+                self.file_manager.to_json()
+                )
             self.audit_client.report(
                 message=message, result_operation='ERROR',
                 type_='GENERAL', operation_type='INSERT'
@@ -415,7 +419,9 @@ class BaseModelService(object):
         """Downloads a zip from File System and creates a model"""
 
         file_id = model_info['model_path']
-        extra_file_id = model_info['extra_path']
+        extra_file_id = None
+        if 'extra_path' in model_info:
+            extra_file_id = model_info['extra_path']
 
         hyperparameters = {}
         for hyperparameter in model_info['hyperparameters']:
@@ -632,6 +638,7 @@ class BaseModelService(object):
         model_file_id = self.upload_model_to_file_system(
             model_folder=tmp_model_folder, zip_path=zip_path
             )
+        
         shutil.rmtree(tmp_model_folder)
         shutil.rmtree(tmp_extra_folder)
         shutil.rmtree(tmp_pretrained_folder)
