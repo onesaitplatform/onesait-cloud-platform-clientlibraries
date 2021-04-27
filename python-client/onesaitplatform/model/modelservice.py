@@ -24,7 +24,7 @@ DIGITAL_CLIENT_JOIN_SUCCESS_MESSAGE = "Digital Client joined server: {}"
 FILE_MANAGER_GET_ERROR_MESSAGE = "Not possible to download with File Manager: {}"
 TRAINING_SUCCESS_MESSAGE = "Training finished with metrics: {}"
 logger = logging.getLogger('onesait.platform.model.BaseModelService')
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
 
 class AuditClient(object):
     """Client to API for audit in Platform"""
@@ -304,7 +304,7 @@ class BaseModelService(object):
                 'metrics': [create_list_item(key, value) for key, value in metrics.items()],
                 'hyperparameters': [create_list_item(key, value) for key, value in hyperparameters.items()],
                 'model_path': model_file_id,
-                'active': 0
+                'active': False
             }
         }
 
