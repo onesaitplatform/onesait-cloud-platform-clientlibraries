@@ -13,6 +13,9 @@ import pandas as pd
 from onesaitplatform.iotbroker import DigitalClient
 from onesaitplatform.files import FileManager
 
+import urllib3
+urllib3.disable_warnings()
+
 DATETIME_PATTERN = "%Y-%m-%dT%H:%M:%SZ"
 DIGITAL_CLIENT_JOIN_MESSAGE = "Digital Client joining server"
 DIGITAL_CLIENT_GET_ERROR_MESSAGE = "Not possible to get data from server with Digital Client: {}"
@@ -263,7 +266,7 @@ class BaseModelService(object):
     def get_active_model(self):
         """Search the model active in models ontology"""
         ontology = self.config.PLATFORM_ONTOLOGY_MODELS
-        query = 'select * from {ontology} as c where c.{ontology}.active = true'.format(
+        query = 'select * from {ontology} as c where c.{ontology}.active = 1'.format(
             ontology=ontology
             )
         model_info = self.get_model_in_ontology(query=query)
@@ -301,7 +304,7 @@ class BaseModelService(object):
                 'metrics': [create_list_item(key, value) for key, value in metrics.items()],
                 'hyperparameters': [create_list_item(key, value) for key, value in hyperparameters.items()],
                 'model_path': model_file_id,
-                'active': True
+                'active': 0
             }
         }
 
@@ -709,25 +712,10 @@ class BaseModelService(object):
         tmp_folder, _ = self.create_tmp_folder_name()
         os.mkdir(tmp_folder)
 
-        downloaded, info = self.file_manager.download_file(
-            dataset_file_id, filepath=tmp_folder
-            )
-        if not downloaded:
-            message = FILE_MANAGER_GET_ERROR_MESSAGE.format(self.file_manager.to_json())
-            self.audit_client.report(
-                message=message, result_operation='ERROR',
-                type_='GENERAL', operation_type='QUERY'
-                )
-            raise ConnectionError(message)
-        else:
-            message = "File manager downloaded file: {}".format(info)
-            logger.info(message)
-            self.audit_client.report(
-                message=message, result_operation='SUCCESS',
-                type_='GENERAL', operation_type='QUERY'
-                )
+        dataset_path = self.download_from_file_system(
+            file_id=dataset_file_id, local_folder=tmp_folder
+        )
 
-        dataset_path = info['name']
         logger.info("Inference started with dataset {}".format(dataset_path))
         predictions = self.predict(dataset_path=dataset_path)
         logger.info("Inference finished")
