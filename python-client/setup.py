@@ -5,7 +5,7 @@ import sys
 from setuptools import setup, find_packages
 
 NAME = "onesaitplatform-client-services"
-VERSION = "4.1.0"
+VERSION = "4.1.1"
 
 DESCRIPTION = "Python Implementation of the Onesait Platform utilities"
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.md')).read()
