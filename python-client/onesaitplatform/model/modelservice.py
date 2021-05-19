@@ -470,6 +470,7 @@ class BaseModelService(object):
         tmp_extra_folder, _ = self.create_tmp_folder_name(suffix='extra')
         tmp_pretrained_folder, _ = self.create_tmp_folder_name(suffix='pretrained')
         os.mkdir(tmp_model_folder)
+        os.mkdir(tmp_extra_folder)
         os.mkdir(tmp_pretrained_folder)
 
         dataset_path = self.download_from_file_system(
