@@ -1,3 +1,4 @@
+import time
 import requests
 from string import Template
 import json
@@ -336,12 +337,11 @@ class DigitalClient(Client):
         except Exception as e:
             log.error("Not possible to query iot-broker: {}".format(e))
             self.add_to_debug_trace("Not possible to query iot-broker: {}".format(e))
-            self.raise_exception_if_enabled(e)
             _res = e
 
         return _ok, _res
 
-    def query_batch(self, ontology, query, query_type, batch_size = None):
+    def query_batch(self, ontology, query, query_type, batch_size = None, offset=None):
         """
         Make a query to iot-broker service of the platform paginated by batch size
 
@@ -360,7 +360,8 @@ class DigitalClient(Client):
         if batch_size is None:
             batch_size = self.batch_size
 
-        offset = 0
+        if offset is None:
+            offset = 0
         limit = batch_size
 
         res_query_count = batch_size
@@ -369,7 +370,15 @@ class DigitalClient(Client):
 
             res_query_count = 0
             step_query = self._query_batch_str(query, offset, limit, query_type)
-            ok_query, res_query = self.query(ontology, step_query, query_type)
+            ok_query, res_query = None, None
+
+            for idx in range(0,3):
+                ok_query, res_query = self.query(ontology, step_query, query_type)
+                if ok_query: # No retries if query is successful
+                    break
+                log.error("Retrying to query to iot-broker {}".format(str(idx + 1)))
+                self.restart()
+                time.sleep(20)
 
             if ok_query:
                 res_query_count = len(res_query)
