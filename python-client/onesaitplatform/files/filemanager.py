@@ -291,7 +291,7 @@ class FileManager:
                 "metadata": metadata
             }
 
-            response = requests.request(RestMethods.PUT.value, url,
+            response = requests.request(RestMethods.POST.value, url,
                                         params=params,
                                         headers=headers, files=files_to_up, 
                                         verify=not self.avoid_ssl_certificate,
