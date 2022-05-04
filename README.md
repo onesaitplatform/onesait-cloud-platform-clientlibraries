@@ -1,10 +1,10 @@
 Onesait Platform Client Libraries
 =================================
 
-This folder includes the different client libraries to communicate and develop on the Onesait Platform.
-Before using the clients for the first time, we strongly recommend that you learn the main concepts of the [Onesait Platform](https://onesaitplatform.atlassian.net/wiki/spaces/OP/overview?mode=global).
+This project includes the different client libraries to communicate and develop on the Onesait Platform.
+Before using the clients for the first time, we strongly recommend that you learn the main concepts of the [Onesait Platform] readking our Getting Started Guide on https://onesaitplatform.refined.site/space/DOCT/2221610206/Getting+Started+with+Onesait+Platform+CloudLab
 
-## Clients included
+##CLIENTS INCLUDED
 At the present time these libraries are included:
 
 ### Android client
@@ -43,3 +43,10 @@ For more information, visit [Python-client README](./python-client/README.md)
 This client is based in [Springboot framework](https://spring.io/projects/spring-boot) to allow easy REST developments.
 
 For more information, visit [Springboot-client README](./springboot-client/README.md)
+
+## Current Contributors
+<a href="https://github.com/onesaitplatform/onesait-cloud-platform-clientlibraries/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=onesaitplatform/onesait-cloud-platform-clientlibraries" />
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).
