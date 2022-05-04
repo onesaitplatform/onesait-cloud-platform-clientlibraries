@@ -1,0 +1,438 @@
+<html>
+    <head>
+        <title>Onesait Platform Javascript Client Example</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.0.0/sockjs.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>
+		<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+		<script src="./js/op_ws_api.js"></script>
+		
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+		<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        
+		<link rel="stylesheet" type="text/css" media="all" href="./json/jsoneditor.css"/>
+		
+		<style>
+			.counter {
+			  background-color: #00cc75;
+			  padding: 20px 0;
+			  border-radius: 5px;
+			  color: white;
+			  margin-left: 10px;
+			}
+			
+			.count-title {
+				font-size: 40px;
+				font-weight: normal;
+				margin-top: 10px;
+				margin-bottom: 0;
+				text-align: center;
+			}
+
+			.count-text {
+				font-size: 13px;
+				font-weight: normal;
+				margin-top: 10px;
+				margin-bottom: 0;
+				text-align: center;
+			}
+			
+			.alarm {
+				background-color: #cc8b00;
+			}
+		</style>
+		<script type="text/javascript">
+			
+			
+			function connectTest(){							
+				var urlIoTBroker = $("#urlIoTBroker").val();
+				console.log(urlIoTBroker);
+				var deviceTemplate = $("#deviceTemplate").val();
+				var device = $("#device").val();
+				var token = $("#token").val();
+				var text = '{"url":"'+urlIoTBroker+'","token":"'+token+'","deviceTemplate":"'+deviceTemplate+'","device":"'+device+'"}'; 
+				console.log(text);
+				var config = JSON.parse(text);	  
+				console.log("Connect with this config:"+config.url);
+
+				
+				config = {"url":"https://lab.onesaitplatform.com/iot-broker/message", "token":"ff4cc09a62014f6eaaaaa9291111e791", "deviceTemplate": "ExampleClient", "device":"ExampleClient1"}; //Ontology: AirQuality
+					  
+				client = new OPClient();
+				client.configure(config);
+				
+				client.connect().then(function(val) {
+					console.log("logged");
+					console.log("Connect with this config:"+client.config.url);				
+					client.join().then(function (response){
+						writeResult("responseDivJoinResult","response join ", response);
+					});
+				});
+			}
+			function connectTestMulti(){
+				
+				i=0;
+				while (i< 100){
+					if (i%2 == 0){
+						client.join().then(function (response){
+							console.log("par -> " + JSON.stringify(response));
+						});
+					}else{
+						client.join().then(function (response){
+							console.log("impar -> " + JSON.stringify(response));
+						});
+					}					
+					i++;
+				}
+			}
+			
+			function writeResult(divId, operation , result){
+				console.log(operation);
+				console.log(result);
+				/*content =  "<p>" + operation + "</p>" + "<pre>" + JSON.stringify(result,null,'\t') + "</pre>";
+				$("#"+divId).html(content);
+				*/
+				$("#"+divId).html("");
+				
+				var jsonSchema = JSON.parse(JSON.stringify(result.body,null,'\t'));
+				var container = document.getElementById(''+divId);	
+				var options = {
+					mode: 'view',
+					theme: 'bootstrap3',			
+					modes: ['view'], // allowed modes
+					error: function (err) {
+						$.alert({title: 'ERROR!', theme: 'dark', style: 'red', content: err.toString()});
+						return false;
+					}
+				};
+				
+				editor = new jsoneditor.JSONEditor(container, options, jsonSchema);
+			}
+			
+			function sendQueryTest(){
+				var ontology = $("#ontologyTabQueryField").val();
+				var query = $("#tabQueryField").val();
+				var queryType = $("#tabQueryTypeField").val();
+				
+				
+				client.query(ontology, query, queryType).then(function (response){
+					content = "response query num of items ";
+					if (response.body !=null && response.body.data != null){
+						content += response.body.data.length;
+					} else {content += "0";}
+					
+					writeResult("responseDivQueryResult",content, response);					
+				});
+
+			}
+			
+			function sendInsertTest () {
+				var ontology = $("#ontologyTabInserField").val();
+				
+				//data = {"EmptyBase" : { "test" : "3" } };
+				
+				data = JSON.parse($("#insertInstance").val());
+				
+				client.insert(ontology, JSON.stringify(data)).then(function (response) {
+					writeResult("responseDivInsertResult","response insert ", response);
+				});	
+			}
+			
+			function sendUpdate () {
+				var ontology = $("#ontologyTabUpdateField").val();
+				var query = $("#tabUpdteField").val();
+				
+				client.update(ontology, query).then(function (response){
+					writeResult("responseDivUpdateResult", "response update", response);
+				});
+				
+			}
+			
+			function sendRemoveTest(){
+				var ontology = $("#ontologyTabDeleteField").val();
+				var query = $("#tabDeleteField").val();
+				client.remove(ontology, query).then(function (response){
+					writeResult("responseDivDeleteResult","test remove", response);
+				});
+			}
+			
+			function sendUpdateByIdTest(){
+				var ontology = $("#ontologyTabUpdateByField").val();
+				var sofiaId = $("#sofiaIdUpdate").val();
+				
+				data = JSON.parse($("#updateInstance").val()); //{"EmptyBase" : { "test" : "testupdate3" } };
+				
+				client.updateById(ontology, sofiaId, JSON.stringify(data)).then( function (response){
+					writeResult("responseDivUpdateByIdResult","test updateById ", response);
+				});
+			}
+			
+			function sendRemoveByIdTest(){
+				var ontology = $("#ontologyTabDeleteByField").val();
+				var sofiaId = $("#sofiaIdDelete").val();
+				
+				client.removeById(ontology, sofiaId).then( function (response){
+					writeResult("responseDivDeleteByIdResult","test remove byId ", response);
+				});
+			}
+			
+			var timer = 0;
+			
+			function startSimulation (){
+				var ontology = $("#ontologyTabSimulateField").val();
+				
+				//data = {"EmptyBase" : { "test" : "3" } };
+				
+				data = JSON.parse($("#simulateInstance").val());
+				
+				simulateInterval = $("#simulateInterval").val();
+				
+				console.log("start simulation" + simulateInterval);
+				timer = setInterval(function(){
+					console.log("executing..");
+					client.insert(ontology, JSON.stringify(data)).then(function (response) {
+						
+						if (response.direction === "ERROR"){
+							$("#counterErrors").text(Math.floor($(counterErrors).text()) + 1);
+							console.log(response);
+						} else {
+							$("#counter").text(Math.floor($("#counter").text()) + 1);
+						}
+						
+					});	
+					
+					
+				},simulateInterval);
+				
+				
+			}
+
+			function subscribe(){
+				var ontology = $("#ontologyTabSubscriptionField").val();
+				var query = $("#ontologyTabQuerySubscriptionField").val() + ontology;
+				console.log("subscribing to ontology " + ontology + " with query " + query);
+				client.subscribe(ontology,query,"SQL", 
+					function(response){
+						console.log("Subscribed with id: "+response.body.data.subscriptionId);
+					}
+					,function(response){
+						console.log("New message from subscription");
+						writeResult("responseDivSubscribeResult","response subscribe: ", response);
+					});
+
+			}
+			
+			function stopSimulation () {
+				clearInterval(timer); 
+			}
+			
+			
+			
+
+        </script>
+    </head>
+    <body>
+		<div class="container">
+  
+				<ul class="nav nav-tabs" id="myTab" role="tablist">
+				  <li class="nav-item">
+					<a class="nav-link active" id="connect-tab" data-toggle="tab" href="#connect" role="tab" aria-controls="connect" aria-selected="true">Connect Platform</a>
+				  </li>
+				  <li class="nav-item">
+					<a class="nav-link" id="home-tab" data-toggle="tab" href="#query" role="tab" aria-controls="query" aria-selected="false">Query</a>
+				  </li>
+				  <li class="nav-item">
+					<a class="nav-link" id="profile-tab" data-toggle="tab" href="#insert" role="tab" aria-controls="insert" aria-selected="false">Insert</a>
+				  </li>
+				  <li class="nav-item">
+					<a class="nav-link" id="contact-tab" data-toggle="tab" href="#update" role="tab" aria-controls="update" aria-selected="false">Update</a>
+				  </li>
+				  <li class="nav-item">
+					<a class="nav-link" id="contact-tab" data-toggle="tab" href="#updateById" role="tab" aria-controls="updateById" aria-selected="false">Update By Id</a>
+				  </li>
+				  <li class="nav-item">
+					<a class="nav-link" id="contact-tab" data-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="false">Delete</a>
+				  </li>
+				  <li class="nav-item">
+					<a class="nav-link" id="contact-tab" data-toggle="tab" href="#deleteById" role="tab" aria-controls="deleteById" aria-selected="false">Delete By Id</a>
+				  </li>
+				  <li class="nav-item">
+					<a class="nav-link" id="contact-tab" data-toggle="tab" href="#simulate" role="tab" aria-controls="simulate" aria-selected="false">Simulate</a>
+				  </li>
+				  <li class="nav-item">
+					<a class="nav-link" id="contact-tab" data-toggle="tab" href="#subscribe" role="tab" aria-controls="subscribe" aria-selected="false">Subscribe</a>
+				  </li>
+				</ul>
+
+				<div class="tab-content" id="myTabContent">
+				  <div class="tab-pane fade show active" id="connect" role="tabpanel" aria-labelledby="connect-tab">
+						<div class="form-group">
+							<label>IoT Broker URL</label> 
+							<input type="text" id="urlIoTBroker" class="form-control"  placeholder="write URL..." value="https://lab.onesaitplatform.com/iot-broker/message"/>
+						</div>
+						<div class="form-group">
+							<label>Device Template:</label> 
+							<input type="text" id="deviceTemplate"  class="form-control"  placeholder="..." value="Client4AirQuality"/>
+						</div>
+						<div class="form-group">
+							<label>Device:</label> 
+							<input type="text" id="device"  class="form-control"  placeholder="..." value="Client4AirQualityInstance1"/>
+						</div>
+						<div class="form-group">
+							<label>Token:</label> 
+							<input type="text" id="token"  class="form-control"  placeholder="..." value="9bf929af30014479a2aeb292c1c2d56f"/>
+						</div>
+						<div class="form-group">
+							<p>
+								<button id="connect" onclick="connectTest();">Connect</button>
+							</p>
+						</div>
+						<div id= "responseDivJoinResult"></div>
+				  </div>
+				  <div class="tab-pane fade show " id="query" role="tabpanel" aria-labelledby="home-tab">
+						<div class="form-group">
+							<label> Ontology name:</label> 
+							<input type="text" id="ontologyTabQueryField" class="form-control"  placeholder="write ontology..." value="AirQuality"/>
+						</div>
+						<div class="form-group">
+							<label>Query:</label> 
+							<input type="text" id="tabQueryField"  class="form-control"  placeholder="Write a query..." value="SELECT * FROM AirQuality AS c LIMIT 10"/>
+						</div>
+						<div class="form-group">
+							<label>Query Type:</label> 
+							<input type="text" id="tabQueryTypeField"  class="form-control"  placeholder="Query type (SQL/NATIVE)" value="SQL"/>
+						</div>
+						<p>
+							<button id="sendMessage" onclick="sendQueryTest()">Test query</button>
+						</p>
+						<div id= "responseDivQueryResult"></div>
+				  </div>
+				  <div class="tab-pane fade" id="insert" role="tabpanel" aria-labelledby="profile-tab">
+						<div class="form-group">
+							<label>Ontology name: </label>
+							<input type="text" id="ontologyTabInserField" class="form-control" placeholder="write ontology..." value="AirQuality"/>
+						</div>
+						<div class="form-group">
+							<label>Instance: </label>
+							<input type="text" id="insertInstance" class="form-control" placeholder="Write instance to insert..." value="{&quot;AirQuality&quot;:{ &quot;location&quot;:&quot;Madrid&quot;,&quot;measure&quot;:18.6,&quot;timestamp&quot;:{&quot;$date&quot;: &quot;2022-03-19T09:14:00Z&quot;}}}"/>
+						</div>
+						<p>
+							<button id="sendInserMessage" onclick="sendInsertTest()">Test insert query</button>
+						</p>	
+						<div id= "responseDivInsertResult"></div>
+				  </div>
+				  <div class="tab-pane fade" id="update" role="tabpanel" aria-labelledby="contact-tab">
+						<div class="form-group">
+							<label>Ontology name:</label> 
+							<input type="text" id="ontologyTabUpdateField" class="form-control" placeholder="write ontology..." value="AirQuality"/>
+						</div>
+						<div class="form-group">
+							<label>Query: </label>
+							<input type="text" id="tabUpdteField" class="form-control" placeholder="Write a query..." value=""/>
+						</div>
+						<p>
+							<button id="sendMessageUpdate" onclick="sendUpdate()">Test update</button>
+						</p>
+						<div id= "responseDivUpdateResult"></div>
+				  </div>
+				  <div class="tab-pane fade" id="updateById" role="tabpanel" aria-labelledby="contact-tab">
+						<div class="form-group">
+							<label>Ontology name:</label>
+							<input type="text" id="ontologyTabUpdateByField" class="form-control" placeholder="write ontology..." value="AirQuality"/>
+						</div>
+						<div class="form-group">
+							<label>Id:</label> 
+							<input type="text" id="sofiaIdUpdate" class="form-control" placeholder="write id..." value=""/>
+						</div>
+						<div class="form-group">
+							<label>Instance:</label> 
+							<input type="text" id="updateInstance" class="form-control" placeholder="Write instance to update..." value="{&quot;AirQuality&quot;:{ &quot;location&quot;:&quot;string&quot;,&quot;measure&quot;:18.6,&quot;timestamp&quot;:{&quot;$date&quot;: &quot;2018-11-19T09:14:00Z&quot;}}}"/>
+						</div>
+						<p>
+							<button id="sendMessageUpdate" onclick="sendUpdateByIdTest()">Test updateById</button>
+						</p>
+						<div id= "responseDivUpdateByIdResult"></div>
+				  </div>
+				  <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="contact-tab">
+						<div class="form-group">
+							<label>Ontology name:</label> 
+							<input type="text" id="ontologyTabDeleteField" class="form-control" placeholder="write ontology..." value="AirQuality"/>
+						</div>
+						<div class="form-group">
+							<label>Query:</label> 
+							<input type="text" id="tabDeleteField" class="form-control" placeholder="Write a query..." value="db.AirQuality.remove()"/>
+						</div>
+						<p>
+							<button id="sendMessageDelete" onclick="sendRemoveTest()">Test delete</button>
+						</p>
+						<div id= "responseDivDeleteResult"></div>
+				  </div>
+				  <div class="tab-pane fade" id="deleteById" role="tabpanel" aria-labelledby="contact-tab">
+						<div class="form-group">
+							<label>Ontology name:</label> 
+							<input type="text" id="ontologyTabDeleteByField" class="form-control" placeholder="write ontology..." value="AirQuality"/>
+						</div>
+						<div class="form-group">
+							<label>Id:</label> 
+							<input type="text" id="sofiaIdDelete" class="form-control" placeholder="write id..." value=""/>
+						</div>
+						<p>
+							<button id="sendMessageDelete" onclick="sendRemoveByIdTest()">Test deleteById</button>
+						</p>	
+						<div id= "responseDivDeleteByIdResult"></div>
+				  </div>
+				  <div class="tab-pane fade" id="simulate" role="tabpanel" aria-labelledby="profile-tab">
+						<div class="form-group">
+							<label>Ontology name: </label>
+							<input type="text" id="ontologyTabSimulateField" class="form-control" placeholder="write ontology..." value="AirQuality"/>
+						</div>
+						<div class="form-group">
+							<label>Instance: </label>
+							<input type="text" id="simulateInstance" class="form-control" placeholder="Write instance to insert..." value="{&quot;AirQuality&quot;:{ &quot;location&quot;:&quot;string&quot;,&quot;measure&quot;:18.6,&quot;timestamp&quot;:{&quot;$date&quot;: &quot;2018-11-19T09:14:00Z&quot;}}}"/>
+						</div>
+						<div class="form-group">
+							<label>Execute every (milliseconds): </label>
+							<input type="text" id="simulateInterval" class="form-control" placeholder="Write in milliseconds..." value="1000"/>
+						</div>
+						<p>
+							<button id="startSimulationBtn" onclick="startSimulation()">Start</button>
+							<button id="stopSimulationBtn" onclick="stopSimulation()">Stop</button>
+						</p>	
+						<div id= "responseDivSimulateResult"></div>
+						<div class="container">
+							<div class="row justify-content-md-center">
+								<div class="counter col col-lg-4">
+								  <i class="fa fa-code fa-2x"></i>
+								  <h2 class="count-title count-number" id="counter">0</h2>
+								  <p class="count-text ">Num of inserted messages</p>
+								</div>
+							
+								<div class="counter alarm col col-lg-4">
+								  <i class="fa fa-code fa-2x"></i>
+								  <h2 class="count-title count-number" id="counterErrors">0</h2>
+								  <p class="count-text ">Num of messages with error</p>
+								</div>
+							</div>
+					    </div>
+				</div>
+				 <div class="tab-pane fade" id="subscribe" role="tabpanel" aria-labelledby="subscribe-tab">
+				 		<div class="form-group">
+							<label> Ontology name:</label> 
+							<input type="text" id="ontologyTabSubscriptionField" class="form-control"  placeholder="write ontology" value="AirQuality"/>
+							<input type="hidden" id="ontologyTabQuerySubscriptionField" class="form-control"  placeholder="write ontology" value="SELECT * FROM "/>
+						</div>
+						
+						<div class="form-group">
+							<p>
+								<button id="connect" onclick="subscribe();">Subscribe</button>
+							</p>
+						</div>
+						<div id= "responseDivSubscribeResult"></div>
+				  </div>
+				<!-- Content here -->
+		</div>
+
+    </body>
+	<script src="./json/jsoneditor.js"></script>
+</html>
