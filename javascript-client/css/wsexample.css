@@ -1,0 +1,120 @@
+			html * {
+			   font-family: Arial !important;
+			}
+		
+		
+			.counter {
+			  background-color: #66CDAA;
+			  padding: 20px 0;
+			  border-radius: 5px;
+			  color: white;
+			  margin-left: 10px;
+			}
+			
+			.count-title {
+				font-size: 40px;
+				font-weight: normal;
+				margin-top: 10px;
+				margin-bottom: 0;
+				text-align: center;
+			}
+
+			.count-text {
+				font-size: 13px;
+				font-weight: normal;
+				margin-top: 10px;
+				margin-bottom: 0;
+				text-align: center;
+			}
+			
+			.alarm {
+				background-color: #E9967A;
+			}
+			
+			*{
+				margin: 0;
+				padding: 0;
+			}
+
+			h1, h3{
+			  text-transform: uppercase;
+			  font-weight: normal;
+			}
+
+			.tabs{
+				width: 1000px;
+				display: block;
+				margin: 40px auto;
+				position: relative;
+			}
+
+			.tabs .tab{
+				float: left;
+				display: block;
+			}
+
+			.tabs .tab>input[type="radio"] {
+				position: absolute;
+				top: -9999px;
+				left: -9999px;
+			}
+
+			.tabs .tab>label {
+				display: block;
+				padding: 6px 21px;
+				font-size: 14px;
+				text-transform: uppercase;
+				cursor: pointer;
+				position: relative;
+				color: #FFF;
+				background: #778899;
+			}
+
+			.tabs .content {
+				display: none;
+				overflow: hidden;
+				width: 948px;
+				padding: 25px;
+				position: absolute;
+				top: 27px;
+				left: 0;
+				background: #2F4F4F;
+				color: #DFDFDF;
+				
+				opacity:0;
+				transition: opacity 400ms ease-out;
+			}
+			
+			.tabs>.tab>[id^="tab"]:checked + label {
+				top: 0;
+				background: #2F4F4F;;
+				color: #F5F5F5;
+			}
+
+			.tabs>.tab>[id^="tab"]:checked ~ [id^="tab-content"] {
+				display: block;
+			   
+				opacity: 1;
+				transition: opacity 400ms ease-out;
+			}
+			
+			.button {
+			  background-color: #008B8B;
+			  border: none;
+			  color: white;
+			  padding: 8px 16px;
+			  text-align: center;
+			  font-size: 16px;
+			  margin: 2px 1px;
+			  opacity: 0.6;
+			  transition: 0.3s;
+			  display: inline-block;
+			  text-decoration: none;
+			  cursor: pointer;
+			}
+
+			.button:hover {opacity: 1}
+			
+			.text {
+				width:100%;
+			}

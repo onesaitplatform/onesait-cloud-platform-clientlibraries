@@ -7,6 +7,7 @@ function OPClient() {
 		var queuePromises;
 		var version = "";
 		var status;
+		var clientId="";
 		
 		
 		this.configure = function (config) {
@@ -25,44 +26,56 @@ function OPClient() {
 		
 		this.connect = function (callback) {
 		
-			if (this.config === null) {
+			if (_this.config === null) {
 				throw Error('Configuration required!');
 			}
 			
 			_this.status = 'CONNECTING';
 			_this.queuePromises = [];
 			
-			var dfd = $.Deferred();
 			
-			var socket = new SockJS(this.config.url);
+			var dfd = new Promise (function(resolve, reject){
 			
-			this.stompClient = Stomp.over(socket);
-			
-			if (this.config.debug) {
-				socket.debug = function(str) {
-					console.log(str);
-				};
+				var socket = new SockJS(_this.config.url);
 				
-				this.stompClient.debug = function (str) {
-					console.log(str);
-				};
+				_this.stompClient = Stomp.over(socket);
 				
-			}else {
-				this.stompClient.debug = false;
-			}
+				if (_this.config.debug) {
+					socket.debug = function(str) {
+						console.log(str);
+					};
+					
+					_this.stompClient.debug = function (str) {
+						console.log(str);
+					};
+					
+				}else {
+					_this.stompClient.debug = false;
+				}
+				
+				_this.stompClient.connect({}, 
+						function (frame) {
+							clientId=getClientIdFromURL(socket._transport.url);
+							resolve(_this.onConnect(frame,callback));
+						}, 
+						function (err) {
+							reject(_this.onError(err));
+							
+						}
+				);
+			});
 			
-			this.stompClient.connect({}, 
-					function (frame) {	
-						dfd.resolve(_this.onConnect(frame,callback));
-					}, 
-					function (err) {
-						dfd.reject(_this.onError(err));
-						
-					}
-			);
-
-			return dfd.promise();
+			return dfd;		
+			
 		}
+		
+		var parseResponseWithACK = function (response, callback) {
+		
+			_this.stompClient.send("/stomp/ack/" + JSON.parse(response.body).messageId, {}, "");
+		
+			parseResponse (response, callback);
+		}
+		
 		
 		var parseResponse = function (response, callback) {
 		
@@ -70,10 +83,16 @@ function OPClient() {
 			response.body = response.body.replace(/}\"/g, '}');
 			response.body = response.body.replace(/\\"/g, '"');
 			
-			body = JSON.parse(response.body);
+			try {
 			
-			if(body.messageType =="JOIN"){
-				sessionKey = body.sessionKey;
+				body = JSON.parse(response.body);
+				
+				if(body.messageType =="JOIN"){
+					sessionKey = body.sessionKey;
+				}
+			
+			} catch (err){
+				body = response;
 			}
 			
 			if(callback)
@@ -84,6 +103,11 @@ function OPClient() {
 			susbcription.unsubscribe();  
 		}
 		
+		var getClientIdFromURL = function (str){
+			str=str.substring(0, str.lastIndexOf("/"));
+			return(str.substring(str.lastIndexOf("/")+1,str.length))
+		}
+		
 		var escapeDoubleQuotes = function (str) {
 			return str.replace(/\\([\s\S])|(")/g,"\\$1$2");
 		}
@@ -92,15 +116,18 @@ function OPClient() {
 		
 			var UUID = (new Date()).getTime();
 			
-			var dfd = $.Deferred();
+			var dfd = new Promise (function(resolve){
 			
-			var susbcription = _this.stompClient.subscribe('/topic/message/' + UUID, function(response) {					
-					dfd.resolve(parseResponse(response,callback));
-			});
+				var susbcription = _this.stompClient.subscribe('/topic/message/' + UUID, function(response) {					
+						resolve(parseResponse(response,callback));
+				});
 
-			_this.stompClient.send("/stomp/message/" + UUID, {}, message);
+				_this.stompClient.send("/stomp/message/" + UUID, {}, message);
 			
-			return dfd.promise();	
+			});
+			
+			return dfd;
+			
 		}
 		
 		this.join = function (callback) {
@@ -274,7 +301,7 @@ function OPClient() {
 			return sendMessage(deleteMessage, callback);
 		};
 
-		this.subscribe = function (ontology, query, queryType, callbackOperation, callbackSubscriptionMessages){
+		this.subscribe = function (subscription, queryValue, queryType, callbackOperation, callbackSubscriptionMessages){
 
 			messageId = "";
 			var subscribeMessage = '{'
@@ -285,20 +312,45 @@ function OPClient() {
 							+ ',"direction":"REQUEST","messageType":"SUBSCRIBE"'
 							+ ',"body": {'
 							+ '"@type": "SSAPBodySubscribeMessage",'
-							+ '"ontology":"'
-							+ ontology
-							+ '","query":"'
-							+ escapeDoubleQuotes(query)
+							+ '"subscription":"'
+							+ subscription
+							+ '","queryValue":"'
+							+ escapeDoubleQuotes(queryValue)
 							+ '","queryType":"'
 							+ queryType
+							+ '","clientId":"'
+							+ clientId
 							+ '"'
 							+ '}'
 							+ '}';
 
-			this.stompClient.subscribe("/topic/subscription/"+sessionKey, function(response){
-				parseResponse(response,callbackSubs)});
+			this.stompClient.subscribe("/topic/subscription/" + sessionKey, function(response){
+				parseResponseWithACK(response, callbackSubscriptionMessages)});
 
-			return sendMessage(subscribeMessage, callback);
+			return sendMessage(subscribeMessage, callbackOperation);
+		};
+		
+		
+		this.unsubscribe = function (subscription, callbackOperation){
+
+			messageId = "";
+			var unsubscribeMessage = '{'
+							+ '"messageId":"' 
+							+ messageId
+							+ '","sessionKey":' 
+							+ ((sessionKey != null)?'"' + sessionKey + '"': null)
+							+ ',"direction":"REQUEST","messageType":"UNSUBSCRIBE"'
+							+ ',"body": {'
+							+ '"@type": "SSAPBodyUnsubscribeMessage",'
+							+ '"subscriptionId":"'
+							+ subscription
+							+ '","clientId":"'
+							+ clientId
+							+ '"'
+							+ '}'
+							+ '}';
+
+			return sendMessage(unsubscribeMessage, callbackOperation);
 		};
 		
 }
