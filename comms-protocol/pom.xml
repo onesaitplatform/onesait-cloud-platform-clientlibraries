@@ -5,20 +5,16 @@
 	<parent>
 		<groupId>com.minsait.onesait.platform</groupId>
 		<artifactId>onesaitplatform-client-libraries-parent</artifactId>
-		<version>1.4.1-RELEASE</version>
+		<version>3.3.5-RELEASE</version>
 		<relativePath>..</relativePath>
 	</parent>
-	
 	<artifactId>onesaitplatform-comms-protocol</artifactId>
-	
 	<packaging>jar</packaging>
 	<name>onesaitplatform-comms-protocol</name>
 	<description>onesait Platform communication protocol</description>
-	
 	<properties>
 		<license.dir>${project.parent.basedir}</license.dir>
 	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -29,9 +25,9 @@
 			<artifactId>jackson-annotations</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.commons</groupId>
+			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
+			<version>2.7</version>
 		</dependency>
 	</dependencies>
-
 </project>

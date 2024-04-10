@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class SSAPMessageGenerator {
 	}
 
 	public static SSAPMessage<SSAPBodySubscribeMessage> generateRequestSubscriptionMessage(String subscription,
-			String queryValue, String callback, String sessionKey, String clientId) {
+			String queryValue, String callback, String sessionKey, String clientId, String tags) {
 
 		final SSAPMessage<SSAPBodySubscribeMessage> subscriptionMessage = new SSAPMessage<>();
 		subscriptionMessage.setSessionKey(sessionKey);
@@ -87,18 +87,21 @@ public class SSAPMessageGenerator {
 		body.setQueryValue(queryValue);
 		body.setSubscription(subscription);
 		body.setClientId(clientId);
+		body.setTags(tags);
+
 		subscriptionMessage.setBody(body);
 
 		return subscriptionMessage;
 	}
 
 	public static SSAPMessage<SSAPBodyUnsubscribeMessage> generateRequestUnsubscribeMessage(String sessionKey,
-			String subscriptionId) {
+			String subscriptionId, String tags) {
 		final SSAPMessage<SSAPBodyUnsubscribeMessage> unsubscribe = new SSAPMessage<SSAPBodyUnsubscribeMessage>();
 		unsubscribe.setSessionKey(sessionKey);
 
 		final SSAPBodyUnsubscribeMessage body = new SSAPBodyUnsubscribeMessage();
 		body.setSubscriptionId(subscriptionId);
+		body.setTags(tags);
 
 		unsubscribe.setBody(body);
 		unsubscribe.setDirection(SSAPMessageDirection.REQUEST);

@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,15 @@ public class SSAPBodyQueryMessage extends SSAPBodyOntologyMessage {
 	private SSAPQueryType queryType;
 	private SSAPQueryResultFormat resultFormat;
 	private long cacheTime;
+	private String tags;
+
+	public String getTags() {
+		return tags;
+	}
+
+	public void setTags(String tags) {
+		this.tags = tags;
+	}
 
 	public String getQuery() {
 		return query;
