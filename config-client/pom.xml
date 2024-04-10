@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.minsait.onesait.platform</groupId>
+		<artifactId>onesaitplatform-client-libraries-parent</artifactId>
+		<version>3.3.5-RELEASE</version> 
+		<relativePath>..</relativePath>
+	</parent>
+	
+	<groupId>com.minsait.onesait.platform</groupId>
+	<artifactId>onesaitplatform-spring-config-client</artifactId>
+	
+	<name>onesaitplatform-spring-config-client</name>
+	<description>Spring Boot Client to manage centraliced configuration platform</description>
+	<properties>
+		<license.dir>${project.parent.basedir}</license.dir>
+		<skip.unit.tests>false</skip.unit.tests>
+		<skip.integration.tests>true</skip.integration.tests>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-config-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-sleuth</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.ulisesbocchio</groupId>
+			<artifactId>jasypt-spring-boot-starter</artifactId>
+			<version>2.0.0</version>
+		</dependency>
+	</dependencies>
+
+</project>
