@@ -4,7 +4,7 @@ import json
 import logging
 import requests
 import onesaitplatform.common.config as config
-from onesaitplatform.enums import RestProtocols
+from onesaitplatform.enum import RestProtocols
 from onesaitplatform.common.log import log
 
 try:
@@ -223,7 +223,7 @@ class Client:
             assert isinstance(exception, Exception)
             raise exception
 
-    def call(self, method, url, headers=None, params=None, body=None, data=None):
+    def call(self, method, url, headers=None, params=None, body=None):
         """
         Make an HTTP request
 
@@ -241,8 +241,8 @@ class Client:
         self.add_to_debug_trace("Calling rest api, method:{}, url:{}, headers:{}, params:{}"
         .format(method, url, headers, params))
 
-        response = requests.request(method, url, headers=headers, params=params, json=body, data=data,
-                                    verify=not self.avoid_ssl_certificate, timeout=self.timeout, proxies=self.proxies)
+        response = requests.request(method, url, headers=headers, params=params, json=body, verify=not self.avoid_ssl_certificate,
+                                    timeout=self.timeout, proxies=self.proxies)
         log.info("Call rest api response: {}".format(response))
         self.add_to_debug_trace("Call rest api response: {}".format(response))
 

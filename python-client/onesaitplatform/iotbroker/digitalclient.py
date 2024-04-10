@@ -6,7 +6,7 @@ import logging
 from onesaitplatform.base import Client
 from onesaitplatform.common.utils import wait
 import onesaitplatform.common.config as config
-from onesaitplatform.enums import RestMethods, QueryType, RestHeaders
+from onesaitplatform.enum import RestMethods, QueryType, RestHeaders
 from onesaitplatform.common.log import log
 
 try:
@@ -15,6 +15,7 @@ try:
 except:
     log.init_logging()
 
+TAGS_PARAM_VALUE = '{"source": "PYTHONCLIENT"}'
 
 class DigitalClient(Client):
     """
@@ -164,7 +165,12 @@ class DigitalClient(Client):
                      .format(self.host, self.__iot_broker_path, self.iot_client, self.iot_client_token))
 
         url = self.__join_template.substitute(protocol=self.protocol, host=self.hostport, path=self.__iot_broker_path)
-        querystring = {"token": self.iot_client_token, "clientPlatform": self.iot_client, "clientPlatformId": self.iot_clientId}
+        querystring = {
+            "token": self.iot_client_token,
+            "clientPlatform": self.iot_client,
+            "clientPlatformId": self.iot_clientId,
+            "tags": TAGS_PARAM_VALUE
+            }
         headers = {
             RestHeaders.ACCEPT_STR.value: RestHeaders.APP_JSON.value,
             RestHeaders.CONT_TYPE.value: RestHeaders.APP_JSON.value
@@ -220,7 +226,8 @@ class DigitalClient(Client):
         if self.is_connected:
             url = self.__leave_template.substitute(protocol=self.protocol, host=self.hostport, path=self.__iot_broker_path)
             headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
-            response = self.call(RestMethods.GET.value, url, headers=headers)
+            params = {"tags": TAGS_PARAM_VALUE}
+            response = self.call(RestMethods.GET.value, url, headers=headers, params=params)
             self.is_connected = False
             self.session_key = None
             log.info("Disconnected correctly: {}".format(response.text))
@@ -290,7 +297,7 @@ class DigitalClient(Client):
         log.info("Making query to ontology:{}, query:{}, query_type:{}".format(ontology, query, query_type))
         url = self.__query_template.substitute(protocol=self.protocol, host=self.hostport,
                                                 path=self.__iot_broker_path, ontology=ontology)
-        querystring = {"query": query, "queryType": query_type.upper()}
+        querystring = {"query": query, "queryType": query_type.upper(), "tags": TAGS_PARAM_VALUE}
         headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
         response = self.call(RestMethods.GET.value, url, headers=headers, params=querystring)
 
@@ -380,6 +387,7 @@ class DigitalClient(Client):
                 self.restart()
                 time.sleep(20)
 
+
             if ok_query:
                 res_query_count = len(res_query)
                 _res += res_query
@@ -421,7 +429,8 @@ class DigitalClient(Client):
                                             path=self.__iot_broker_path, ontology=ontology)
         body = list_data
         headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
-        response = self.call(RestMethods.POST.value, url, headers=headers, body=body)
+        params = {"tags": TAGS_PARAM_VALUE}
+        response = self.call(RestMethods.POST.value, url, headers=headers, body=body, params=params)
 
         if response.status_code != 200:
             log.info("Session expired, reconnecting...")
@@ -431,7 +440,7 @@ class DigitalClient(Client):
 
             if is_reconnected:
                 headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
-                response = self.call(RestMethods.POST.value, url, headers=headers, body=body)
+                response = self.call(RestMethods.POST.value, url, headers=headers, body=body, params=params)
 
         return response
 
@@ -506,7 +515,7 @@ class DigitalClient(Client):
             parameters = {"multi": "true"}  # It could be added as a parameter on a future release
             body = "db.{}.update({},{},{})".format(ontology, where, data, parameters)
 
-        params = {"ids": return_ids}
+        params = {"ids": return_ids, "tags": TAGS_PARAM_VALUE}
         headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
 
         response = self.call(RestMethods.PUT.value, url, headers=headers, params=params, body=body)
@@ -519,7 +528,8 @@ class DigitalClient(Client):
 
             if is_reconnected:
                 headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
-                response = self.call(RestMethods.PUT.value, url, headers=headers, body=body, params={"ids": True})
+                params = {"ids": True, "tags": TAGS_PARAM_VALUE}
+                response = self.call(RestMethods.PUT.value, url, headers=headers, body=body, params=params)
 
         return response
 
@@ -581,7 +591,7 @@ class DigitalClient(Client):
         url = self.__delete_template.substitute(protocol=self.protocol, host=self.hostport,
                                             path=self.__iot_broker_path, ontology=ontology,
                                             entity=entity_id)
-        params = {"ids": return_ids}
+        params = {"ids": return_ids, "tags": TAGS_PARAM_VALUE}
         headers = {RestHeaders.AUTHORIZATION.value: self.session_key}
         response = self.call(RestMethods.DELETE.value, url, headers=headers, params=params)
 

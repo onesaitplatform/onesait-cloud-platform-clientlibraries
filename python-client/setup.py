@@ -5,8 +5,7 @@ import sys
 from setuptools import setup, find_packages
 
 NAME = "onesaitplatform-client-services"
-
-VERSION = "1.4.3"
+VERSION = "1.4.11"
 
 DESCRIPTION = "Python Implementation of the Onesait Platform utilities"
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.md')).read()
@@ -19,7 +18,7 @@ KEYWORDS = (
 
 PACKAGES = find_packages()
 
-REQUIRED_PACKAGES = ["paho-mqtt", "six", "requests", "pandas"]
+REQUIRED_PACKAGES = ["paho-mqtt", "six", "requests"]
 
 NAMESPACE_PACKAGES = ["onesaitplatform"]
 

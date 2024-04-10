@@ -33,32 +33,29 @@ python setup.py install
 pip install onesaitplatform-client-services
 ~~~~~~
 
+Compilation and upload to pypi
+
+1. Build the distribution of the package (/dist). It's necessary to change the version in setup.py:
+
+~~~~~~
+python setup.py sdist bdist_wheel
+~~~~~~
+
+2. Upload to pypi:
+
+~~~~~~
+python -m twine upload dist/*
+~~~~~~
 
 ## Samples usage
 
-### DigitalClient
+### IotBrokerClient
 
-An example of DigitalClient is available in [DigitalClient tutorial](./examples/DigitalClient.ipynb)
-
-[See documentation](./DOC/digital_broker.md)
-
-### ApiManagerClient
-
-An example of ApiManagerClient is available in [ApiManagerClient tutorial](./examples/ApiManagerClient.ipynb)
-
-[See documentation](./DOC/api_manager.md)
+An example of IotBrokerClient is available in [IotBrokerClient tutorial](./examples/IotBrokerClient.ipynb)
 
 ### FileManager
 
 An example of FileManager is available in [FileManager tutorial](./examples/FileManager.ipynb)
-
-[See documentation](./DOC/file_manager.md)
-
-### AuthClient
-
-An example of AuthClient is available in [AuthClient tutorial](./examples/AuthClient.ipynb)
-
-[See documentation](./DOC/auth_client.md)
 
 ### MQTTClient
 

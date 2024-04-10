@@ -4,9 +4,9 @@ from string import Template
 import json
 import logging
 import onesaitplatform.common.config as config
-from onesaitplatform.enums import RestHeaders
-from onesaitplatform.enums import RestMethods
-from onesaitplatform.enums import RestProtocols
+from onesaitplatform.enum import RestHeaders
+from onesaitplatform.enum import RestMethods
+from onesaitplatform.enum import RestProtocols
 from onesaitplatform.common.log import log
 
 try:
@@ -24,12 +24,13 @@ class FileManager:
     __files_path = config.FILE_MANAGER_FILES_PATH
     __upload_template = Template("$protocol://$host$path")
     __update_template = Template("$protocol://$host$path/$id_file")
-    __download_template = Template("$protocol://$host$path/$id_file")
+    __download_template = Template("$protocol://$host$path/gridfs/$id_file")
+    __download_template_legacy = Template("$protocol://$host$path/$id_file")
     __MAX_X_OP_APIKEY_LENGTH = 35
 
     __avoid_ssl_certificate = False
 
-    def __init__(self, host, user_token=config.USER_TOKEN):
+    def __init__(self, host, user_token=config.USER_TOKEN, legacy=False):
         """
         Class FileManager to make operations with binary repository
 
@@ -39,10 +40,18 @@ class FileManager:
         self.host = host
         self.user_token = user_token
         self.__protocol = config.PROTOCOL
-        self.avoid_ssl_certificate = False
+        if "OSP_FILEMANAGER_DISABLE_VERIFY" in os.environ.keys():
+            if os.environ["OSP_FILEMANAGER_DISABLE_VERIFY"].lower() == 'true':
+                self.avoid_ssl_certificate = True
+            else:
+                self.avoid_ssl_certificate = False
+        else:
+            self.avoid_ssl_certificate = False
         self.__proxies = None
         self.__timeout = None
         self.__raise_exceptions = False
+        if legacy:
+            self.__download_template = self.__download_template_legacy
         self.load_proxies_automatically()
     
     @property
@@ -196,20 +205,23 @@ class FileManager:
             raise exception
 
     def load_proxies_automatically(self):
-        proxies = {}
-        if "http_proxy" in os.environ.keys():
-            proxies["http"] = os.environ["http_proxy"]
-        elif "HTTP_PROXY" in os.environ.keys():
-            proxies["http"] = os.environ["HTTP_PROXY"]
+        if "OSP_FILEMANAGER_AVOID_LOADPROXIES" in os.environ.keys() and os.environ["OSP_FILEMANAGER_AVOID_LOADPROXIES"].lower() == 'true':
+            self.__proxies = None
+            self.proxies = None
+        else:
+            proxies = {}
+            if "http_proxy" in os.environ.keys():
+                proxies["http"] = os.environ["http_proxy"]
+            elif "HTTP_PROXY" in os.environ.keys():
+                proxies["http"] = os.environ["HTTP_PROXY"]
 
-        if "https_proxy" in os.environ.keys():
-            proxies["https"] = os.environ["https_proxy"]
-        elif "HTTPS_PROXY" in os.environ.keys():
-            proxies["https"] = os.environ["HTTPS_PROXY"]
-
-        if proxies != {}:
-            log.info("Detected proxies: {}".format(proxies))
-            self.__proxies = proxies
+            if "https_proxy" in os.environ.keys():
+                proxies["https"] = os.environ["https_proxy"]
+            elif "HTTPS_PROXY" in os.environ.keys():
+                proxies["https"] = os.environ["HTTPS_PROXY"]
+            if proxies != {}:
+                log.info("Detected proxies: {}".format(proxies))
+                self.__proxies = proxies
 
     def upload_file(self, filename, filepath, metadata = None):
         """
@@ -291,7 +303,7 @@ class FileManager:
                 "metadata": metadata
             }
 
-            response = requests.request(RestMethods.PUT.value, url,
+            response = requests.request(RestMethods.POST.value, url,
                                         params=params,
                                         headers=headers, files=files_to_up, 
                                         verify=not self.avoid_ssl_certificate,
