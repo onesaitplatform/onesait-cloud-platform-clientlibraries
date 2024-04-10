@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import java.net.URLEncoder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.minsait.onesait.platform.client.utils.OkHttpClientUtil;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class RestClientTransactional extends RestClient {
 	private static final String TRANSACTION_ERROR = "Error in transaction . Response:";
 	private static final String TRANSACTION_EXPIRED = "Expired sessionkey or transactionId detected. Please strat a new transaction.";
 
-	private ObjectMapper mapper = new ObjectMapper();
+	private final ObjectMapper mapper = new ObjectMapper();
 
 	public RestClientTransactional(String restServer, TimeOutConfig timeout) {
 		super(restServer, timeout);
@@ -57,7 +58,7 @@ public class RestClientTransactional extends RestClient {
 
 		final JsonNode toReturn = sendStartTx();
 		if (toReturn.has("transactionId")) {
-			String transactionId = toReturn.get("transactionId").asText();
+			final String transactionId = toReturn.get("transactionId").asText();
 			log.debug("Transaction id: " + transactionId);
 			return transactionId;
 		} else {
@@ -158,8 +159,10 @@ public class RestClientTransactional extends RestClient {
 					.addPathSegment(ontology).addPathSegment(id).addEncodedQueryParameter("ids", Boolean.toString(true))
 					.build();
 
-			request = new Request.Builder().url(url).delete().addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).addHeader(TRANSACTION_STR, transactionId).build();
+			request = new Request.Builder().url(url).delete()
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, sessionKey).addHeader(TRANSACTION_STR, transactionId)
+					.build();
 
 			response = client.newCall(request).execute();
 
@@ -204,8 +207,10 @@ public class RestClientTransactional extends RestClient {
 					.addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addEncodedQueryParameter("ids", Boolean.toString(true)).build();
 			// Es una update by query, va por GET
-			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).addHeader(TRANSACTION_STR, transactionId).get().build();
+			request = new Request.Builder().url(url)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, sessionKey).addHeader(TRANSACTION_STR, transactionId)
+					.get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -242,7 +247,8 @@ public class RestClientTransactional extends RestClient {
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(START_TX)
 					.build();
-			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+			request = new Request.Builder().url(url).addHeader(OkHttpClientUtil.AUTHORIZATION_STR, sessionKey).get()
+					.build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -251,7 +257,7 @@ public class RestClientTransactional extends RestClient {
 					sessionRetry = true;
 					try {
 						super.createConnection(token, deviceTemplate, device);
-						return this.sendStartTx();
+						return sendStartTx();
 					} catch (final Exception e) {
 						log.error(REGENERATING_ERROR, e);
 					} finally {
@@ -263,7 +269,8 @@ public class RestClientTransactional extends RestClient {
 				throw new SSAPConnectionException(TRANSACTION_ERROR + response.body().string());
 			}
 			final String transactionIdAsText = response.body().string();
-			JsonNode transactionId = mapper.readValue(transactionIdAsText, typeFactory.constructType(JsonNode.class));
+			final JsonNode transactionId = mapper.readValue(transactionIdAsText,
+					typeFactory.constructType(JsonNode.class));
 
 			return transactionId;
 		} catch (final SSAPConnectionException e) {
@@ -291,8 +298,10 @@ public class RestClientTransactional extends RestClient {
 					.addPathSegment(ontology).build();
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), instance);
 
-			request = new Request.Builder().url(url).post(body).addHeader(CORRELATION_ID_HEADER_NAME, super.logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).addHeader(TRANSACTION_STR, transactionId).build();
+			request = new Request.Builder().url(url).post(body)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, sessionKey).addHeader(TRANSACTION_STR, transactionId)
+					.build();
 
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
@@ -332,8 +341,10 @@ public class RestClientTransactional extends RestClient {
 
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), instance);
 
-			request = new Request.Builder().url(url).put(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).addHeader(TRANSACTION_STR, transactionId).build();
+			request = new Request.Builder().url(url).put(body)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, sessionKey).addHeader(TRANSACTION_STR, transactionId)
+					.build();
 
 			response = client.newCall(request).execute();
 
@@ -378,8 +389,10 @@ public class RestClientTransactional extends RestClient {
 					.addEncodedQueryParameter(QUERY_STR, processedQuery)
 					.addEncodedQueryParameter("ids", Boolean.toString(false)).build();
 			// Es una update by query, va por GET
-			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, sessionKey).addHeader(TRANSACTION_STR, transactionId).get().build();
+			request = new Request.Builder().url(url)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, sessionKey).addHeader(TRANSACTION_STR, transactionId)
+					.get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -414,7 +427,7 @@ public class RestClientTransactional extends RestClient {
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(COMMIT_TX)
 					.addPathSegment(transactionId).build();
-			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey)
+			request = new Request.Builder().url(url).addHeader(OkHttpClientUtil.AUTHORIZATION_STR, sessionKey)
 					.addHeader(LOCK_ONTOLOGIES_STR, Boolean.toString(lockOntologies)).get().build();
 			response = client.newCall(request).execute();
 
@@ -448,7 +461,8 @@ public class RestClientTransactional extends RestClient {
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(ROLLBACK_TX)
 					.addPathSegment(transactionId).build();
-			request = new Request.Builder().url(url).addHeader(AUTHORIZATION_STR, sessionKey).get().build();
+			request = new Request.Builder().url(url).addHeader(OkHttpClientUtil.AUTHORIZATION_STR, sessionKey).get()
+					.build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {

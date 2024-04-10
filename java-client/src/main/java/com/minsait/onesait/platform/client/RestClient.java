@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,18 @@
 package com.minsait.onesait.platform.client;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
-import org.slf4j.MDC;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.minsait.onesait.platform.client.enums.QueryType;
+import com.minsait.onesait.platform.client.utils.OkHttpClientUtil;
 import com.minsait.onesait.platform.comms.protocol.enums.SSAPQueryType;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
 
@@ -52,29 +46,29 @@ public class RestClient {
 	protected String sessionKey;
 	@Getter
 	protected final String restServer;
-	private final static String JOIN_GET = "rest/client/join";
-	private final static String LEAVE_GET = "rest/client/leave";
-	private final static String LIST_GET = "rest/ontology";
-	protected final static String INSERT_POST = "rest/ontology";
-	protected final static String UPDATE = "rest/ontology";
-	protected final static String DELETE = "rest/ontology";
-	protected final static String SUBSCRIBE = "rest/subscribe";
-	protected final static String UNSUBSCRIBE = "rest/unsubscribe";
-	private final static String COMMAND = "commandAsync";
+	private static final String UTF8 = "UTF-8";
+	private static final String TAGS = "{\"source\":\"JAVACLIENT\"}";
+	private static final String JOIN_GET = "rest/client/join";
+	private static final String LEAVE_GET = "rest/client/leave";
+	private static final String LIST_GET = "rest/ontology";
+	protected static final String INSERT_POST = "rest/ontology";
+	protected static final String UPDATE = "rest/ontology";
+	protected static final String DELETE = "rest/ontology";
+	protected static final String SUBSCRIBE = "rest/subscribe";
+	protected static final String UNSUBSCRIBE = "rest/unsubscribe";
+	private static final String COMMAND = "commandAsync";
 
-	protected final static String NULL_CLIENT = "Client is null. Use connect() before.";
-	protected final static String UTF_8 = "UTF-8";
-	protected final static String QUERY_STR = "query";
-	protected final static String AUTHORIZATION_STR = "Authorization";
-	protected final static String SESSIONKEY_EXP = "Expired sessionkey detected. Regenerating";
-	protected final static String REGENERATING_ERROR = "Error regenerating sessionkey";
-	private final static String QUERY_ERROR = "Error in query . Response:";
-	protected final static String APP_JSON = "application/json; charset=utf-8";
-	private final static String UPDATE_ERROR = "Error in update . Response:";
-	private final static String DELETE_ERROR = "Error in delete . Response:";
+	protected static final String NULL_CLIENT = "Client is null. Use connect() before.";
+	protected static final String UTF_8 = "UTF-8";
+	protected static final String QUERY_STR = "query";
 
-	public static final String CORRELATION_ID_LOG_VAR_NAME = "correlationId";
-	public static final String CORRELATION_ID_HEADER_NAME = "X-Correlation-Id";
+	protected static final String SESSIONKEY_EXP = "Expired sessionkey detected. Regenerating";
+	protected static final String REGENERATING_ERROR = "Error regenerating sessionkey";
+	private static final String QUERY_ERROR = "Error in query . Response:";
+	protected static final String APP_JSON = "application/json; charset=utf-8";
+	private static final String UPDATE_ERROR = "Error in update . Response:";
+	private static final String DELETE_ERROR = "Error in delete . Response:";
+
 	private static final int MAX_LENGTH_BYTES = 1500;
 
 	protected OkHttpClient client;
@@ -124,15 +118,9 @@ public class RestClient {
 		try {
 			lockConnection.lock();
 			if (avoidSSLValidation) {
-				client = getUnsafeOkHttpClient();
+				client = OkHttpClientUtil.getUnsafeOkHttpClient(timeout);
 			} else {
-				if (timeout == null)
-					client = new OkHttpClient();
-				else
-					client = new OkHttpClient().newBuilder()
-							.connectTimeout(timeout.getConnectTimeout(), timeout.getTimeunit())
-							.writeTimeout(timeout.getWriteTimeout(), timeout.getTimeunit())
-							.readTimeout(timeout.getReadTimeouts(), timeout.getTimeunit()).build();
+				client = OkHttpClientUtil.getSafeOkHttpClient(timeout);
 			}
 
 			return createConnection(token, deviceTemplate, device);
@@ -173,8 +161,10 @@ public class RestClient {
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(JOIN_GET)
 					.addQueryParameter("token", token).addQueryParameter("clientPlatform", deviceTemplate)
-					.addEncodedQueryParameter("clientPlatformId", device).build();
-			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId()).get().build();
+					.addEncodedQueryParameter("clientPlatformId", device)
+					.addEncodedQueryParameter("tags", URLEncoder.encode(TAGS, UTF8)).build();
+			request = new Request.Builder().url(url)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId()).get().build();
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
 				log.error("Error in createConnection . Response:" + response.toString());
@@ -214,8 +204,9 @@ public class RestClient {
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), "");
 
 			final String usedSessionKey = new String(sessionKey);
-			request = new Request.Builder().url(url).post(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).build();
+			request = new Request.Builder().url(url).post(body)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).build();
 
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
@@ -262,8 +253,9 @@ public class RestClient {
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), "");
 
 			final String usedSessionKey = new String(sessionKey);
-			request = new Request.Builder().url(url).post(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).build();
+			request = new Request.Builder().url(url).post(body)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).build();
 
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
@@ -314,18 +306,22 @@ public class RestClient {
 						.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0))
 						.addEncodedPathSegments(LIST_GET).addPathSegment(ontology)
 						.addEncodedQueryParameter(QUERY_STR, processedQuery)
-						.addQueryParameter("queryType", SSAPQueryType.valueOf(queryType.name()).name()).build();
-				request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-						.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
+						.addQueryParameter("queryType", SSAPQueryType.valueOf(queryType.name()).name())
+						.addEncodedQueryParameter("tags", URLEncoder.encode(TAGS, UTF8)).build();
+				request = new Request.Builder().url(url)
+						.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+						.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).get().build();
 			} else {
 				url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
 						.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 						.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0))
 						.addEncodedPathSegments(LIST_GET).addPathSegment(ontology).addEncodedPathSegments(QUERY_STR)
-						.addQueryParameter("queryType", SSAPQueryType.valueOf(queryType.name()).name()).build();
+						.addQueryParameter("queryType", SSAPQueryType.valueOf(queryType.name()).name())
+						.addEncodedQueryParameter("tags", URLEncoder.encode(TAGS, UTF8)).build();
 				final RequestBody formBody = new FormBody.Builder().add(QUERY_STR, query).build();
-				request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-						.addHeader(AUTHORIZATION_STR, usedSessionKey).post(formBody).build();
+				request = new Request.Builder().url(url)
+						.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+						.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).post(formBody).build();
 			}
 			response = client.newCall(request).execute();
 
@@ -354,8 +350,10 @@ public class RestClient {
 			// instancesAsText = instancesAsText.replaceAll("\\\\\\\"", "\"").replace("\"{",
 			// "{").replace("}\"", "}");
 			List<JsonNode> instances = new ArrayList<>();
-			instances = mapper.readValue(instancesAsText,
-					typeFactory.constructCollectionType(List.class, JsonNode.class));
+			if (!instancesAsText.isEmpty()) {
+				instances = mapper.readValue(instancesAsText,
+						typeFactory.constructCollectionType(List.class, JsonNode.class));
+			}
 			return instances;
 		} catch (final SSAPConnectionException e) {
 			throw e;
@@ -387,9 +385,11 @@ public class RestClient {
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(LIST_GET)
 					.addPathSegment(ontology).addEncodedQueryParameter(QUERY_STR, processedQuery)
-					.addQueryParameter("queryType", SSAPQueryType.valueOf(SSAPQueryType.SQL.name()).name()).build();
-			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
+					.addQueryParameter("queryType", SSAPQueryType.valueOf(SSAPQueryType.SQL.name()).name())
+					.addEncodedQueryParameter("tags", URLEncoder.encode(TAGS, UTF8)).build();
+			request = new Request.Builder().url(url)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -438,9 +438,11 @@ public class RestClient {
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(LIST_GET)
 					.addPathSegment(ontology).addEncodedQueryParameter(QUERY_STR, query)
-					.addQueryParameter("queryType", queryType.name()).build();
-			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
+					.addQueryParameter("queryType", queryType.name())
+					.addEncodedQueryParameter("tags", URLEncoder.encode(TAGS, UTF8)).build();
+			request = new Request.Builder().url(url)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).get().build();
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
 				if (response.code() == 401) {// Expired sessionkey
@@ -515,12 +517,13 @@ public class RestClient {
 			url = new HttpUrl.Builder().scheme(HttpUrl.parse(restServer).scheme())
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(INSERT_POST)
-					.addPathSegment(ontology).build();
+					.addPathSegment(ontology).addEncodedQueryParameter("tags", URLEncoder.encode(TAGS, UTF8)).build();
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), instance);
 
 			final String usedSessionKey = new String(sessionKey);
-			request = new Request.Builder().url(url).post(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).build();
+			request = new Request.Builder().url(url).post(body)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).build();
 
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
@@ -574,13 +577,15 @@ public class RestClient {
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(UPDATE)
 					.addPathSegment(ontology).addPathSegment(id)
-					.addEncodedQueryParameter("ids", Boolean.toString(includeIds)).build();
+					.addEncodedQueryParameter("ids", Boolean.toString(includeIds))
+					.addEncodedQueryParameter("tags", URLEncoder.encode(TAGS, UTF8)).build();
 
 			final RequestBody body = RequestBody.create(MediaType.parse(APP_JSON), instance);
 
 			final String usedSessionKey = new String(sessionKey);
-			request = new Request.Builder().url(url).put(body).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).build();
+			request = new Request.Builder().url(url).put(body)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).build();
 
 			response = client.newCall(request).execute();
 
@@ -638,15 +643,17 @@ public class RestClient {
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(UPDATE)
 					.addPathSegment(ontology).addEncodedPathSegments("update")
-					.addEncodedQueryParameter("ids", Boolean.toString(getIds)).build();
+					.addEncodedQueryParameter("ids", Boolean.toString(getIds))
+					.addEncodedQueryParameter("tags", URLEncoder.encode(TAGS, UTF8)).build();
 
 			// Es una update by query, va por PUT
 			final String usedSessionKey = new String(sessionKey);
 			final MediaType JSON = MediaType.parse(APP_JSON);
 			final RequestBody body = RequestBody.create(JSON, query);
 
-			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).put(body).build();
+			request = new Request.Builder().url(url)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).put(body).build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -712,11 +719,13 @@ public class RestClient {
 					.host(HttpUrl.parse(restServer).host()).port(HttpUrl.parse(restServer).port())
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(DELETE)
 					.addPathSegment(ontology).addPathSegment(id)
-					.addEncodedQueryParameter("ids", Boolean.toString(includeIds)).build();
+					.addEncodedQueryParameter("ids", Boolean.toString(includeIds))
+					.addEncodedQueryParameter("tags", URLEncoder.encode(TAGS, UTF8)).build();
 
 			final String usedSessionKey = new String(sessionKey);
-			request = new Request.Builder().url(url).delete().addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).build();
+			request = new Request.Builder().url(url).delete()
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).build();
 
 			response = client.newCall(request).execute();
 
@@ -776,12 +785,14 @@ public class RestClient {
 					.addPathSegment(HttpUrl.parse(restServer).pathSegments().get(0)).addEncodedPathSegments(DELETE)
 					.addPathSegment(ontology).addEncodedPathSegments("delete")
 					.addEncodedQueryParameter(QUERY_STR, processedQuery)
-					.addEncodedQueryParameter("ids", Boolean.toString(getIds)).build();
+					.addEncodedQueryParameter("ids", Boolean.toString(getIds))
+					.addEncodedQueryParameter("tags", URLEncoder.encode(TAGS, UTF8)).build();
 
 			final String usedSessionKey = new String(sessionKey);
 			// Es una update by query, va por GET
-			request = new Request.Builder().url(url).addHeader(CORRELATION_ID_HEADER_NAME, logId())
-					.addHeader(AUTHORIZATION_STR, usedSessionKey).get().build();
+			request = new Request.Builder().url(url)
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).get().build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -837,8 +848,8 @@ public class RestClient {
 
 			final String usedSessionKey = new String(sessionKey);
 			final Request request = new Request.Builder().url(url).post(body)
-					.addHeader(CORRELATION_ID_HEADER_NAME, logId()).addHeader(AUTHORIZATION_STR, usedSessionKey)
-					.build();
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -891,8 +902,8 @@ public class RestClient {
 
 			final String usedSessionKey = new String(toDeviceSession);
 			final Request request = new Request.Builder().url(url).post(body)
-					.addHeader(CORRELATION_ID_HEADER_NAME, logId()).addHeader(AUTHORIZATION_STR, usedSessionKey)
-					.build();
+					.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId())
+					.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, usedSessionKey).build();
 			response = client.newCall(request).execute();
 
 			if (!response.isSuccessful()) {
@@ -925,11 +936,21 @@ public class RestClient {
 
 	/**
 	 * Closes REST session.
+	 * 
+	 * @throws UnsupportedEncodingException
 	 *
 	 **/
 	public void disconnect() {
-		final Request request = new Request.Builder().url(restServer + "/" + LEAVE_GET)
-				.addHeader(AUTHORIZATION_STR, sessionKey).addHeader(CORRELATION_ID_HEADER_NAME, logId()).get().build();
+		String leaveGet = null;
+		try {
+			leaveGet = String.format(LEAVE_GET, URLEncoder.encode(TAGS, UTF8));
+		} catch (UnsupportedEncodingException e1) {
+			log.error("Error encoding tags parameters. {}", TAGS);
+			leaveGet = LEAVE_GET;
+		}
+		final Request request = new Request.Builder().url(restServer + "/" + leaveGet)
+				.addHeader(OkHttpClientUtil.AUTHORIZATION_STR, sessionKey)
+				.addHeader(OkHttpClientUtil.CORRELATION_ID_HEADER_NAME, OkHttpClientUtil.logId()).get().build();
 		try {
 			client.newCall(request).execute();
 		} catch (final IOException e) {
@@ -937,61 +958,6 @@ public class RestClient {
 		}
 		log.info("Disconnected");
 		sessionKey = null;
-	}
-
-	private OkHttpClient getUnsafeOkHttpClient() {
-		OkHttpClient.Builder builder = null;
-		try {
-			// Create a trust manager that does not validate certificate chains
-			final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-				@Override
-				public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType)
-						throws CertificateException {
-				}
-
-				@Override
-				public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType)
-						throws CertificateException {
-				}
-
-				@Override
-				public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-					return new java.security.cert.X509Certificate[] {};
-				}
-			} };
-
-			// Install the all-trusting trust manager
-			final SSLContext sslContext = SSLContext.getInstance("SSL");
-			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-			// Create an ssl socket factory with our all-trusting manager
-			final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-
-			if (timeout == null)
-				builder = new OkHttpClient.Builder();
-			else
-				builder = new OkHttpClient().newBuilder()
-						.connectTimeout(timeout.getConnectTimeout(), timeout.getTimeunit())
-						.writeTimeout(timeout.getWriteTimeout(), timeout.getTimeunit())
-						.readTimeout(timeout.getReadTimeouts(), timeout.getTimeunit());
-
-			builder.sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0]);
-			builder.hostnameVerifier((hostname, session) -> true);
-
-			final OkHttpClient okHttpClient = builder.build();
-			return okHttpClient;
-		} catch (final SSAPConnectionException e) {
-			throw e;
-		} catch (final Exception e) {
-			throw new SSAPConnectionException("Error in getUnsafeOkHttpClient", e);
-		}
-	}
-
-	protected String logId() {
-		final String logId = MDC.get(CORRELATION_ID_LOG_VAR_NAME);
-		if (null == logId)
-			return new String("");
-		else
-			return logId;
 	}
 
 }

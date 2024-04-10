@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package com.minsait.onesait.platform.client.examples;
 import java.io.File;
 import java.io.IOException;
 
-import org.overviewproject.mime_types.GetBytesException;
-
 import com.minsait.onesait.platform.client.BinaryRepositoryClient;
 import com.minsait.onesait.platform.client.enums.RepositoryType;
 import com.minsait.onesait.platform.client.exception.BinaryRepositoryException;
@@ -34,14 +32,14 @@ public class BinaryRepoAppExample {
 	private final static String SERVER = "https://localhost:18000/controlpanel/";
 	private final static String RESOURCES_FILE = "onesaitCloudPlatform_GettingStarted.pdf";
 
-	public static void main(String[] args) throws BinaryRepositoryException, IOException, GetBytesException {
+	public static void main(String[] args) throws BinaryRepositoryException, IOException {
 
 		System.setProperty("java.net.useSystemProxies", "true");
 
 		final File myFile = new File(BinaryRepoAppExample.class.getClassLoader().getResource(RESOURCES_FILE).getFile());
 
 		// Create binary repository RESTFull client
-		final BinaryRepositoryClient client = new BinaryRepositoryClient(USERNAME, PASSWORD, SERVER);
+		final BinaryRepositoryClient client = new BinaryRepositoryClient(USERNAME, PASSWORD, SERVER, "onesaitplatform");
 
 		// Add binary file to platform
 		final String newFileId = client.addBinaryFile(myFile, "", RepositoryType.MONGO_GRIDFS);

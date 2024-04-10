@@ -12,18 +12,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.minsait.onesait.platform.client.exception;
+package com.minsait.onesait.platform.client.interfaces;
 
-public class MqttClientException extends Exception {
+import com.minsait.onesait.platform.client.model.Notification;
 
-	private static final long serialVersionUID = 1L;
+public interface Notifier {
+	public <T> String createOntologyFromPOJO(Class<T> clazz);
 
-	public MqttClientException(String message) {
-		super(message);
-	}
+	public <T> String createOrUpdateOntology(Class<T> clazz);
 
-	public MqttClientException(String message, Throwable e) {
-		super(message, e);
-	}
+	public String createOrUpdateOntology(String ontology, String schema);
+
+	public void validateSchema(String ontology, String input);
+
+	public void validateSchema(Object input);
+
+	public boolean notify(Notification notification);
+
+	public void notifyAsync(Notification notification);
 
 }

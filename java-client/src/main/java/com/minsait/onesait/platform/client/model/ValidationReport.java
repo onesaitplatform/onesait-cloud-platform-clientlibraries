@@ -12,18 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.minsait.onesait.platform.client.exception;
+package com.minsait.onesait.platform.client.model;
 
-public class MqttClientException extends Exception {
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-	private static final long serialVersionUID = 1L;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ValidationReport {
 
-	public MqttClientException(String message) {
-		super(message);
-	}
-
-	public MqttClientException(String message, Throwable e) {
-		super(message, e);
-	}
+	boolean ok;
+	String errors;
 
 }

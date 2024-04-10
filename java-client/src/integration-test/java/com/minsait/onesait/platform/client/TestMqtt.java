@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ public class TestMqtt {
 	static final String deviceTemplate = "TicketingApp";
 	static final String device = "Exampletest";
 	static final String ontology = "Ticket";
+	static final String subscriptionName = "ticketStatus";
+	static final String queryValue = "DONE";
 	static final ObjectMapper mapper = new ObjectMapper();
 	static JsonNode deviceConfig;
 	static final String tags = "iot, device, testing, onesait";
@@ -71,7 +73,7 @@ public class TestMqtt {
 			throws JsonProcessingException, IOException, MqttClientException, InterruptedException {
 		Thread.sleep(2000);
 		log.info("Attemping to connect to broker with SSL");
-		final String sessionKey = clientSecure.connect(token, deviceTemplate, device, null, tags, deviceConfig);
+		final String sessionKey = clientSecure.connect(token, deviceTemplate, device, null, tags, deviceConfig, 10);
 		Assert.assertNotNull(sessionKey);
 		log.info("Session key is {}", sessionKey);
 
@@ -104,7 +106,7 @@ public class TestMqtt {
 
 		final String querySQL = "select Ticket.Ticket as Ticket from Ticket where Ticket.status=\"DONE\"";
 		log.info("Subscribing to ontology {} with filtering query {}", ontology, querySQL);
-		final String subscriptionId = clientSecure.subscribe(ontology, new SubscriptionListener() {
+		final String subscriptionId = clientSecure.subscribe(subscriptionName, queryValue, new SubscriptionListener() {
 
 			@Override
 			public void onMessageArrived(String message) {
@@ -137,7 +139,7 @@ public class TestMqtt {
 	public void when_providingBadCredentials_then_sessionKeyIsNotRetrieved()
 			throws InterruptedException, MqttClientException {
 		Thread.sleep(2000);
-		clientSecure.connect("sad", deviceTemplate, device, null, tags, deviceConfig);
+		clientSecure.connect("sad", deviceTemplate, device, null, tags, deviceConfig, 10);
 
 	}
 
@@ -146,7 +148,7 @@ public class TestMqtt {
 		Thread.sleep(2000);
 		String sessionKey = null;
 
-		sessionKey = clientSecure.connect(token, deviceTemplate, device, null, tags, deviceConfig);
+		sessionKey = clientSecure.connect(token, deviceTemplate, device, null, tags, deviceConfig, 10);
 		Assert.assertNotNull(sessionKey);
 
 		log.info("Inserting one instance");
@@ -165,7 +167,7 @@ public class TestMqtt {
 		Thread.sleep(2000);
 		String sessionKey = null;
 		try {
-			sessionKey = clientSecure.connect(token, deviceTemplate, device);
+			sessionKey = clientSecure.connect(token, deviceTemplate, device, 10);
 			Assert.assertNotNull(sessionKey);
 			log.info("Inserting 2 ontologies");
 			final String size = clientSecure.insertBulk(ontology, mapper.readTree(
@@ -187,7 +189,7 @@ public class TestMqtt {
 		String sessionKey = null;
 		try {
 			Thread.sleep(2000);
-			sessionKey = clientSecure.connect(token, deviceTemplate, device);
+			sessionKey = clientSecure.connect(token, deviceTemplate, device, 10);
 			Assert.assertNotNull(sessionKey);
 			clientSecure.disconnect();
 			Assert.assertTrue(clientSecure.connect(token, deviceTemplate, device, sessionKey).equals(sessionKey));
@@ -203,7 +205,7 @@ public class TestMqtt {
 	public void whenConnecting_andDisconnecting_andInserting_thenClientAutoReconnects()
 			throws InterruptedException, IOException, MqttClientException {
 		Thread.sleep(2000);
-		final String sessionKey = clientSecure.connect(token, deviceTemplate, device);
+		final String sessionKey = clientSecure.connect(token, deviceTemplate, device, 10);
 		Assert.assertNotNull(sessionKey);
 		clientSecure.disconnect();
 		Thread.sleep(1000);
@@ -222,7 +224,7 @@ public class TestMqtt {
 	// only to test reconnection when lost
 	public void whenConnectingReconnects() throws InterruptedException, IOException, MqttClientException {
 		Thread.sleep(2000);
-		final String sessionKey = clientSecure.connect(token, deviceTemplate, device);
+		final String sessionKey = clientSecure.connect(token, deviceTemplate, device, 10);
 		Assert.assertNotNull(sessionKey);
 
 		Thread.sleep(120000);

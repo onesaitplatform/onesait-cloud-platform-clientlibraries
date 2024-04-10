@@ -12,18 +12,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.minsait.onesait.platform.client.exception;
+package com.minsait.onesait.platform.client.model;
 
-public class MqttClientException extends Exception {
+import com.minsait.onesait.platform.client.enums.OperationType;
+import com.minsait.onesait.platform.client.enums.QueryType;
 
-	private static final long serialVersionUID = 1L;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-	public MqttClientException(String message) {
-		super(message);
-	}
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Notification {
 
-	public MqttClientException(String message, Throwable e) {
-		super(message, e);
-	}
+	private QueryType queryType;
+
+	private OperationType operation;
+
+	private String query;
+
+	private String id;
+
+	private String payload;
+
+	private String ontology;
 
 }

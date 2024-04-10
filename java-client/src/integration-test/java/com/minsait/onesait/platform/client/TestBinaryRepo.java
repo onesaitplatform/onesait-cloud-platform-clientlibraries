@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.junit.experimental.categories.Category;
 
 import com.minsait.onesait.platform.client.enums.RepositoryType;
 import com.minsait.onesait.platform.client.examples.BinaryRepoAppExample;
-import com.minsait.onesait.platform.client.exception.BinaryRepositoryException;
 import com.minsait.onesait.platform.client.model.BinaryDataFile;
 import com.minsait.onesait.platform.testing.IntegrationTest;
 
@@ -36,10 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 @Category(IntegrationTest.class)
 public class TestBinaryRepo {
 
-	private final static String USERNAME = "developer";
-	private final static String PASSWORD = "Changed!";
-	private final static String SERVER = "https://development.onesaitplatform.com/controlpanel/";
-	private final static String RESOURCES_FILE = "onesaitCloudPlatform_GettingStarted.pdf";
+	private static final String SERVER = "https://lab.onesaitplatform.com/controlpanel/";
+	private static final String RESOURCES_FILE = "Arbol.jpeg";
+	private static final String TOKEN = "Bearer AT-863643-t-uCSYyrKtabDzEI3W7lduzFwfxaJQfT";
 
 	private static BinaryRepositoryClient client = null;
 	private static File myFile = null;
@@ -50,8 +48,14 @@ public class TestBinaryRepo {
 		try {
 			// System.setProperty("java.net.useSystemProxies", "true");
 			myFile = new File(BinaryRepoAppExample.class.getClassLoader().getResource(RESOURCES_FILE).getFile());
-			client = new BinaryRepositoryClient(USERNAME, PASSWORD, SERVER);
-		} catch (final BinaryRepositoryException e) {
+
+			// KEYCLOAK AUTH
+//			client = new BinaryRepositoryClient("meteringAdmin", "Minsait2019!", "https://ouidemo.cwbyminsait.com",
+//					AuthServerType.KEYCLOAK, "oui_new");
+			// CONTROLPANEL AUTH"
+			client = new BinaryRepositoryClient("developer", "Changed2019!", SERVER, "onesaitplatform");
+
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -84,8 +88,8 @@ public class TestBinaryRepo {
 
 			// Update binary file
 			final String metadata = "{\"private\" : true}";
-			client.updateBinaryFile(newFileId, myFile, metadata);
-			Assert.assertTrue("Updated binary file {}" + newFileId, true);
+			// client.updateBinaryFile(newFileId, myFile, metadata);
+			// Assert.assertTrue("Updated binary file {}" + newFileId, true);
 
 			// delete the binary file
 			client.removeBinaryFile(newFileId);

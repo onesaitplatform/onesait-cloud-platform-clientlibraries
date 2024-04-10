@@ -14,15 +14,18 @@
  */
 package com.minsait.onesait.platform.client.exception;
 
-public class MqttClientException extends Exception {
+public class NotifierException extends RuntimeException {
 
+	/**
+	 *
+	 */
 	private static final long serialVersionUID = 1L;
 
-	public MqttClientException(String message) {
+	public NotifierException(String message) {
 		super(message);
 	}
 
-	public MqttClientException(String message, Throwable e) {
+	public NotifierException(String message, Throwable e) {
 		super(message, e);
 	}
 

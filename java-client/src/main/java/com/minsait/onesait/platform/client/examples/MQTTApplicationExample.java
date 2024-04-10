@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class MQTTApplicationExample {
 		log.info("Connecting with deviceTemplate:" + deviceTemplate + " and Token:" + token + " with timeout "
 				+ timeout);
 		log.info("Using Ontology:" + ontology + " and instanceOntology");
-		clientSecure.connect(token, deviceTemplate, device, null, "", deviceConfig);
+		clientSecure.connect(token, deviceTemplate, device, null, "", deviceConfig, 10);
 		clientSecure.setTimeout(timeout);
 
 		clientSecure.subscribeCommands(new SubscriptionListener() {
