@@ -12,21 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*******************************************************************************
- * Indra Sistemas, S.A.
- * 2013 - 2018  SPAIN
- * 
- * All rights reserved
- ******************************************************************************/
-package com.minsait.onesait.platform.client.springboot.fromjson;
+package com.minsait.onesait.platform.client.springboot.aspect.notifier;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public abstract class Ontology<T> extends OntologyId {
-	
-	public @JsonIgnore abstract void setData(T data);
-	
-	public @JsonIgnore abstract T getData();
-	
-	
+/**
+ * Annotation used to validate schema.
+ *
+ */
+@Target(value = { ElementType.TYPE, ElementType.PARAMETER })
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface OPValidateSchema {
 }

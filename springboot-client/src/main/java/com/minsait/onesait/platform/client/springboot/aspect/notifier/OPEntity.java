@@ -12,21 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*******************************************************************************
- * Indra Sistemas, S.A.
- * 2013 - 2018  SPAIN
+package com.minsait.onesait.platform.client.springboot.aspect.notifier;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Annotation used to create or update the ontology in Onesait Platform.
  * 
- * All rights reserved
- ******************************************************************************/
-package com.minsait.onesait.platform.client.springboot.fromjson;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-public abstract class Ontology<T> extends OntologyId {
-	
-	public @JsonIgnore abstract void setData(T data);
-	
-	public @JsonIgnore abstract T getData();
-	
-	
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface OPEntity {
 }

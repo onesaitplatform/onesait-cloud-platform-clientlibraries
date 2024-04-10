@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.minsait.onesait.platform.client.springboot.aspect.IoTBrokerDynamicQuery;
 import com.minsait.onesait.platform.client.springboot.aspect.IoTBrokerDynamicRepository;
@@ -34,17 +38,18 @@ public class OperationUtil {
 
 	/**
 	 * Mapea los atributos de los metodos a los parametros de la consulta
-	 * 
+	 *
 	 * @param method
 	 * @param args
 	 * @param query
 	 * @return
 	 */
 	public String prepareQueryParameter(Method method, Object[] args, String query) throws Exception {
-		Parameter[] parameters = method.getParameters();
+		final Parameter[] parameters = method.getParameters();
 		IoTBrokerParam param = null;
 		for (int i = 0; i < parameters.length; i++) {
-			if (parameters[i].getAnnotations()[0] instanceof IoTBrokerParam) {
+			if (parameters[i].getAnnotations().length > 0
+					&& parameters[i].getAnnotations()[0] instanceof IoTBrokerParam) {
 				param = (IoTBrokerParam) parameters[i].getAnnotations()[0];
 				query = query.replace(param.value(), String.valueOf(args[i]));
 			}
@@ -59,13 +64,15 @@ public class OperationUtil {
 
 	public String prepareDynamicQuery(Method method, Object[] args) throws Exception {
 		String query = null;
-		Parameter[] parameters = method.getParameters();
-		Map<String, String> arguments = new HashMap<String, String>();
+		final Parameter[] parameters = method.getParameters();
+		final Map<String, String> arguments = new HashMap<String, String>();
 		for (int i = 0; i < parameters.length; i++) {
-			if (parameters[i].getAnnotations()[0] instanceof IoTBrokerDynamicQuery) {
+			if (parameters[i].getAnnotations().length > 0
+					&& parameters[i].getAnnotations()[0] instanceof IoTBrokerDynamicQuery) {
 				query = String.valueOf(args[i]);
-			} else if (parameters[i].getAnnotations()[0] instanceof IoTBrokerParam) {
-				IoTBrokerParam param = (IoTBrokerParam) parameters[i].getAnnotations()[0];
+			} else if (parameters[i].getAnnotations().length > 0
+					&& parameters[i].getAnnotations()[0] instanceof IoTBrokerParam) {
+				final IoTBrokerParam param = (IoTBrokerParam) parameters[i].getAnnotations()[0];
 				arguments.put(param.value(), String.valueOf(args[i]));
 			}
 		}
@@ -75,7 +82,7 @@ public class OperationUtil {
 					"@IoTBrokerDynamicQuery annotation is required for one parameter");
 		}
 
-		for (String argumentKey : arguments.keySet()) {
+		for (final String argumentKey : arguments.keySet()) {
 			query = query.replace(argumentKey, String.valueOf(arguments.get(argumentKey)));
 		}
 
@@ -83,10 +90,11 @@ public class OperationUtil {
 	}
 
 	public Optional<String> prepareDynamicRepository(Method method, Object[] args) throws Exception {
-		Parameter[] parameters = method.getParameters();
+		final Parameter[] parameters = method.getParameters();
 		for (int i = 0; i < parameters.length; i++) {
-			if (parameters[i].getAnnotations()[0] instanceof IoTBrokerDynamicRepository) {
-				String ontology = String.valueOf(args[i]);
+			if (parameters[i].getAnnotations().length > 0
+					&& parameters[i].getAnnotations()[0] instanceof IoTBrokerDynamicRepository) {
+				final String ontology = String.valueOf(args[i]);
 				return Optional.of(ontology);
 			}
 		}
@@ -98,7 +106,7 @@ public class OperationUtil {
 	/**
 	 * Preapara el objeto retorno ObjectId para ser devuelto en un Objeto o lista de
 	 * Objetos
-	 * 
+	 *
 	 * @param message
 	 * @return
 	 * @throws Sofia2PersistenceException
@@ -119,4 +127,47 @@ public class OperationUtil {
 		}
 	}
 
+	public Object parseSpEL(String expression, Object[] args) {
+		if (StringUtils.isEmpty(expression) || args == null) {
+			return "";
+		}
+		final ExpressionParser spELparser = new SpelExpressionParser();
+		final StandardEvaluationContext context = new StandardEvaluationContext();
+		for (int i = 0; i < args.length; i++) {
+			context.setVariable("p" + i, args[i]);
+		}
+		final Object returnValue = spELparser.parseExpression(expression).getValue(context);
+		if (returnValue == null) {
+			return "";
+		} else {
+			return returnValue;
+		}
+	}
+
+	public static Object selectOntologyArgument(Object[] args) {
+		Object retVal = args[0];
+		for (int i = 0; i < args.length; i++) {
+			if (!(args[i] instanceof String)) {
+				retVal = args[i];
+			}
+		}
+		return retVal;
+	}
+
+	public static String selectIdArgument(Object[] args, String tenantExpression) {
+		if (args != null && args.length > 0) {
+			String returnVal = null;
+			if (tenantExpression == null) {
+				tenantExpression = "";
+			}
+			for (int i = 0; i < args.length; i++) {
+				if (args[i] instanceof String && !("#p" + i).equals(tenantExpression)) {
+					returnVal = (String) args[i];
+				}
+			}
+			return returnVal;
+		} else {
+			throw new IllegalArgumentException("No arguments to retrieve ID");
+		}
+	}
 }

@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,13 +54,13 @@ public class Query implements Operation {
 	public Object operation(Method method, Object[] args, ClientIoTBroker client, String ontology,
 			Class<?> parametrizedType, boolean renewSession) throws SSAPConnectionException {
 		Object toReturn = null;
-		ObjectMapper mapper = new ObjectMapper();
+		final ObjectMapper mapper = new ObjectMapper();
 		List<JsonNode> returnData = null;
 		try {
-			IoTBrokerQuery queryAnnotation = ((IoTBrokerQuery) method.getAnnotations()[0]);
+			final IoTBrokerQuery queryAnnotation = (IoTBrokerQuery) method.getAnnotations()[0];
 			String query = queryAnnotation.value();
 
-			Optional<String> dynamicRepository = util.prepareDynamicRepository(method, args);
+			final Optional<String> dynamicRepository = util.prepareDynamicRepository(method, args);
 			if (dynamicRepository.isPresent()) {
 				ontology = dynamicRepository.get();
 			}
@@ -76,18 +76,19 @@ public class Query implements Operation {
 				log.info("Prepared query: {}", query);
 			}
 
-			IoTBrokerQuery.QueryOf qOf = queryAnnotation.is();
+			final IoTBrokerQuery.QueryOf qOf = queryAnnotation.is();
+			final String tenant = (String) util.parseSpEL(queryAnnotation.tenant(), args);
 			if (qOf == IoTBrokerQuery.QueryOf.QUERY) {
-				returnData = client.init().query(ontology, query, queryAnnotation.queryType());
+				returnData = client.init(tenant).query(ontology, query, queryAnnotation.queryType());
 			} else if (qOf == IoTBrokerQuery.QueryOf.UPDATE) {
 				if (queryAnnotation.queryType() == SSAPQueryType.SQL) {
 					returnData = new ArrayList<JsonNode>();
-					returnData.add(client.init().updateSQL(ontology, query));
+					returnData.add(client.init(tenant).updateSQL(ontology, query));
 				} else {
 					if (method.getReturnType().getName().equals("void")) {
-						client.init().updateQuery(ontology, query);
+						client.init(tenant).updateQuery(ontology, query);
 					} else {
-						JsonNode data = client.init().updateQueryWithIds(ontology, query);
+						final JsonNode data = client.init(tenant).updateQueryWithIds(ontology, query);
 						returnData = new ArrayList<JsonNode>();
 						returnData.add(data);
 					}
@@ -96,12 +97,12 @@ public class Query implements Operation {
 			} else if (qOf == IoTBrokerQuery.QueryOf.DELETE) {
 				if (queryAnnotation.queryType() == SSAPQueryType.SQL) {
 					returnData = new ArrayList<JsonNode>();
-					returnData.add(client.init().updateSQL(ontology, query));
+					returnData.add(client.init(tenant).updateSQL(ontology, query));
 				} else {
 					if (method.getReturnType().getName().equals("void")) {
-						client.init().deleteQuery(ontology, query);
+						client.init(tenant).deleteQuery(ontology, query);
 					} else {
-						JsonNode data = client.init().deleteQueryWithIds(ontology, query);
+						final JsonNode data = client.init(tenant).deleteQueryWithIds(ontology, query);
 						returnData = new ArrayList<JsonNode>();
 						returnData.add(data);
 					}
@@ -109,12 +110,13 @@ public class Query implements Operation {
 			} else {
 				throw new SSAPConnectionException("QueryOf:" + qOf.name() + " not supported yet");
 			}
-			if (returnData == null)
+			if (returnData == null) {
 				return null;
+			}
 
 			if (method.getReturnType() == List.class) {
-				ParameterizedType stringListType = (ParameterizedType) method.getGenericReturnType();
-				Type t = stringListType.getActualTypeArguments()[0];
+				final ParameterizedType stringListType = (ParameterizedType) method.getGenericReturnType();
+				final Type t = stringListType.getActualTypeArguments()[0];
 
 				JavaType type = null;
 				if (parametrizedType != null && "T".equals(t.getTypeName())) {
@@ -125,11 +127,11 @@ public class Query implements Operation {
 				}
 				try {
 					toReturn = mapper.readValue(returnData.toString(), type);
-				} catch (Exception e) {
-					List<JsonNode> returnDataByValue = new ArrayList<>();
+				} catch (final Exception e) {
+					final List<JsonNode> returnDataByValue = new ArrayList<>();
 					// it tries to obtain the data from value property
-					for (JsonNode jsonNode : returnData) {
-						JsonNode valueNode = jsonNode.get("value");
+					for (final JsonNode jsonNode : returnData) {
+						final JsonNode valueNode = jsonNode.get("value");
 						// if there is not valueNode then the exception is propagated
 						if (valueNode != null) {
 							returnDataByValue.add(valueNode);
@@ -143,31 +145,33 @@ public class Query implements Operation {
 			} else if (method.getReturnType().isArray()) {
 				// TODO: develop two cases, with templated generics and without
 			} else if (method.getReturnType() == Integer.class || method.getReturnType() == int.class) {
-				IntValue temp = mapper.readValue(returnData.get(0).toString(), IntValue.class);
+				final IntValue temp = mapper.readValue(returnData.get(0).toString(), IntValue.class);
 				return temp.getValue();
 			} else if (method.getReturnType().isAssignableFrom(void.class)) {
 				return null;
 			} else {
-				if (returnData.size() > 1)
+				if (returnData.size() > 1) {
 					log.warn("Data with more than a JsonNode and you are only expecting one "
 							+ method.getReturnType().getName() + ".Returning first.");
-				if (returnData.size() == 0)
+				}
+				if (returnData.size() == 0) {
 					return null;
+				}
 				try {
 					if (method.getReturnType() == String.class) {
 						toReturn = returnData.get(0).toString();
 					} else {
 						toReturn = mapper.readValue(returnData.get(0).toString(), method.getReturnType());
 					}
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					toReturn = mapper.readValue(returnData.get(0).get("value").toString(), method.getReturnType());
 				}
 			}
 			return toReturn;
 
-		} catch (SSAPConnectionException e) {
+		} catch (final SSAPConnectionException e) {
 			throw e;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Error in Query operation:", e);
 			throw new SSAPConnectionException("Error in Query", e);
 		}

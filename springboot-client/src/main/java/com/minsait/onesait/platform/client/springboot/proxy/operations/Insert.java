@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 /*******************************************************************************
  * Indra Sistemas, S.A.
  * 2013 - 2017  SPAIN
- * 
+ *
  * All rights reserved
  ******************************************************************************/
 package com.minsait.onesait.platform.client.springboot.proxy.operations;
@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minsait.onesait.platform.client.Transaction;
+import com.minsait.onesait.platform.client.springboot.aspect.IoTBrokerInsert;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
 import com.minsait.onesait.platform.client.springboot.proxy.operations.Transaction.OperationType;
 import com.minsait.onesait.platform.comms.protocol.exception.SSAPConnectionException;
@@ -45,19 +46,21 @@ public class Insert implements Operation {
 	public Object operation(Method method, Object[] args, ClientIoTBroker client, String ontology,
 			Class<?> parametrizedType, boolean renewSession) throws SSAPConnectionException {
 		Object toReturn;
-		ObjectMapper mapper = new ObjectMapper();
+		final ObjectMapper mapper = new ObjectMapper();
 		try {
+			final String tenantAnnotation = method.getAnnotation(IoTBrokerInsert.class).tenant();
 			if (args.length < 1) {
 				log.error("We need at least 1 parameter: insert(Object ontology)");
 				throw new SSAPConnectionException("We need at least 1 parameter: insert(Object ontology)");
 			}
 			String idInsert;
-			String instanceInString = mapper.writeValueAsString(args[0]);
-
-			if (args[0] instanceof List) {
-				idInsert = client.init().insertBulk(ontology, instanceInString).toString();
+			final Object ontologyArg = OperationUtil.selectOntologyArgument(args);
+			final String instanceInString = mapper.writeValueAsString(ontologyArg);
+			final String tenant = (String) util.parseSpEL(tenantAnnotation, args);
+			if (ontologyArg instanceof List) {
+				idInsert = client.init(tenant).insertBulk(ontology, instanceInString).toString();
 			} else {
-				idInsert = client.init().insert(ontology, instanceInString);
+				idInsert = client.init(tenant).insert(ontology, instanceInString);
 			}
 
 			if (method.getReturnType().isAssignableFrom(void.class)) {
@@ -71,9 +74,9 @@ public class Insert implements Operation {
 			toReturn = mapper.readValue(idInsert, method.getReturnType());
 			return toReturn;
 
-		} catch (SSAPConnectionException e) {
+		} catch (final SSAPConnectionException e) {
 			throw e;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Error in Insert operation", e);
 			throw new SSAPConnectionException("Error in Insert", e);
 		}

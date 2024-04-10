@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 /*******************************************************************************
  * Indra Sistemas, S.A.
  * 2013 - 2017  SPAIN
- * 
+ *
  * All rights reserved
  ******************************************************************************/
 package com.minsait.onesait.platform.client.springboot.proxy.operations;
@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minsait.onesait.platform.client.Transaction;
+import com.minsait.onesait.platform.client.springboot.aspect.IoTBrokerDelete;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
 import com.minsait.onesait.platform.client.springboot.fromjson.DeleteResult;
 import com.minsait.onesait.platform.client.springboot.proxy.operations.Transaction.OperationType;
@@ -47,7 +48,8 @@ public class Delete implements Operation {
 			Class<?> parametrizedType, boolean renewSession) throws SSAPConnectionException {
 		String idInstance = null;
 		try {
-			if (args.length < 1) {
+			final String tenantAnnotation = method.getAnnotation(IoTBrokerDelete.class).tenant();
+			if (args.length < 1 || !"".equals(tenantAnnotation) && args.length < 2) {
 				log.error("We need at least 1 parameter: delete(String identification)");
 				throw new SSAPConnectionException("We need at least 1 parameter: delete(String identification)");
 			}
@@ -56,23 +58,25 @@ public class Delete implements Operation {
 				log.error("@IoTBrokerDelete must return void");
 				throw new SSAPConnectionException("@IoTBrokerDelete must return void");
 			}
-			if (args[0].getClass() == String.class) {
-				idInstance = (String) args[0];
-			} else {
-				idInstance = (String) args[1];
-			}
+			// if (args[0].getClass() == String.class) {
+			// idInstance = (String) args[0];
+			// } else {
+			// idInstance = (String) args[1];
+			// }
+			idInstance = OperationUtil.selectIdArgument(args, tenantAnnotation);
+			final String tenant = (String) util.parseSpEL(tenantAnnotation, args);
 			if (method.getReturnType().getName().equals("void")) {
-				client.init().delete(ontology, idInstance);
+				client.init(tenant).delete(ontology, idInstance);
 				return null;
 			} else {
-				JsonNode data = client.init().deleteWithConfirmation(ontology, idInstance);
-				Object toReturn = new ObjectMapper().readValue(data.toString(), method.getReturnType());
+				final JsonNode data = client.init(tenant).deleteWithConfirmation(ontology, idInstance);
+				final Object toReturn = new ObjectMapper().readValue(data.toString(), method.getReturnType());
 				return toReturn;
 			}
 
-		} catch (SSAPConnectionException e) {
+		} catch (final SSAPConnectionException e) {
 			throw e;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Error in Delete operation", e);
 			throw new SSAPConnectionException("Error in Delete", e);
 		}

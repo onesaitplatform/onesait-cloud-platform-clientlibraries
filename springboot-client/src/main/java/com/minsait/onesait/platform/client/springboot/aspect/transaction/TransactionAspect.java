@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.minsait.onesait.platform.client.Transaction;
+import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ConnectionProperties;
+import com.minsait.onesait.platform.client.springboot.dto.DeviceTokenDTO;
+import com.minsait.onesait.platform.client.springboot.proxy.operations.OperationUtil;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -47,26 +51,32 @@ public class TransactionAspect {
 	@Autowired
 	private ConnectionProperties props;
 
-	@Before("@annotation(IoTBrokerTransaction)")
-	public void startTx() {
+	@Autowired
+	private OperationUtil util;
+
+	@Autowired
+	private ClientIoTBroker iotBrokerClient;
+
+	@Before("@annotation(ioTBrokerTransaction)")
+	public void startTx(JoinPoint joinPoint, IoTBrokerTransaction ioTBrokerTransaction) {
 		log.info("Start transaction.");
 		if (TransactionContext.getTransactionContext() == null) {
 			tx = new Transaction();
-			Properties prop = new Properties();
+			final Properties prop = new Properties();
 			prop.put(Transaction.DIGITAL_BROKER_REST_ENDPOINT, props.getUrlRestIoTBroker());
 			prop.put(Transaction.CONNECTION_TYPE, Transaction.ConnectionType.REST.name());
 			tx.configureConnection(prop);
-
-			String transactionId = tx.start(props.getToken(), props.getDeviceTemplate(), props.getDevice());
+			final String token = getToken(ioTBrokerTransaction, joinPoint.getArgs());
+			final String transactionId = tx.start(token, props.getDeviceTemplate(), props.getDevice());
 			if (transactionId != null) {
-				TransactionDTO ctx = new TransactionDTO(tx, transactionId, 1);
+				final TransactionDTO ctx = new TransactionDTO(tx, transactionId, 1);
 				TransactionContext.setTransactionContext(ctx);
 			} else {
 				log.error("Error starting transaction.");
 			}
 		} else {
 			log.info("The transaction already exists. Transaction is NOT open again.");
-			Integer numTransaction = TransactionContext.getTransactionContext().getNumTransactions() + 1;
+			final Integer numTransaction = TransactionContext.getTransactionContext().getNumTransactions() + 1;
 			TransactionContext.getTransactionContext().setNumTransactions(numTransaction);
 		}
 	}
@@ -75,14 +85,14 @@ public class TransactionAspect {
 	public void commitTx(JoinPoint jp) {
 		log.info("Commit transaction.");
 		if (TransactionContext.getTransactionContext().getNumTransactions() == 1) {
-			MethodSignature signature = (MethodSignature) jp.getSignature();
-			Method method = signature.getMethod();
-			IoTBrokerTransaction annotation = (IoTBrokerTransaction) method.getAnnotations()[0];
+			final MethodSignature signature = (MethodSignature) jp.getSignature();
+			final Method method = signature.getMethod();
+			final IoTBrokerTransaction annotation = (IoTBrokerTransaction) method.getAnnotations()[0];
 			tx.commit(annotation.lockOntologies());
 			TransactionContext.clear();
 		} else {
 			log.info("This transaction is not the last one. Transaction is NOT commited already.");
-			Integer numTransaction = TransactionContext.getTransactionContext().getNumTransactions() - 1;
+			final Integer numTransaction = TransactionContext.getTransactionContext().getNumTransactions() - 1;
 			TransactionContext.getTransactionContext().setNumTransactions(numTransaction);
 		}
 	}
@@ -95,10 +105,22 @@ public class TransactionAspect {
 			TransactionContext.clear();
 		} else {
 			log.info("This transaction is not the last one. Transaction is NOT rollback already.");
-			Integer numTransaction = TransactionContext.getTransactionContext().getNumTransactions() - 1;
+			final Integer numTransaction = TransactionContext.getTransactionContext().getNumTransactions() - 1;
 			TransactionContext.getTransactionContext().setNumTransactions(numTransaction);
 		}
 
+	}
+
+	private String getToken(IoTBrokerTransaction annotation, Object args[]) {
+		if (!props.isMultitenant()) {
+			return props.getToken();
+		} else {
+			final String tenant = (String) util.parseSpEL(annotation.tenant(), args);
+			final DeviceTokenDTO deviceToken = iotBrokerClient.getTokens().stream()
+					.filter(t -> t.getTenant().equals(tenant)).findFirst().orElse(null);
+			Assert.notNull(deviceToken, "No token found for tenant " + tenant);
+			return deviceToken.getToken();
+		}
 	}
 
 }

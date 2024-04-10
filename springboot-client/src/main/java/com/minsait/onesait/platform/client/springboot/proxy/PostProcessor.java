@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,33 +33,54 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 
 import com.minsait.onesait.platform.client.springboot.aspect.IoTBrokerRepository;
+import com.minsait.onesait.platform.client.springboot.aspect.notifier.OPEntity;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
 public class PostProcessor implements BeanFactoryPostProcessor, ApplicationContextAware {
 
+	@Getter
 	private ApplicationContext applicationContext;
 
+	@Getter
+	private Set<Class<?>> classEntities;
+
+	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
+		classEntities = new HashSet<>();
 	}
 
+	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		log.info("Scanning for resources...");
 
-		Set<Class<?>> classSet = new HashSet<>();
+		final Set<Class<?>> classSet = new HashSet<>();
 
-		List<String> packagesToScan = this.getComponentScanPackages();
-		for (String packages : packagesToScan) {
-			Reflections ref = new Reflections(packages);
-			for (Class<?> cl : ref.getTypesAnnotatedWith(IoTBrokerRepository.class)) {
-				classSet.add(cl);
+		final List<String> packagesToScan = getComponentScanPackages();
+		for (final String packages : packagesToScan) {
+			try {
+				final Reflections ref = new Reflections(packages);
+				final Set<Class<?>> classes = ref.getTypesAnnotatedWith(IoTBrokerRepository.class);
+
+				for (final Class<?> cl : classes) {
+					classSet.add(cl);
+				}
+
+				final Set<Class<?>> entities = ref.getTypesAnnotatedWith(OPEntity.class);
+
+				for (final Class<?> cl : entities) {
+					classEntities.add(cl);
+				}
+			} catch (final Exception e) {
+				log.warn("Could not load packages: {}, skipping", packages);
 			}
 		}
 
-		for (Class<?> cl : classSet) {
+		for (final Class<?> cl : classSet) {
 			registerClassByName(cl, beanFactory);
 		}
 
@@ -67,14 +88,14 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 
 	private List<String> getComponentScanPackages() {
 
-		List<String> scanPackages = new ArrayList<String>();
+		final List<String> scanPackages = new ArrayList<String>();
 
 		applicationContext.getBeansWithAnnotation(ComponentScan.class).forEach((name, instance) -> {
 
-			Set<ComponentScan> scans = AnnotatedElementUtils.findMergedRepeatableAnnotations(instance.getClass(),
+			final Set<ComponentScan> scans = AnnotatedElementUtils.findMergedRepeatableAnnotations(instance.getClass(),
 					ComponentScan.class);
 
-			for (ComponentScan scan : scans) {
+			for (final ComponentScan scan : scans) {
 				scanPackages.addAll(Arrays.asList(scan.basePackages()));
 			}
 
@@ -87,31 +108,31 @@ public class PostProcessor implements BeanFactoryPostProcessor, ApplicationConte
 
 	private void registerClassByName(Class<?> clazz, ConfigurableListableBeanFactory beanFactory) {
 		try {
-			boolean isInterface = clazz.isInterface();
-			boolean isSofiaRepository = clazz.isAnnotationPresent(IoTBrokerRepository.class);
+			final boolean isInterface = clazz.isInterface();
+			final boolean isSofiaRepository = clazz.isAnnotationPresent(IoTBrokerRepository.class);
 
 			if (isInterface && isSofiaRepository) {
-				ClassLoader classLoader = clazz.getClassLoader();
-				Class<?>[] classes = new java.lang.Class[] { clazz };
-				String annotationValue = ((IoTBrokerRepository) clazz.getAnnotation(IoTBrokerRepository.class)).value();
+				final ClassLoader classLoader = clazz.getClassLoader();
+				final Class<?>[] classes = new java.lang.Class[] { clazz };
+				final String annotationValue = clazz.getAnnotation(IoTBrokerRepository.class).value();
 
 				Class<?> typeArgument = null;
-				Type[] typeGenericInterfaces = clazz.getGenericInterfaces();
+				final Type[] typeGenericInterfaces = clazz.getGenericInterfaces();
 				if (typeGenericInterfaces.length > 0) {
-					ParameterizedType parameterizedType = (ParameterizedType) clazz.getGenericInterfaces()[0];
-					Type[] typeArguments = parameterizedType.getActualTypeArguments();
+					final ParameterizedType parameterizedType = (ParameterizedType) clazz.getGenericInterfaces()[0];
+					final Type[] typeArguments = parameterizedType.getActualTypeArguments();
 					typeArgument = (Class<?>) typeArguments[0];
 					log.info(typeArgument.getName());
 				}
 
-				InvocationHandler invocationHandler = new InvocationHandler(annotationValue, applicationContext,
+				final InvocationHandler invocationHandler = new InvocationHandler(annotationValue, applicationContext,
 						typeArgument);
-				Object proxy = Proxy.newProxyInstance(classLoader, classes, invocationHandler);
+				final Object proxy = Proxy.newProxyInstance(classLoader, classes, invocationHandler);
 				beanFactory.registerSingleton(clazz.getCanonicalName(), proxy);
 				log.info("Registered proxy for {}", clazz.getName());
 
 			}
-		} catch (NoClassDefFoundError e) {
+		} catch (final NoClassDefFoundError e) {
 			log.warn("Unable to get class for name: {}", clazz.getName());
 		}
 	}

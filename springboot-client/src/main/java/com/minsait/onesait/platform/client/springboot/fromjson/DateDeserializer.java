@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.minsait.onesait.platform.client.springboot.aspect.transaction.TransactionAspect;
 
-import jline.internal.Log;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DateDeserializer extends StdDeserializer<Date> implements DateParserConstants {
 
 	/**
@@ -53,7 +55,7 @@ public class DateDeserializer extends StdDeserializer<Date> implements DateParse
 			try {
 				return new SimpleDateFormat(DATE_FORMAT).parse(date);
 			} catch (ParseException e) {
-				Log.error("Error parsing dates: ", e.getMessage());
+				log.error("Error parsing dates: ", e.getMessage());
 			}
 		}
 		throw new JsonParseException(jp,

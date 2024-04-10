@@ -12,19 +12,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.minsait.onesait.platform.client.springboot.aspect.transaction;
+package com.minsait.onesait.platform.client.springboot.aspect.notifier;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.minsait.onesait.platform.client.enums.OperationType;
+import com.minsait.onesait.platform.client.enums.QueryType;
+
+/**
+ * Annotation used to notifier any operation in a document.
+ *
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface IoTBrokerTransaction {
+@Documented
+public @interface OPNotifierOperation {
 
-	boolean lockOntologies() default false;
+	String ontology();
 
-	String tenant() default "";
+	boolean async() default false;
+
+	QueryType queryType() default QueryType.NATIVE;
+
+	OperationType operationType() default OperationType.QUERY;
+
+	String query() default "";
+
+	String id() default "#p0";
+
+	String payload() default "";
 
 }

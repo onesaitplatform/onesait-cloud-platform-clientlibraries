@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 /*******************************************************************************
  * Indra Sistemas, S.A.
  * 2013 - 2017  SPAIN
- * 
+ *
  * All rights reserved
  ******************************************************************************/
 package com.minsait.onesait.platform.client.springboot.autoconfigure;
@@ -32,8 +32,17 @@ public class ConnectionProperties {
 	@Value("${onesaitplatform.iotclient.urlRestIoTBroker:http://localhost:1900/iot-broker/}")
 	private String urlRestIoTBroker;
 
-	@Value("${onesaitplatform.iotclient.token}")
+	@Value("${onesaitplatform.iotclient.urlRestControlpanel:http://controlpanelservice.onesait-platform:18000}")
+	private String urlRestControlpanel;
+
+	@Value("${onesaitplatform.iotclient.token:null}")
 	private String token;
+
+	@Value("${onesaitplatform.iotclient.multitenant:false}")
+	private boolean multitenant;
+
+	@Value("${onesaitplatform.iotclient.admin-api-token:null}")
+	private String adminAPIToken;
 
 	@Value("${onesaitplatform.iotclient.deviceTemplate}")
 	private String deviceTemplate;

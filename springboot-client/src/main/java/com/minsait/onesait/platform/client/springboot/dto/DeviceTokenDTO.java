@@ -12,21 +12,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*******************************************************************************
- * Indra Sistemas, S.A.
- * 2013 - 2018  SPAIN
- * 
- * All rights reserved
- ******************************************************************************/
-package com.minsait.onesait.platform.client.springboot.fromjson;
+package com.minsait.onesait.platform.client.springboot.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-public abstract class Ontology<T> extends OntologyId {
-	
-	public @JsonIgnore abstract void setData(T data);
-	
-	public @JsonIgnore abstract T getData();
-	
-	
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(Include.NON_NULL)
+public class DeviceTokenDTO {
+
+	private String token;
+	private String tenant;
+	private boolean active;
 }

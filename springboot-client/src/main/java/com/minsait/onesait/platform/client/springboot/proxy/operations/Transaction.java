@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,15 +40,15 @@ public class Transaction implements Operation {
 			String ontology, Class<?> parametrizedType, boolean renewSession, OperationType operationType)
 			throws SSAPConnectionException {
 		Object toReturn = null;
-		ObjectMapper mapper = new ObjectMapper();
+		final ObjectMapper mapper = new ObjectMapper();
 		String result = null;
 		String instanceInString = null;
 		String idInstance = null;
 		try {
 
 			if (operationType == OperationType.INSERT) {
-
-				instanceInString = mapper.writeValueAsString(args[0]);
+				final Object ontologyArg = OperationUtil.selectOntologyArgument(args);
+				instanceInString = mapper.writeValueAsString(ontologyArg);
 				result = tx.insert(ontology, instanceInString);
 			} else if (operationType == OperationType.UPDATE) {
 
@@ -77,9 +77,9 @@ public class Transaction implements Operation {
 			toReturn = mapper.readValue(result, method.getReturnType());
 			return toReturn;
 
-		} catch (SSAPConnectionException e) {
+		} catch (final SSAPConnectionException e) {
 			throw e;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Error in Transaction operation : {}", e);
 			throw new SSAPConnectionException("Error in Transaction", e);
 		}

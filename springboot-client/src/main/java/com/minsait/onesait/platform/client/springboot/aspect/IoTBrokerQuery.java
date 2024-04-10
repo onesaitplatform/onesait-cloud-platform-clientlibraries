@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,16 @@ public @interface IoTBrokerQuery {
 	/**
 	 * Es la consulta que se quiere ejecutar sobre la plataforma Sofia2 (select *
 	 * from Alarma where Alarma.tipo=$tipo)
-	 * 
+	 *
 	 * @return String
 	 */
 	String value() default "";
 
+	String tenant() default "";
+
 	/**
 	 * QueryType: NATIVE/SQL
-	 * 
+	 *
 	 * @return SSAPQueryType
 	 */
 	SSAPQueryType queryType() default SSAPQueryType.SQL;

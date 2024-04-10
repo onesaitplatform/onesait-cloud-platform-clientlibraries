@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 /*******************************************************************************
  * Indra Sistemas, S.A.
  * 2013 - 2017  SPAIN
- * 
+ *
  * All rights reserved
  ******************************************************************************/
 package com.minsait.onesait.platform.client.springboot.proxy.operations;
@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minsait.onesait.platform.client.Transaction;
+import com.minsait.onesait.platform.client.springboot.aspect.IoTBrokerUpdate;
 import com.minsait.onesait.platform.client.springboot.autoconfigure.ClientIoTBroker;
 import com.minsait.onesait.platform.client.springboot.fromjson.UpdateResult;
 import com.minsait.onesait.platform.client.springboot.proxy.operations.Transaction.OperationType;
@@ -45,11 +46,12 @@ public class Update implements Operation {
 	@Override
 	public Object operation(Method method, Object[] args, ClientIoTBroker client, String ontology,
 			Class<?> parametrizedType, boolean renewSession) throws SSAPConnectionException {
-		ObjectMapper mapper = new ObjectMapper();
+		final ObjectMapper mapper = new ObjectMapper();
 		String instanceInString = null;
 		String idInstance = null;
 		try {
-			if (args.length < 2) {
+			final String tenantAnnotation = method.getAnnotation(IoTBrokerUpdate.class).tenant();
+			if (args.length < 2 || !"".equals(tenantAnnotation) && args.length < 3) {
 				log.error("We need at least 2 parameters: update(String identification,Object objectToUpdate)");
 				throw new SSAPConnectionException(
 						"We need at least 2 parameters: update(String identification,Object objectToUpdate)");
@@ -59,26 +61,29 @@ public class Update implements Operation {
 				log.error("@IoTBrokerUpdate must return void");
 				throw new SSAPConnectionException("@IoTBrokerUpdate must return void");
 			}
-			if (args[0].getClass() == String.class) {
-				idInstance = (String) args[0];
-				instanceInString = mapper.writeValueAsString(args[1]);
-			} else {
-				idInstance = (String) args[1];
-				instanceInString = mapper.writeValueAsString(args[0]);
-			}
-
+			// if (args[0].getClass() == String.class) {
+			// idInstance = (String) args[0];
+			// instanceInString = mapper.writeValueAsString(args[1]);
+			// } else {
+			// idInstance = (String) args[1];
+			// instanceInString = mapper.writeValueAsString(args[0]);
+			// }
+			idInstance = OperationUtil.selectIdArgument(args, tenantAnnotation);
+			instanceInString = mapper.writeValueAsString(OperationUtil.selectOntologyArgument(args));
+			final String tenant = (String) util.parseSpEL(tenantAnnotation, args);
 			if (method.getReturnType().getName().equals("void")) {
-				client.init().update(ontology, instanceInString, idInstance);
+				client.init(tenant).update(ontology, instanceInString, idInstance);
 				return null;
 			} else {
-				JsonNode data = client.init().updateWithConfirmation(ontology, instanceInString, idInstance);
-				Object toReturn = new ObjectMapper().readValue(data.toString(), method.getReturnType());
+				final JsonNode data = client.init(tenant).updateWithConfirmation(ontology, instanceInString,
+						idInstance);
+				final Object toReturn = new ObjectMapper().readValue(data.toString(), method.getReturnType());
 				return toReturn;
 			}
 
-		} catch (SSAPConnectionException e) {
+		} catch (final SSAPConnectionException e) {
 			throw e;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Error in Update operation", e);
 			throw new SSAPConnectionException("Error in Update", e);
 		}
