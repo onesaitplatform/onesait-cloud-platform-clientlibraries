@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -102,8 +104,16 @@ public class LoginServiceImpl implements LoginService {
 		final OAuth2Token login = new OAuth2Token();
 		if (auth.getBody().getAccessToken() != null && !"".equals(auth.getBody().getAccessToken())) {
 			login.setToken(auth.getBody().getAccessToken());
+			login.setRefreshToken(auth.getBody().getRefreshToken());
 			login.setTokenType(auth.getBody().getTokenType());
 			login.setExpiresIn(auth.getBody().getExpiresIn());
+			if (!StringUtils.isEmpty(auth.getBody().getTenant())) {
+				login.setTenant(auth.getBody().getTenant());
+			}
+			if (!CollectionUtils.isEmpty(auth.getBody().getVerticals())) {
+				login.setVerticals(auth.getBody().getVerticals());
+			}
+
 		} else {
 			throw new Exception("User information and authentication token could not be retrieved");
 

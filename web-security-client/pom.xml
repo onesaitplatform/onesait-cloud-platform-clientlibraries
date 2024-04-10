@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.minsait.onesait.platform</groupId>
 	<artifactId>onesaitplatform-web-security-client</artifactId>
-	<version>1.4.0-RELEASE</version>
+	<version>1.6.0-RELEASE</version>
 	<name>onesaitplatform-web-security-client</name>
 	<description>Demo project for Spring Boot</description>
 	<packaging>jar</packaging>
@@ -68,7 +68,7 @@
 	      <distributionManagement>
 				<repository>
 					<id>releases-ssdd</id>
-					<url>https://nexus-ssdd.onesaitplatform.com/repository/maven-releases/</url>
+					<url>https://nexus.devops.onesait.com/repository/maven-releases/</url>
 				</repository>	
 	      </distributionManagement>
 	    </profile>
@@ -81,7 +81,7 @@
 	      <distributionManagement>
 				<repository>
 					<id>releases</id>
-					<url>https://nexus.onesaitplatform.com/nexus/content/repositories/releases/</url>
+					<url>https://nexus.onesaitplatform.com/nexus/repository/releases/</url>
 				</repository>	      
 	      </distributionManagement>
 	    </profile>
@@ -94,7 +94,7 @@
 	      <distributionManagement>
 				<repository>
 					<id>snapshots</id>
-					<url>https://nexus.onesaitplatform.com/nexus/content/repositories/snapshots/</url>
+					<url>https://nexus.onesaitplatform.com/nexus/repository/snapshots/</url>
 				</repository>	      
 	      </distributionManagement>
 	    </profile>	    

@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,36 +14,77 @@
  */
 package com.minsait.onesait.platform.web.security.client.domain;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OAuth2Token {
-		
 	private String token;
-	
+
 	@JsonProperty("token-type")
 	private String tokenType;
-	
+
+	@JsonProperty("refresh_token")
+	private String refreshToken;
+
+	@JsonProperty("verticals")
+	private List<String> verticals;
+
+	@JsonProperty("tenant")
+	private String tenant;
+
 	@JsonProperty("expires-in")
 	private long expiresIn;
-	
+
+	public List<String> getVerticals() {
+		return verticals;
+	}
+
+	public void setVerticals(List<String> verticals) {
+		this.verticals = verticals;
+	}
+
+	public String getTenant() {
+		return tenant;
+	}
+
+	public void setTenant(String tenant) {
+		this.tenant = tenant;
+	}
+
 	public String getToken() {
 		return token;
 	}
+
 	public void setToken(String token) {
 		this.token = token;
 	}
+
 	public String getTokenType() {
 		return tokenType;
 	}
+
 	public void setTokenType(String tokenType) {
 		this.tokenType = tokenType;
 	}
+
 	public long getExpiresIn() {
 		return expiresIn;
 	}
+
 	public void setExpiresIn(long expiresIn) {
 		this.expiresIn = expiresIn;
 	}
-	
-	
+
+	public String getRefreshToken() {
+		return refreshToken;
+	}
+
+	public void setRefreshToken(String refreshToken) {
+		this.refreshToken = refreshToken;
+	}
+
+
 }

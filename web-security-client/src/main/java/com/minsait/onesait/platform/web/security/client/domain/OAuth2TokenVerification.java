@@ -1,6 +1,6 @@
 /**
  * Copyright Indra Soluciones Tecnologías de la Información, S.L.U.
- * 2013-2019 SPAIN
+ * 2013-2021 SPAIN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,57 @@ package com.minsait.onesait.platform.web.security.client.domain;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OAuth2TokenVerification {
 
 	@JsonProperty("principal")
 	private String principal;
-	
+
 	@JsonProperty("grant_type")
 	private String grant_type;
-	
+
 	@JsonProperty("scope")
 	private List<String> scope;
-	
+
 	@JsonProperty("name")
 	private String name;
-	
+
 	@JsonProperty("exp")
 	private long exp;
-	
+
 	@JsonProperty("jti")
 	private String jti;
-	
+
 	@JsonProperty("client_id")
 	private String client_id;
-	
+
 	@JsonProperty("authorities")
 	private List<String> authorities;
+
+	@JsonProperty("verticals")
+	private List<String> verticals;
+
+	@JsonProperty("tenant")
+	private String tenant;
+
+	public List<String> getVerticals() {
+		return verticals;
+	}
+
+	public void setVerticals(List<String> verticals) {
+		this.verticals = verticals;
+	}
+
+	public String getTenant() {
+		return tenant;
+	}
+
+	public void setTenant(String tenant) {
+		this.tenant = tenant;
+	}
 
 	public String getGrant_type() {
 		return grant_type;
@@ -107,5 +131,5 @@ public class OAuth2TokenVerification {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 }
