@@ -38,7 +38,7 @@
 		<org.overviewproject.mime-types.version>0.1.0</org.overviewproject.mime-types.version>
 		<org.slf4j.slf4j-api.version>1.7.25</org.slf4j.slf4j-api.version>
 		<ch.qos.logback.logback-classic.version>1.2.3</ch.qos.logback.logback-classic.version>
-		<junit.junit.version>4.12</junit.junit.version>
+		<junit.junit.version>4.13.1</junit.junit.version>
 		<org.beryx.version>3.2.0</org.beryx.version>
 		<org.yaml.snakeyaml.version>1.17</org.yaml.snakeyaml.version>
 		<org.springframework.boot.version>1.5.9.RELEASE</org.springframework.boot.version>
